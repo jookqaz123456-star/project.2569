@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#0B0C10;font-family:'IBM Plex Sans Thai',sans-serif;-webkit-font-smoothing:antialiased;color:#E8EAF0;}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#23262F;border-radius:6px;}
+  input,select,textarea{font-family:'IBM Plex Sans Thai',sans-serif;}
+  input::placeholder,textarea::placeholder{color:#5A5F6E;}
+  @keyframes mfade{from{opacity:0;transform:translateY(10px) scale(.99);}to{opacity:1;transform:none;}}
+  @keyframes ofade{from{opacity:0;}to{opacity:1;}}
+  @keyframes tpop{from{opacity:0;transform:translate(-50%,12px);}to{opacity:1;transform:translate(-50%,0);}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:radial-gradient(1200px 700px at 75% -10%, rgba(108,79,216,0.12), transparent 60%), #0B0C10;">
+
+  <!-- ===== AUTH ===== -->
+  <sc-if value="{{ notLoggedIn }}" hint-placeholder-val="{{ true }}">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;width:880px;max-width:100%;background:#15171E;border:1px solid rgba(255,255,255,0.08);border-radius:22px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,0.5);">
+      <div style="background:linear-gradient(150deg,#2A1C5E,#16181F);padding:44px 40px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;">
+        <div style="position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(124,92,230,0.25);filter:blur(60px);top:-40px;right:-40px;"></div>
+        <div style="position:relative;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:44px;height:44px;border-radius:13px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M4 20V9l8-5 8 5v11" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><rect x="9" y="13" width="6" height="7" stroke="#fff" stroke-width="1.6"/></svg></div>
+            <div><div style="font-weight:700;font-size:18px;">หอพักสัมฤทธิ์</div><div style="font:500 11px 'JetBrains Mono',monospace;color:#9C8FD6;letter-spacing:1px;">RESIDENT PORTAL</div></div>
+          </div>
+        </div>
+        <div style="position:relative;">
+          <div style="font-size:25px;font-weight:700;line-height:1.35;letter-spacing:-.4px;">หาห้องที่ใช่<br>จองง่าย จ่ายสะดวก<br>ในที่เดียว</div>
+          <div style="font-size:13.5px;color:#A9A2C9;margin-top:14px;line-height:1.7;">ค้นหาห้องว่าง จองออนไลน์ ตรวจบิลค่าน้ำ-ค่าไฟ ชำระเงิน และดูประวัติการเข้าพักของคุณได้ทุกที่ทุกเวลา</div>
+        </div>
+        <div style="position:relative;display:flex;gap:22px;font-size:12.5px;color:#A9A2C9;">
+          <div><div style="font:700 19px 'JetBrains Mono',monospace;color:#fff;">12</div>ห้องพัก</div>
+          <div><div style="font:700 19px 'JetBrains Mono',monospace;color:#fff;">3</div>ชั้น</div>
+          <div><div style="font:700 19px 'JetBrains Mono',monospace;color:#fff;">24/7</div>บริการ</div>
+        </div>
+      </div>
+
+      <div style="padding:44px 40px;">
+        <div style="display:flex;gap:6px;background:rgba(0,0,0,0.3);padding:5px;border-radius:12px;margin-bottom:26px;">
+          <button onClick="{{ toLogin }}" style="{{ authTab.login }}">เข้าสู่ระบบ</button>
+          <button onClick="{{ toRegister }}" style="{{ authTab.register }}">สมัครสมาชิก</button>
+        </div>
+
+        <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-size:20px;font-weight:700;margin-bottom:4px;">ยินดีต้อนรับกลับ</div>
+          <div style="font-size:13px;color:#7C828F;margin-bottom:24px;">เข้าสู่ระบบด้วยบัญชีของคุณ</div>
+          <label style="display:block;margin-bottom:15px;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:7px;">อีเมล / ชื่อผู้ใช้</span><input value="{{ form.username }}" onChange="{{ field.username }}" placeholder="somchai@email.com" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:12px 14px;color:#E8EAF0;font:500 14px 'IBM Plex Sans Thai',sans-serif;outline:none;"></label>
+          <label style="display:block;margin-bottom:20px;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:7px;">รหัสผ่าน</span><input value="{{ form.password }}" onChange="{{ field.password }}" type="password" placeholder="••••••••" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:12px 14px;color:#E8EAF0;font:500 14px 'JetBrains Mono',monospace;outline:none;"></label>
+          <button onClick="{{ doLogin }}" style="width:100%;background:#6C4FD8;border:none;color:#fff;border-radius:11px;padding:13px;cursor:pointer;font:600 15px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">เข้าสู่ระบบ</button>
+          <div style="text-align:center;font-size:12px;color:#565B69;margin-top:16px;">ทดลองระบบ: กด “เข้าสู่ระบบ” ได้ทันที</div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="font-size:20px;font-weight:700;margin-bottom:4px;">สมัครสมาชิกผู้พักอาศัย</div>
+          <div style="font-size:13px;color:#7C828F;margin-bottom:22px;">กรอกข้อมูลเพื่อเริ่มจองห้องพัก</div>
+          <label style="display:block;margin-bottom:13px;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:6px;">ชื่อ-นามสกุล</span><input value="{{ form.name }}" onChange="{{ field.name }}" placeholder="ชื่อของคุณ" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:11px 14px;color:#E8EAF0;font:500 14px 'IBM Plex Sans Thai',sans-serif;outline:none;"></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px;">
+            <label style="display:block;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:6px;">เบอร์โทร</span><input value="{{ form.phone }}" onChange="{{ field.phone }}" placeholder="08x-xxx-xxxx" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:11px 14px;color:#E8EAF0;font:500 14px 'JetBrains Mono',monospace;outline:none;"></label>
+            <label style="display:block;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:6px;">อีเมล</span><input value="{{ form.email }}" onChange="{{ field.email }}" placeholder="email@mail.com" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:11px 14px;color:#E8EAF0;font:500 14px 'JetBrains Mono',monospace;outline:none;"></label>
+          </div>
+          <label style="display:block;margin-bottom:20px;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:6px;">รหัสผ่าน</span><input value="{{ form.password }}" onChange="{{ field.password }}" type="password" placeholder="ตั้งรหัสผ่าน" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:11px 14px;color:#E8EAF0;font:500 14px 'JetBrains Mono',monospace;outline:none;"></label>
+          <button onClick="{{ doRegister }}" style="width:100%;background:#6C4FD8;border:none;color:#fff;border-radius:11px;padding:13px;cursor:pointer;font:600 15px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">สมัครสมาชิก</button>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== APP ===== -->
+  <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <!-- top bar -->
+    <header style="position:sticky;top:0;z-index:40;background:rgba(11,12,16,0.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.06);">
+      <div style="max-width:1120px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;">
+        <div style="display:flex;align-items:center;gap:11px;">
+          <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 20V9l8-5 8 5v11" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><rect x="9" y="13" width="6" height="7" stroke="#fff" stroke-width="1.6"/></svg></div>
+          <div style="font-weight:700;font-size:15.5px;">หอพักสัมฤทธิ์</div>
+        </div>
+        <nav style="display:flex;gap:4px;background:rgba(255,255,255,0.03);padding:5px;border-radius:13px;border:1px solid rgba(255,255,255,0.05);">
+          <button onClick="{{ goBrowse }}" style="{{ tab.browse }}">ค้นหาห้อง</button>
+          <button onClick="{{ goBookings }}" style="{{ tab.bookings }}">การจองของฉัน</button>
+          <button onClick="{{ goPayments }}" style="{{ tab.payments }}">ชำระเงิน</button>
+          <button onClick="{{ goHistory }}" style="{{ tab.history }}">ประวัติ</button>
+        </nav>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="text-align:right;"><div style="font-weight:600;font-size:13.5px;">{{ me.name }}</div><div style="font:500 11px 'JetBrains Mono',monospace;color:#6B7180;">{{ me.roomLabel }}</div></div>
+          <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;">{{ me.initial }}</div>
+          <button onClick="{{ logout }}" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);color:#9AA0AE;border-radius:10px;padding:9px 13px;cursor:pointer;font:600 12.5px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(242,84,91,0.12);color:#F2606A;">ออกจากระบบ</button>
+        </div>
+      </div>
+    </header>
+
+    <div style="max-width:1120px;margin:0 auto;padding:30px 28px 70px;">
+
+      <!-- BROWSE -->
+      <sc-if value="{{ isBrowse }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.4px;">ค้นหาห้องพักที่ใช่สำหรับคุณ</h1>
+        <p style="margin:0 0 22px;font-size:14px;color:#9AA0AE;">เลือกชั้น ประเภท และช่วงราคาที่ต้องการ แล้วจองออนไลน์ได้ทันที</p>
+
+        <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px 18px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:22px;">
+          <label style="flex:1;min-width:180px;"><span style="font-size:12px;color:#9AA0AE;display:block;margin-bottom:6px;">ค้นหา</span><input value="{{ filters.q }}" onChange="{{ field.q }}" placeholder="เลขห้อง เช่น 7" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 13px;color:#E8EAF0;font:500 13.5px 'IBM Plex Sans Thai',sans-serif;outline:none;"></label>
+          <label style="min-width:150px;"><span style="font-size:12px;color:#9AA0AE;display:block;margin-bottom:6px;">ประเภทห้อง</span><select value="{{ filters.type }}" onChange="{{ field.ftype }}" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 13px;color:#E8EAF0;font:500 13.5px 'IBM Plex Sans Thai',sans-serif;outline:none;"><option value="all">ทั้งหมด</option><option value="ห้องแอร์">ห้องแอร์</option><option value="ห้องพัดลม">ห้องพัดลม</option></select></label>
+          <label style="min-width:170px;"><span style="font-size:12px;color:#9AA0AE;display:block;margin-bottom:6px;">ช่วงราคา</span><select value="{{ filters.price }}" onChange="{{ field.fprice }}" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 13px;color:#E8EAF0;font:500 13.5px 'IBM Plex Sans Thai',sans-serif;outline:none;"><option value="all">ทุกราคา</option><option value="le3500">ไม่เกิน 3,500</option><option value="mid">3,501 - 4,000</option><option value="gt4000">มากกว่า 4,000</option></select></label>
+          <button onClick="{{ toggleVacant }}" style="{{ vacantBtn }}">เฉพาะห้องว่าง</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;"><div style="font-size:13.5px;color:#9AA0AE;">พบ <span style="color:#E8EAF0;font-weight:600;">{{ resultCount }}</span> ห้อง</div></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;">
+          <sc-for list="{{ browseRooms }}" as="room" hint-placeholder-count="9">
+            <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="height:130px;background:repeating-linear-gradient(135deg,#1C2029 0 10px,#191C24 10px 20px);display:flex;align-items:center;justify-content:center;position:relative;">
+                <span style="font:700 34px 'JetBrains Mono',monospace;color:rgba(255,255,255,0.14);">ห้อง {{ room.number }}</span>
+                <span style="position:absolute;top:12px;right:13px;padding:4px 12px;border-radius:20px;font-size:11.5px;font-weight:600;background:{{ room.sbg }};color:{{ room.sc }};">{{ room.status }}</span>
+              </div>
+              <div style="padding:16px 18px;display:flex;flex-direction:column;gap:11px;flex:1;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div><div style="font-weight:600;font-size:16px;">ห้อง {{ room.number }}</div><div style="font-size:12.5px;color:#7C828F;">{{ room.type }} · ชั้น {{ room.floor }} · {{ room.size }} ตร.ม.</div></div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <sc-for list="{{ room.facPreview }}" as="fac" hint-placeholder-count="3"><span style="font-size:11px;color:#9AA0AE;background:rgba(255,255,255,0.05);padding:3px 9px;border-radius:7px;">{{ fac }}</span></sc-for>
+                </div>
+                <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:11px;border-top:1px solid rgba(255,255,255,0.05);">
+                  <div><span style="font:700 18px 'JetBrains Mono',monospace;color:#9D86F5;">฿{{ room.priceLabel }}</span><span style="font-size:11.5px;color:#6B7180;">/เดือน</span></div>
+                  <button onClick="{{ room.onView }}" style="background:rgba(108,79,216,0.16);border:none;color:#C9BBFF;border-radius:9px;padding:8px 15px;cursor:pointer;font:600 13px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(108,79,216,0.28);">ดูรายละเอียด</button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}"><div style="text-align:center;color:#6B7180;padding:50px 0;font-size:14px;">ไม่พบห้องที่ตรงกับเงื่อนไข ลองปรับตัวกรองดูนะครับ</div></sc-if>
+      </div>
+      </sc-if>
+
+      <!-- MY BOOKINGS -->
+      <sc-if value="{{ isBookings }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.4px;">การจองของฉัน</h1>
+        <p style="margin:0 0 8px;font-size:14px;color:#9AA0AE;">ติดตามสถานะการจอง แก้ไขหรือยกเลิกได้ตามเงื่อนไข</p>
+        <div style="font-size:12px;color:#7C828F;background:rgba(240,169,59,0.08);border:1px solid rgba(240,169,59,0.2);border-radius:10px;padding:10px 14px;margin-bottom:22px;display:inline-block;">เงื่อนไข: ยกเลิก/แก้ไขได้เฉพาะรายการสถานะ “รอยืนยัน” เท่านั้น</div>
+        <sc-if value="{{ hasBookings }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
+          <sc-for list="{{ myBookings }}" as="b" hint-placeholder-count="2">
+            <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px 22px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:13px;"><div style="width:46px;height:46px;border-radius:12px;background:rgba(108,79,216,0.14);display:flex;align-items:center;justify-content:center;font:700 16px 'JetBrains Mono',monospace;color:#9D86F5;">{{ b.roomNumber }}</div><div><div style="font-weight:600;font-size:15.5px;">ห้อง {{ b.roomNumber }}</div><div style="font-size:12.5px;color:#7C828F;">{{ b.type }} · {{ b.months }} เดือน</div></div></div>
+                <span style="padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;background:{{ b.sbg }};color:{{ b.sc }};">{{ b.status }}</span>
+              </div>
+              <div style="display:flex;gap:24px;font-size:12.5px;margin-bottom:16px;">
+                <div><div style="color:#6B7180;margin-bottom:3px;">วันเข้าพัก</div><span style="font-family:'JetBrains Mono',monospace;color:#C5CAD6;">{{ b.date }}</span></div>
+                <div><div style="color:#6B7180;margin-bottom:3px;">ค่าเช่า/เดือน</div><span style="font-family:'JetBrains Mono',monospace;color:#C5CAD6;">฿{{ b.rentLabel }}</span></div>
+              </div>
+              <sc-if value="{{ b.editable }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;gap:9px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05);">
+                <button onClick="{{ b.onEdit }}" style="flex:1;background:rgba(255,255,255,0.06);border:none;color:#C5CAD6;border-radius:9px;padding:9px;cursor:pointer;font:600 12.5px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(255,255,255,0.12);">แก้ไขวันเข้าพัก</button>
+                <button onClick="{{ b.onCancel }}" style="flex:1;background:rgba(242,84,91,0.1);border:none;color:#F2606A;border-radius:9px;padding:9px;cursor:pointer;font:600 12.5px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(242,84,91,0.2);">ยกเลิกการจอง</button>
+              </div>
+              </sc-if>
+              <sc-if value="{{ b.locked }}" hint-placeholder-val="{{ false }}"><div style="padding-top:14px;border-top:1px solid rgba(255,255,255,0.05);font-size:12px;color:#6B7180;">รายการนี้ยืนยันแล้ว ไม่สามารถแก้ไขผ่านระบบได้</div></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ noBookings }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:54px 0;"><div style="color:#6B7180;font-size:14px;margin-bottom:16px;">คุณยังไม่มีการจอง</div><button onClick="{{ goBrowse }}" style="background:#6C4FD8;border:none;color:#fff;border-radius:10px;padding:11px 22px;cursor:pointer;font:600 14px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">เริ่มค้นหาห้อง</button></div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- PAYMENTS -->
+      <sc-if value="{{ isPayments }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.4px;">ชำระเงิน</h1>
+        <p style="margin:0 0 22px;font-size:14px;color:#9AA0AE;">ตรวจสอบค่าเช่าและค่าสาธารณูปโภค พร้อมดาวน์โหลดใบเสร็จ</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px;">
+          <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:18px 20px;"><div style="font-size:12.5px;color:#9AA0AE;margin-bottom:9px;">ยอดค้างชำระ</div><div style="font:700 26px 'JetBrains Mono',monospace;color:#F2606A;">฿{{ dueLabel }}</div></div>
+          <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:18px 20px;"><div style="font-size:12.5px;color:#9AA0AE;margin-bottom:9px;">บิลรอชำระ</div><div style="font:700 26px 'JetBrains Mono',monospace;">{{ dueCount }}</div></div>
+          <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:18px 20px;"><div style="font-size:12.5px;color:#9AA0AE;margin-bottom:9px;">ชำระแล้วปีนี้</div><div style="font:700 26px 'JetBrains Mono',monospace;color:#34D58E;">฿{{ paidLabel }}</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <sc-for list="{{ myBills }}" as="p" hint-placeholder-count="3">
+            <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px 22px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+                <div><div style="font-weight:600;font-size:16px;">บิลค่าเช่า · {{ p.month }}</div><div style="font-size:12.5px;color:#7C828F;">ห้อง {{ p.roomNumber }} · ครบกำหนด {{ p.due }}</div></div>
+                <span style="padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;background:{{ p.sbg }};color:{{ p.sc }};">{{ p.status }}</span>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:18px;font-size:12.5px;color:#9AA0AE;margin-bottom:16px;">
+                <span>ค่าเช่า <b style="color:#C5CAD6;font-family:'JetBrains Mono',monospace;">฿{{ p.rentLabel }}</b></span>
+                <span>น้ำ {{ p.waterUnit }} หน่วย <b style="color:#C5CAD6;font-family:'JetBrains Mono',monospace;">฿{{ p.waterAmt }}</b></span>
+                <span>ไฟ {{ p.electricUnit }} หน่วย <b style="color:#C5CAD6;font-family:'JetBrains Mono',monospace;">฿{{ p.electricAmt }}</b></span>
+                <span>เน็ต <b style="color:#C5CAD6;font-family:'JetBrains Mono',monospace;">฿{{ p.internetLabel }}</b></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05);">
+                <div><span style="font-size:12.5px;color:#7C828F;">ยอดรวม </span><span style="font:700 20px 'JetBrains Mono',monospace;color:#9D86F5;">฿{{ p.total }}</span></div>
+                <div style="display:flex;gap:9px;">
+                  <sc-if value="{{ p.canPay }}" hint-placeholder-val="{{ true }}"><button onClick="{{ p.onPay }}" style="background:#6C4FD8;border:none;color:#fff;border-radius:9px;padding:9px 18px;cursor:pointer;font:600 13px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">ชำระเงิน</button></sc-if>
+                  <sc-if value="{{ p.paid }}" hint-placeholder-val="{{ false }}"><button onClick="{{ p.onReceipt }}" style="background:rgba(108,79,216,0.16);border:none;color:#C9BBFF;border-radius:9px;padding:9px 16px;cursor:pointer;font:600 13px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(108,79,216,0.28);">ดูใบเสร็จ</button></sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- HISTORY -->
+      <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h1 style="margin:0 0 22px;font-size:27px;font-weight:700;letter-spacing:-.4px;">ประวัติของฉัน</h1>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;">
+          <div style="display:flex;flex-direction:column;gap:18px;">
+            <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:22px;">
+              <div style="font-weight:600;font-size:15px;margin-bottom:16px;">ประวัติการเข้าพัก</div>
+              <sc-for list="{{ stays }}" as="st" hint-placeholder-count="2">
+                <div style="display:flex;gap:13px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <div style="width:9px;height:9px;border-radius:50%;background:{{ st.dot }};margin-top:5px;flex:none;"></div>
+                  <div style="flex:1;"><div style="font-size:13.5px;font-weight:500;">ห้อง {{ st.room }} · {{ st.type }}</div><div style="font:500 11.5px 'JetBrains Mono',monospace;color:#7C828F;margin-top:2px;">{{ st.period }}</div></div>
+                  <span style="font-size:11.5px;font-weight:600;color:{{ st.dot }};">{{ st.status }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:22px;">
+              <div style="font-weight:600;font-size:15px;margin-bottom:16px;">ประวัติการชำระเงิน</div>
+              <sc-for list="{{ payHistory }}" as="ph" hint-placeholder-count="3">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <div><div style="font-size:13.5px;font-weight:500;">{{ ph.month }}</div><div style="font:500 11px 'JetBrains Mono',monospace;color:#7C828F;">{{ ph.date }} · {{ ph.method }}</div></div>
+                  <div style="display:flex;align-items:center;gap:12px;"><span style="font:600 13.5px 'JetBrains Mono',monospace;">฿{{ ph.total }}</span><button onClick="{{ ph.onReceipt }}" style="background:rgba(108,79,216,0.14);border:none;color:#9D86F5;border-radius:7px;padding:5px 11px;cursor:pointer;font:600 11.5px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(108,79,216,0.24);">ใบเสร็จ</button></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:22px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><div style="font-weight:600;font-size:15px;">การแจ้งซ่อม</div><button onClick="{{ openRepair }}" style="background:#6C4FD8;border:none;color:#fff;border-radius:9px;padding:8px 15px;cursor:pointer;font:600 12.5px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">+ แจ้งซ่อม</button></div>
+            <sc-if value="{{ hasRepairs }}" hint-placeholder-val="{{ true }}">
+            <sc-for list="{{ repairs }}" as="rp" hint-placeholder-count="2">
+              <div style="padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><div style="font-size:13.5px;font-weight:500;">{{ rp.title }}</div><span style="padding:3px 11px;border-radius:20px;font-size:11px;font-weight:600;background:{{ rp.sbg }};color:{{ rp.sc }};">{{ rp.status }}</span></div>
+                <div style="font-size:12px;color:#9AA0AE;line-height:1.5;">{{ rp.detail }}</div>
+                <div style="font:500 11px 'JetBrains Mono',monospace;color:#6B7180;margin-top:5px;">แจ้งเมื่อ {{ rp.date }} · ห้อง {{ rp.room }}</div>
+              </div>
+            </sc-for>
+            </sc-if>
+            <sc-if value="{{ noRepairs }}" hint-placeholder-val="{{ false }}"><div style="color:#6B7180;font-size:13px;padding:10px 0;">ยังไม่มีรายการแจ้งซ่อม</div></sc-if>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== MODAL ===== -->
+  <sc-if value="{{ isModal }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(5,6,10,0.74);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px;animation:ofade .15s ease;">
+    <div onClick="{{ stop }}" style="background:#15171E;border:1px solid rgba(255,255,255,0.1);border-radius:20px;width:520px;max-width:100%;max-height:90vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,0.55);animation:mfade .22s cubic-bezier(.2,.7,.3,1);">
+
+      <!-- ROOM DETAIL -->
+      <sc-if value="{{ mDetail }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="height:160px;background:repeating-linear-gradient(135deg,#1C2029 0 12px,#191C24 12px 24px);display:flex;align-items:center;justify-content:center;position:relative;border-radius:20px 20px 0 0;">
+          <span style="font:700 46px 'JetBrains Mono',monospace;color:rgba(255,255,255,0.13);">ห้อง {{ sel.number }}</span>
+          <span style="position:absolute;top:16px;right:18px;padding:5px 14px;border-radius:22px;font-size:12.5px;font-weight:600;background:{{ sel.sbg }};color:{{ sel.sc }};">{{ sel.status }}</span>
+          <button onClick="{{ closeModal }}" style="position:absolute;top:14px;left:14px;background:rgba(0,0,0,0.4);border:none;color:#fff;width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:18px;line-height:1;">×</button>
+        </div>
+        <div style="padding:22px 26px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+            <div><div style="font-size:21px;font-weight:700;">ห้อง {{ sel.number }} · {{ sel.type }}</div><div style="font-size:13px;color:#7C828F;margin-top:3px;">ชั้น {{ sel.floor }} · {{ sel.size }} ตร.ม.</div></div>
+            <div style="text-align:right;"><div style="font:700 24px 'JetBrains Mono',monospace;color:#9D86F5;">฿{{ sel.priceLabel }}</div><div style="font-size:11.5px;color:#6B7180;">ต่อเดือน</div></div>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:#C5CAD6;margin-bottom:11px;">สิ่งอำนวยความสะดวก</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px;">
+            <sc-for list="{{ sel.facilities }}" as="fac" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:9px;font-size:13px;color:#C5CAD6;"><span style="width:18px;height:18px;border-radius:6px;background:rgba(52,213,142,0.16);display:flex;align-items:center;justify-content:center;color:#34D58E;font-size:11px;flex:none;">✓</span>{{ fac }}</div>
+            </sc-for>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
+            <div style="font-size:12px;color:#9AA0AE;margin-bottom:10px;">อัตราค่าบริการ</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:#9AA0AE;">ค่าเช่า/เดือน</span><span style="font-family:'JetBrains Mono',monospace;">฿{{ sel.priceLabel }}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:#9AA0AE;">ค่าน้ำ</span><span style="font-family:'JetBrains Mono',monospace;">18 ฿/หน่วย</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:#9AA0AE;">ค่าไฟ</span><span style="font-family:'JetBrains Mono',monospace;">7 ฿/หน่วย</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:#9AA0AE;">อินเทอร์เน็ต</span><span style="font-family:'JetBrains Mono',monospace;">200 ฿/เดือน</span></div>
+            </div>
+          </div>
+          <sc-if value="{{ sel.canBook }}" hint-placeholder-val="{{ true }}"><button onClick="{{ sel.onBook }}" style="width:100%;background:#6C4FD8;border:none;color:#fff;border-radius:12px;padding:13px;cursor:pointer;font:600 15px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">จองห้องนี้</button></sc-if>
+          <sc-if value="{{ sel.cantBook }}" hint-placeholder-val="{{ false }}"><div style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#7C828F;border-radius:12px;padding:13px;text-align:center;font:600 14px 'IBM Plex Sans Thai',sans-serif;">ห้องนี้ไม่ว่างในขณะนี้</div></sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- BOOK / EDIT -->
+      <sc-if value="{{ mBook }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:22px 26px;border-bottom:1px solid rgba(255,255,255,0.07);"><div style="font-weight:700;font-size:18px;">{{ bookTitle }}</div><button onClick="{{ closeModal }}" style="background:rgba(255,255,255,0.06);border:none;color:#9AA0AE;width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:18px;line-height:1;" style-hover="background:rgba(255,255,255,0.12);color:#fff;">×</button></div>
+        <div style="padding:24px 26px;">
+          <div style="background:rgba(108,79,216,0.1);border:1px solid rgba(108,79,216,0.2);border-radius:12px;padding:15px 18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:600;font-size:15px;">ห้อง {{ form.roomNumber }} · {{ form.type }}</div><div style="font-size:12.5px;color:#9C92C9;">ชั้น {{ form.floor }}</div></div><div style="font:700 18px 'JetBrains Mono',monospace;color:#fff;">฿{{ form.rentLabel }}</div></div>
+          <label style="display:block;margin-bottom:15px;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:7px;">วันที่ต้องการเข้าพัก</span><input value="{{ form.date }}" onChange="{{ field.date }}" type="date" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:12px 14px;color:#E8EAF0;font:500 14px 'JetBrains Mono',monospace;outline:none;"></label>
+          <label style="display:block;margin-bottom:18px;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:7px;">ระยะเวลาสัญญา</span><select value="{{ form.months }}" onChange="{{ field.months }}" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:12px 14px;color:#E8EAF0;font:500 14px 'IBM Plex Sans Thai',sans-serif;outline:none;"><option value="6">6 เดือน</option><option value="12">12 เดือน</option></select></label>
+          <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:15px 17px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:#9AA0AE;">ค่าเช่าเดือนแรก</span><span style="font-family:'JetBrains Mono',monospace;">฿{{ form.rentLabel }}</span></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="color:#9AA0AE;">เงินประกัน (2 เดือน)</span><span style="font-family:'JetBrains Mono',monospace;">฿{{ depositLabel }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:9px;border-top:1px solid rgba(255,255,255,0.07);"><span style="font-weight:600;">ยอดชำระวันจอง</span><span style="font:700 16px 'JetBrains Mono',monospace;color:#9D86F5;">฿{{ bookTotal }}</span></div>
+          </div>
+        </div>
+        <div style="padding:0 26px 24px;display:flex;gap:12px;justify-content:flex-end;">
+          <button onClick="{{ closeModal }}" style="background:rgba(255,255,255,0.06);border:none;color:#C5CAD6;border-radius:11px;padding:12px 22px;cursor:pointer;font:600 14px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(255,255,255,0.12);">ยกเลิก</button>
+          <button onClick="{{ confirmBook }}" style="background:#6C4FD8;border:none;color:#fff;border-radius:11px;padding:12px 26px;cursor:pointer;font:600 14px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">{{ bookCta }}</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- REPAIR -->
+      <sc-if value="{{ mRepair }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:22px 26px;border-bottom:1px solid rgba(255,255,255,0.07);"><div style="font-weight:700;font-size:18px;">แจ้งซ่อม</div><button onClick="{{ closeModal }}" style="background:rgba(255,255,255,0.06);border:none;color:#9AA0AE;width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:18px;line-height:1;" style-hover="background:rgba(255,255,255,0.12);color:#fff;">×</button></div>
+        <div style="padding:24px 26px;">
+          <label style="display:block;margin-bottom:15px;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:7px;">หัวข้อ</span><input value="{{ form.title }}" onChange="{{ field.title }}" placeholder="เช่น แอร์ไม่เย็น, ไฟห้องน้ำเสีย" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:12px 14px;color:#E8EAF0;font:500 14px 'IBM Plex Sans Thai',sans-serif;outline:none;"></label>
+          <label style="display:block;"><span style="font-size:12.5px;color:#9AA0AE;display:block;margin-bottom:7px;">รายละเอียด</span><textarea value="{{ form.detail }}" onChange="{{ field.detail }}" rows="4" placeholder="อธิบายอาการ/จุดที่ต้องการให้ซ่อม" style="width:100%;background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:12px 14px;color:#E8EAF0;font:500 14px 'IBM Plex Sans Thai',sans-serif;outline:none;resize:vertical;"></textarea></label>
+        </div>
+        <div style="padding:0 26px 24px;display:flex;gap:12px;justify-content:flex-end;">
+          <button onClick="{{ closeModal }}" style="background:rgba(255,255,255,0.06);border:none;color:#C5CAD6;border-radius:11px;padding:12px 22px;cursor:pointer;font:600 14px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(255,255,255,0.12);">ยกเลิก</button>
+          <button onClick="{{ submitRepair }}" style="background:#6C4FD8;border:none;color:#fff;border-radius:11px;padding:12px 26px;cursor:pointer;font:600 14px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">ส่งคำขอ</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- RECEIPT -->
+      <sc-if value="{{ mReceipt }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:22px 26px;border-bottom:1px solid rgba(255,255,255,0.07);"><div style="font-weight:700;font-size:18px;">ใบเสร็จรับเงิน</div><button onClick="{{ closeModal }}" style="background:rgba(255,255,255,0.06);border:none;color:#9AA0AE;width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:18px;line-height:1;" style-hover="background:rgba(255,255,255,0.12);color:#fff;">×</button></div>
+        <div style="padding:24px 26px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:1px dashed rgba(255,255,255,0.12);margin-bottom:16px;">
+            <div><div style="font-weight:700;font-size:16px;">หอพักสัมฤทธิ์</div><div style="font-size:11.5px;color:#7C828F;">ใบเสร็จรับเงิน / RECEIPT</div></div>
+            <div style="text-align:right;"><div style="font:600 13px 'JetBrains Mono',monospace;color:#9D86F5;">{{ receipt.no }}</div><div style="font-size:11.5px;color:#7C828F;">{{ receipt.month }}</div></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:16px;"><span style="color:#9AA0AE;">ห้อง {{ receipt.roomNumber }} · {{ me.name }}</span><span style="font-weight:600;color:#34D58E;">ชำระแล้ว</span></div>
+          <div style="display:flex;flex-direction:column;gap:11px;font-size:13.5px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:#9AA0AE;">ค่าเช่าห้อง</span><span style="font-family:'JetBrains Mono',monospace;">฿{{ receipt.rentLabel }}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#9AA0AE;">ค่าน้ำ ({{ receipt.waterUnit }} หน่วย × 18)</span><span style="font-family:'JetBrains Mono',monospace;">฿{{ receipt.waterAmt }}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#9AA0AE;">ค่าไฟ ({{ receipt.electricUnit }} หน่วย × 7)</span><span style="font-family:'JetBrains Mono',monospace;">฿{{ receipt.electricAmt }}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#9AA0AE;">ค่าอินเทอร์เน็ต</span><span style="font-family:'JetBrains Mono',monospace;">฿{{ receipt.internetLabel }}</span></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:1px dashed rgba(255,255,255,0.12);"><span style="font-weight:700;font-size:15px;">ยอดรวมทั้งสิ้น</span><span style="font:700 22px 'JetBrains Mono',monospace;color:#9D86F5;">฿{{ receipt.total }}</span></div>
+          <div style="font-size:11.5px;color:#6B7180;margin-top:14px;">ชำระเมื่อ {{ receipt.date }} · ช่องทาง {{ receipt.method }}</div>
+        </div>
+        <div style="padding:0 26px 24px;display:flex;gap:12px;justify-content:flex-end;">
+          <button onClick="{{ closeModal }}" style="background:rgba(255,255,255,0.06);border:none;color:#C5CAD6;border-radius:11px;padding:12px 22px;cursor:pointer;font:600 14px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:rgba(255,255,255,0.12);">ปิด</button>
+          <button onClick="{{ printReceipt }}" style="background:#6C4FD8;border:none;color:#fff;border-radius:11px;padding:12px 26px;cursor:pointer;font:600 14px 'IBM Plex Sans Thai',sans-serif;" style-hover="background:#7C5CE6;">พิมพ์ใบเสร็จ</button>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1C1F28;border:1px solid rgba(108,79,216,0.4);border-radius:12px;padding:13px 24px;color:#E8EAF0;font:600 14px 'IBM Plex Sans Thai',sans-serif;box-shadow:0 12px 34px rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;gap:10px;animation:tpop .25s ease;">
+    <span style="width:20px;height:20px;border-radius:50%;background:#34D58E;display:flex;align-items:center;justify-content:center;color:#0B0C10;font-size:13px;">✓</span>{{ toast }}
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:820}}">
+class Component extends DCLogic {
+  state = {
+    loggedIn: false,
+    authMode: 'login',
+    me: { name:'สมชาย ใจดี', initial:'ส', room:1 },
+    screen: 'browse',
+    filters: { q:'', type:'all', price:'all', vacantOnly:false },
+    modal: null,
+    form: {},
+    toast: null,
+    rooms: [
+      { id:'r1', number:1, floor:3, type:'ห้องแอร์', price:4200, status:'ไม่ว่าง', size:24, facilities:['เครื่องปรับอากาศ','เครื่องทำน้ำอุ่น','เตียง 5 ฟุต','ตู้เสื้อผ้า','โต๊ะทำงาน','Wi-Fi','ระเบียง','ตู้เย็น'] },
+      { id:'r2', number:2, floor:3, type:'ห้องแอร์', price:4200, status:'ว่าง', size:24, facilities:['เครื่องปรับอากาศ','เครื่องทำน้ำอุ่น','เตียง 5 ฟุต','ตู้เสื้อผ้า','โต๊ะทำงาน','Wi-Fi','ระเบียง','ตู้เย็น'] },
+      { id:'r3', number:3, floor:3, type:'ห้องแอร์', price:4200, status:'ไม่ว่าง', size:24, facilities:['เครื่องปรับอากาศ','เครื่องทำน้ำอุ่น','เตียง 5 ฟุต','ตู้เสื้อผ้า','โต๊ะทำงาน','Wi-Fi','ระเบียง'] },
+      { id:'r4', number:4, floor:3, type:'ห้องแอร์', price:4200, status:'ซ่อม', size:24, facilities:['เครื่องปรับอากาศ','เครื่องทำน้ำอุ่น','เตียง 5 ฟุต','ตู้เสื้อผ้า','โต๊ะทำงาน','Wi-Fi'] },
+      { id:'r5', number:5, floor:2, type:'ห้องพัดลม', price:3500, status:'ไม่ว่าง', size:20, facilities:['พัดลมเพดาน','เครื่องทำน้ำอุ่น','เตียง 3.5 ฟุต','ตู้เสื้อผ้า','โต๊ะ','Wi-Fi'] },
+      { id:'r6', number:6, floor:2, type:'ห้องพัดลม', price:3500, status:'ไม่ว่าง', size:20, facilities:['พัดลมเพดาน','เครื่องทำน้ำอุ่น','เตียง 3.5 ฟุต','ตู้เสื้อผ้า','โต๊ะ','Wi-Fi'] },
+      { id:'r7', number:7, floor:2, type:'ห้องพัดลม', price:3500, status:'ว่าง', size:20, facilities:['พัดลมเพดาน','เครื่องทำน้ำอุ่น','เตียง 3.5 ฟุต','ตู้เสื้อผ้า','โต๊ะ','Wi-Fi'] },
+      { id:'r8', number:8, floor:2, type:'ห้องพัดลม', price:3500, status:'ไม่ว่าง', size:20, facilities:['พัดลมเพดาน','เครื่องทำน้ำอุ่น','เตียง 3.5 ฟุต','ตู้เสื้อผ้า','โต๊ะ','Wi-Fi'] },
+      { id:'r9', number:9, floor:1, type:'ห้องพัดลม', price:3500, status:'ไม่ว่าง', size:20, facilities:['พัดลมเพดาน','เครื่องทำน้ำอุ่น','เตียง 3.5 ฟุต','ตู้เสื้อผ้า','โต๊ะ','Wi-Fi'] },
+      { id:'r10', number:10, floor:1, type:'ห้องพัดลม', price:3500, status:'ว่าง', size:20, facilities:['พัดลมเพดาน','เครื่องทำน้ำอุ่น','เตียง 3.5 ฟุต','ตู้เสื้อผ้า','โต๊ะ','Wi-Fi'] },
+      { id:'r11', number:11, floor:1, type:'ห้องพัดลม', price:3500, status:'ไม่ว่าง', size:20, facilities:['พัดลมเพดาน','เครื่องทำน้ำอุ่น','เตียง 3.5 ฟุต','ตู้เสื้อผ้า','โต๊ะ','Wi-Fi'] },
+      { id:'r12', number:12, floor:1, type:'ห้องพัดลม', price:3500, status:'ไม่ว่าง', size:20, facilities:['พัดลมเพดาน','เครื่องทำน้ำอุ่น','เตียง 3.5 ฟุต','ตู้เสื้อผ้า','โต๊ะ','Wi-Fi'] },
+    ],
+    bookings: [
+      { id:'b1', roomNumber:2, type:'ห้องแอร์', floor:3, date:'2026-07-01', months:12, rent:4200, status:'รอยืนยัน' },
+      { id:'b2', roomNumber:7, type:'ห้องพัดลม', floor:2, date:'2026-06-25', months:6, rent:3500, status:'ยืนยันแล้ว' },
+    ],
+    bills: [
+      { id:'p1', month:'มิ.ย. 2569', roomNumber:1, rent:4200, waterUnit:5, electricUnit:120, internet:200, status:'รอชำระ', due:'5 มิ.ย. 69', date:'', method:'' },
+      { id:'p2', month:'พ.ค. 2569', roomNumber:1, rent:4200, waterUnit:4, electricUnit:108, internet:200, status:'ชำระแล้ว', due:'5 พ.ค. 69', date:'3 พ.ค. 69', method:'พร้อมเพย์' },
+      { id:'p3', month:'เม.ย. 2569', roomNumber:1, rent:4200, waterUnit:6, electricUnit:132, internet:200, status:'ชำระแล้ว', due:'5 เม.ย. 69', date:'4 เม.ย. 69', method:'เงินสด' },
+    ],
+    stays: [
+      { room:1, type:'ห้องแอร์', period:'5 ม.ค. 2568 - ปัจจุบัน', status:'กำลังพักอาศัย' },
+      { room:9, type:'ห้องพัดลม', period:'1 มี.ค. 2567 - 31 ธ.ค. 2567', status:'ย้ายออกแล้ว' },
+    ],
+    repairs: [
+      { id:'rp1', title:'แอร์ไม่เย็น', detail:'แอร์เปิดแล้วไม่เย็น มีเสียงดังผิดปกติ', date:'12 มิ.ย. 69', room:1, status:'กำลังซ่อม' },
+      { id:'rp2', title:'ก๊อกน้ำรั่ว', detail:'ก๊อกน้ำในห้องน้ำรั่วซึมตลอดเวลา', date:'2 มิ.ย. 69', room:1, status:'เสร็จสิ้น' },
+    ],
+  };
+  WATER=18; ELECTRIC=7;
+
+  toast(m){ this.setState({toast:m}); clearTimeout(this._t); this._t=setTimeout(()=>this.setState({toast:null}),2200); }
+  setField(k,v){ this.setState(s=>({form:{...s.form,[k]:v}})); }
+  baht(n){ return (n||0).toLocaleString('th-TH'); }
+  billTotal(b){ return b.rent + b.waterUnit*this.WATER + b.electricUnit*this.ELECTRIC + b.internet; }
+
+  doLogin(){ const u=this.state.form.username; this.setState({ loggedIn:true, screen:'browse', form:{} }); this.toast('เข้าสู่ระบบสำเร็จ'); }
+  doRegister(){ const f=this.state.form; const name=f.name||'สมาชิกใหม่'; this.setState(s=>({ loggedIn:true, screen:'browse', me:{...s.me, name, initial:name.trim().charAt(0)}, form:{} })); this.toast('สมัครสมาชิกสำเร็จ ยินดีต้อนรับ'); }
+  logout(){ this.setState({ loggedIn:false, authMode:'login', form:{}, modal:null }); }
+
+  rstatus(st){ if(st==='ว่าง') return {c:'#34D58E', bg:'rgba(52,213,142,0.13)'}; if(st==='ไม่ว่าง') return {c:'#9D86F5', bg:'rgba(108,79,216,0.2)'}; return {c:'#F0A93B', bg:'rgba(240,169,59,0.14)'}; }
+  bkstatus(st){ if(st==='ยืนยันแล้ว') return {c:'#34D58E', bg:'rgba(52,213,142,0.13)'}; if(st==='รอยืนยัน') return {c:'#F0A93B', bg:'rgba(240,169,59,0.14)'}; return {c:'#8A90A0', bg:'rgba(255,255,255,0.05)'}; }
+  pstatus(st){ if(st==='ชำระแล้ว') return {c:'#34D58E', bg:'rgba(52,213,142,0.13)'}; if(st==='ค้างชำระ') return {c:'#F2606A', bg:'rgba(242,84,91,0.14)'}; return {c:'#F0A93B', bg:'rgba(240,169,59,0.14)'}; }
+  rpstatus(st){ if(st==='เสร็จสิ้น') return {c:'#34D58E', bg:'rgba(52,213,142,0.13)'}; if(st==='กำลังซ่อม') return {c:'#9D86F5', bg:'rgba(108,79,216,0.18)'}; return {c:'#F0A93B', bg:'rgba(240,169,59,0.14)'}; }
+
+  openRoom(r){ this.setState({ modal:'detail', form:{ roomId:r.id } }); this._selId=r.id; this.forceUpdate(); }
+  bookRoom(r){ this.setState({ modal:'book', form:{ mode:'add', roomId:r.id, roomNumber:r.number, type:r.type, floor:r.floor, rent:r.price, date:'', months:'12' } }); }
+  editBooking(b){ this.setState({ modal:'book', form:{ mode:'edit', id:b.id, roomNumber:b.roomNumber, type:b.type, floor:b.floor, rent:b.rent, date:b.date, months:String(b.months) } }); }
+  confirmBook(){ const f=this.state.form; if(!f.date){ this.toast('กรุณาเลือกวันเข้าพัก'); return; }
+    if(f.mode==='edit'){ this.setState(s=>({ bookings: s.bookings.map(b=> b.id===f.id? {...b, date:f.date, months:+f.months}:b), modal:null, form:{} })); this.toast('แก้ไขการจองแล้ว'); }
+    else { this.setState(s=>({ bookings:[{ id:'b'+Math.random().toString(36).slice(2,7), roomNumber:+f.roomNumber, type:f.type, floor:f.floor, date:f.date, months:+f.months, rent:f.rent, status:'รอยืนยัน' }, ...s.bookings], modal:null, form:{}, screen:'bookings' })); this.toast('ส่งคำขอจองเรียบร้อย'); }
+  }
+  cancelBooking(id){ this.setState(s=>({ bookings: s.bookings.filter(b=>b.id!==id) })); this.toast('ยกเลิกการจองแล้ว'); }
+  payBill(id){ this.setState(s=>({ bills: s.bills.map(b=> b.id===id? {...b, status:'ชำระแล้ว', date:'19 มิ.ย. 69', method:'พร้อมเพย์'}:b) })); this.toast('ชำระเงินสำเร็จ'); }
+  openReceipt(b){ this.setState({ modal:'receipt', form:{...b} }); }
+  openRepair(){ this.setState({ modal:'repair', form:{} }); }
+  submitRepair(){ const f=this.state.form; if(!f.title){ this.toast('กรุณากรอกหัวข้อ'); return; } this.setState(s=>({ repairs:[{ id:'rp'+Math.random().toString(36).slice(2,7), title:f.title, detail:f.detail||'-', date:'19 มิ.ย. 69', room:s.me.room, status:'รอดำเนินการ' }, ...s.repairs], modal:null, form:{} })); this.toast('ส่งคำขอแจ้งซ่อมแล้ว'); }
+  closeModal(){ this.setState({ modal:null, form:{} }); this._selId=null; }
+
+  renderVals(){
+    const s=this.state;
+    const F={}; ['username','password','name','phone','email','q','date','months','title','detail'].forEach(k=> F[k]=(e)=>this.setField(k,e.target.value));
+    F.ftype=(e)=>this.setState(st=>({filters:{...st.filters,type:e.target.value}}));
+    F.fprice=(e)=>this.setState(st=>({filters:{...st.filters,price:e.target.value}}));
+
+    const authTab=(m)=>`flex:1;padding:10px;border:none;border-radius:9px;cursor:pointer;font:600 14px 'IBM Plex Sans Thai',sans-serif;transition:all .15s;background:${s.authMode===m?'#6C4FD8':'transparent'};color:${s.authMode===m?'#fff':'#9AA0AE'};`;
+    const tab=(id)=>`padding:9px 17px;border:none;border-radius:10px;cursor:pointer;font:600 13.5px 'IBM Plex Sans Thai',sans-serif;transition:all .15s;background:${s.screen===id?'#6C4FD8':'transparent'};color:${s.screen===id?'#fff':'#9AA0AE'};`;
+
+    // filters
+    const f=s.filters;
+    let browse=s.rooms.filter(r=>{
+      if(f.q && !(''+r.number).includes(f.q.trim())) return false;
+      if(f.type!=='all' && r.type!==f.type) return false;
+      if(f.price==='le3500' && r.price>3500) return false;
+      if(f.price==='mid' && !(r.price>3500 && r.price<=4000)) return false;
+      if(f.price==='gt4000' && r.price<=4000) return false;
+      if(f.vacantOnly && r.status!=='ว่าง') return false;
+      return true;
+    });
+    const browseRooms=browse.map(r=>{ const m=this.rstatus(r.status); return {
+      ...r, sc:m.c, sbg:m.bg, priceLabel:this.baht(r.price), facPreview:r.facilities.slice(0,3),
+      onView:()=>this.openRoom(r),
+    };});
+
+    // selected room
+    let sel=null; if(s.modal==='detail' && this._selId){ const r=s.rooms.find(x=>x.id===this._selId); if(r){ const m=this.rstatus(r.status); sel={ ...r, sc:m.c, sbg:m.bg, priceLabel:this.baht(r.price), canBook:r.status==='ว่าง', cantBook:r.status!=='ว่าง', onBook:()=>this.bookRoom(r) }; } }
+
+    const myBookings=s.bookings.map(b=>{ const m=this.bkstatus(b.status); return {
+      ...b, sc:m.c, sbg:m.bg, rentLabel:this.baht(b.rent), editable:b.status==='รอยืนยัน', locked:b.status!=='รอยืนยัน',
+      onEdit:()=>this.editBooking(b), onCancel:()=>this.cancelBooking(b.id),
+    };});
+
+    const myBills=s.bills.map(b=>{ const m=this.pstatus(b.status); return {
+      ...b, sc:m.c, sbg:m.bg, rentLabel:this.baht(b.rent), waterAmt:this.baht(b.waterUnit*this.WATER), electricAmt:this.baht(b.electricUnit*this.ELECTRIC), internetLabel:this.baht(b.internet), total:this.baht(this.billTotal(b)),
+      canPay:b.status!=='ชำระแล้ว', paid:b.status==='ชำระแล้ว', onPay:()=>this.payBill(b.id), onReceipt:()=>this.openReceipt(b),
+    };});
+    const due=s.bills.filter(b=>b.status!=='ชำระแล้ว').reduce((a,b)=>a+this.billTotal(b),0);
+    const paid=s.bills.filter(b=>b.status==='ชำระแล้ว').reduce((a,b)=>a+this.billTotal(b),0);
+
+    const payHistory=s.bills.filter(b=>b.status==='ชำระแล้ว').map(b=>({ month:b.month, date:b.date, method:b.method, total:this.baht(this.billTotal(b)), onReceipt:()=>this.openReceipt(b) }));
+    const stays=s.stays.map(st=>({ ...st, dot: st.status==='กำลังพักอาศัย'? '#34D58E':'#8A90A0' }));
+    const repairs=s.repairs.map(r=>{ const m=this.rpstatus(r.status); return {...r, sc:m.c, sbg:m.bg}; });
+
+    // book modal computed
+    const fm=s.form;
+    const rent=+fm.rent||0;
+    const deposit=rent*2;
+    const bookTotal=this.baht(rent+deposit);
+    let receipt=null; if(s.modal==='receipt'){ receipt={ ...fm, rentLabel:this.baht(fm.rent), waterAmt:this.baht(fm.waterUnit*this.WATER), electricAmt:this.baht(fm.electricUnit*this.ELECTRIC), internetLabel:this.baht(fm.internet), total:this.baht(this.billTotal(fm)), no:'RC-'+(fm.id||'').toUpperCase().slice(0,6) }; }
+
+    return {
+      notLoggedIn:!s.loggedIn, loggedIn:s.loggedIn,
+      authMode:s.authMode, isLogin:s.authMode==='login', isRegister:s.authMode==='register', authTab:{login:authTab('login'),register:authTab('register')},
+      toLogin:()=>this.setState({authMode:'login'}), toRegister:()=>this.setState({authMode:'register'}),
+      doLogin:()=>this.doLogin(), doRegister:()=>this.doRegister(), logout:()=>this.logout(),
+      me:{...s.me, roomLabel: s.me.room? 'ห้อง '+s.me.room : 'สมาชิก'},
+      screen:s.screen, tab:{browse:tab('browse'),bookings:tab('bookings'),payments:tab('payments'),history:tab('history')},
+      isBrowse:s.screen==='browse', isBookings:s.screen==='bookings', isPayments:s.screen==='payments', isHistory:s.screen==='history',
+      goBrowse:()=>this.setState({screen:'browse'}), goBookings:()=>this.setState({screen:'bookings'}), goPayments:()=>this.setState({screen:'payments'}), goHistory:()=>this.setState({screen:'history'}),
+      filters:s.filters, field:F, form:{...fm, rentLabel:this.baht(fm.rent)},
+      toggleVacant:()=>this.setState(st=>({filters:{...st.filters,vacantOnly:!st.filters.vacantOnly}})),
+      vacantBtn:`padding:10px 16px;border-radius:10px;cursor:pointer;font:600 13px 'IBM Plex Sans Thai',sans-serif;transition:all .15s;border:1px solid ${f.vacantOnly?'#6C4FD8':'rgba(255,255,255,0.1)'};background:${f.vacantOnly?'rgba(108,79,216,0.2)':'transparent'};color:${f.vacantOnly?'#C9BBFF':'#9AA0AE'};`,
+      browseRooms, resultCount:browseRooms.length, noResults:browseRooms.length===0,
+      myBookings, hasBookings:myBookings.length>0, noBookings:myBookings.length===0,
+      myBills, dueLabel:this.baht(due), dueCount:s.bills.filter(b=>b.status!=='ชำระแล้ว').length, paidLabel:this.baht(paid),
+      stays, payHistory, repairs, hasRepairs:repairs.length>0, noRepairs:repairs.length===0,
+      openRepair:()=>this.openRepair(), submitRepair:()=>this.submitRepair(),
+      // modal
+      isModal:!!s.modal, mDetail:s.modal==='detail', mBook:s.modal==='book', mRepair:s.modal==='repair', mReceipt:s.modal==='receipt',
+      sel, receipt,
+      bookTitle: fm.mode==='edit'? 'แก้ไขการจอง' : 'จองห้อง '+(fm.roomNumber||''), bookCta: fm.mode==='edit'? 'บันทึกการแก้ไข':'ยืนยันการจอง',
+      depositLabel:this.baht(deposit), bookTotal,
+      confirmBook:()=>this.confirmBook(),
+      closeModal:()=>this.closeModal(), stop:(e)=>e.stopPropagation(), printReceipt:()=>this.toast('ส่งใบเสร็จไปยังเครื่องพิมพ์'),
+      toast:s.toast, hasToast:!!s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>
