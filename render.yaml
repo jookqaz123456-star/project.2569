@@ -1,0 +1,25 @@
+# Render.com blueprint — deploy the full app (frontend + API + SQLite).
+# 1. Push this repo to GitHub.
+# 2. On render.com: New → Blueprint → connect the repo. Render reads this file.
+# 3. Deploy. You get a URL like https://samrit-residence.onrender.com
+#
+# NOTE: the free plan has an EPHEMERAL filesystem — the SQLite file resets
+# when the service restarts/redeploys. For permanent data, uncomment the
+# `disk:` block below (requires a paid instance) or switch DATA_DIR to a disk.
+services:
+  - type: web
+    name: samrit-residence
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node --experimental-sqlite server/server.js
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true   # Render generates a strong secret
+      - key: NODE_VERSION
+        value: "22.22.2"
+    # disk:                   # ← uncomment for persistent SQLite (paid plan)
+    #   name: samrit-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # then also add:  - key: DATA_DIR  value: /var/data

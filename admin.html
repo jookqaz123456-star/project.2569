@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบจัดการหอพักสัมฤทธิ์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0B0C10;font-family:'IBM Plex Sans Thai',sans-serif;color:#E8EAF0;min-height:100vh;display:flex;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#0B0C10;}
+::-webkit-scrollbar-thumb{background:#2A2D3A;border-radius:3px;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;font-family:inherit;}
+input,select,textarea{font-family:inherit;}
+
+/* Sidebar */
+.sidebar{width:220px;min-height:100vh;background:#0E1016;border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;}
+.sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.sb-logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.sb-logo-title{font-size:14px;font-weight:700;line-height:1.3;}
+.sb-logo-sub{font-size:10px;color:#5C6270;font-family:'JetBrains Mono',monospace;letter-spacing:.5px;margin-top:2px;}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto;}
+.sb-section{font-size:10px;color:#4A5060;font-family:'JetBrains Mono',monospace;letter-spacing:1px;padding:12px 16px 4px;text-transform:uppercase;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:13.5px;color:#8A909E;cursor:pointer;border-left:2px solid transparent;transition:all .15s;}
+.sb-item:hover{background:rgba(108,79,216,0.08);color:#C8CCDA;}
+.sb-item.active{background:rgba(108,79,216,0.12);color:#A990FF;border-left-color:#6C4FD8;}
+.sb-item svg{opacity:.7;flex-shrink:0;}
+.sb-item.active svg{opacity:1;}
+.sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);}
+.sb-user{display:flex;align-items:center;gap:10px;}
+.sb-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.sb-uname{font-size:13px;font-weight:600;}
+.sb-urole{font-size:11px;color:#5C6270;}
+
+/* Main */
+.main{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{height:56px;background:#0E1016;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50;}
+.topbar-title{font-size:16px;font-weight:700;flex:1;}
+.topbar-sub{font-size:12px;color:#5C6270;font-family:'JetBrains Mono',monospace;}
+.page{padding:24px;flex:1;}
+
+/* Cards */
+.card{background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;}
+.stat-label{font-size:11.5px;color:#6B7180;margin-bottom:6px;}
+.stat-value{font-size:28px;font-weight:700;line-height:1;}
+.stat-sub{font-size:12px;color:#5C6270;margin-top:4px;}
+.stat-accent{color:#6C4FD8;}
+
+/* Table */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;font-family:'JetBrains Mono',monospace;color:#5C6270;letter-spacing:.8px;text-transform:uppercase;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);}
+td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.badge-green{background:rgba(52,211,153,0.12);color:#34D399;}
+.badge-red{background:rgba(248,113,113,0.12);color:#F87171;}
+.badge-yellow{background:rgba(251,191,36,0.12);color:#FBBF24;}
+.badge-blue{background:rgba(96,165,250,0.12);color:#60A5FA;}
+.badge-gray{background:rgba(156,163,175,0.12);color:#9CA3AF;}
+.badge-purple{background:rgba(108,79,216,0.15);color:#A990FF;}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:13.5px;font-weight:600;border:none;transition:all .15s;}
+.btn-primary{background:#6C4FD8;color:#fff;}
+.btn-primary:hover{background:#7B5FE8;}
+.btn-ghost{background:rgba(255,255,255,0.06);color:#C8CCDA;}
+.btn-ghost:hover{background:rgba(255,255,255,0.1);}
+.btn-danger{background:rgba(248,113,113,0.1);color:#F87171;border:1px solid rgba(248,113,113,0.2);}
+.btn-danger:hover{background:rgba(248,113,113,0.18);}
+.btn-sm{padding:5px 12px;font-size:12.5px;}
+.btn-icon{width:32px;height:32px;padding:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;}
+
+/* Inputs */
+.input{background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px 13px;font-size:13.5px;color:#E8EAF0;width:100%;outline:none;transition:border-color .15s;}
+.input:focus{border-color:#6C4FD8;}
+.input::placeholder{color:#4A5060;}
+select.input{cursor:pointer;}
+.form-label{font-size:12px;color:#7C828F;margin-bottom:5px;display:block;}
+.form-group{margin-bottom:14px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:#15171E;border:1px solid rgba(255,255,255,0.08);border-radius:20px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;padding:28px;}
+.modal-lg{max-width:700px;}
+.modal-xl{max-width:860px;}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);}
+
+/* Room plan */
+.floor-block{margin-bottom:20px;}
+.floor-label{font-size:12px;font-family:'JetBrains Mono',monospace;color:#5C6270;letter-spacing:.8px;margin-bottom:10px;}
+.room-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.room-card{background:#0E1016;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;cursor:pointer;transition:all .15s;position:relative;}
+.room-card:hover{border-color:rgba(108,79,216,0.4);transform:translateY(-1px);}
+.room-card.vacant{border-color:rgba(52,211,153,0.25);}
+.room-card.occupied{border-color:rgba(248,113,113,0.25);}
+.room-card.repair{border-color:rgba(251,191,36,0.25);}
+.room-num{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.room-type{font-size:11px;color:#6B7180;margin-top:2px;}
+.room-price{font-size:12px;color:#A990FF;margin-top:4px;font-weight:600;}
+
+/* View switcher */
+.view-switch{display:flex;gap:4px;background:#0E1016;border-radius:10px;padding:4px;}
+.view-btn{padding:6px 12px;border-radius:7px;font-size:12.5px;border:none;background:transparent;color:#6B7180;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.view-btn.active{background:#1E2130;color:#E8EAF0;}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;background:#0E1016;border-radius:10px;padding:4px;margin-bottom:20px;}
+.tab{padding:7px 16px;border-radius:7px;font-size:13.5px;border:none;background:transparent;color:#6B7180;cursor:pointer;transition:all .15s;}
+.tab.active{background:#1E2130;color:#E8EAF0;font-weight:600;}
+
+/* Checklist */
+.perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.perm-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#0E1016;border-radius:8px;cursor:pointer;}
+.perm-item input{accent-color:#6C4FD8;}
+
+/* Search bar */
+.search-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.search-input{position:relative;flex:1;}
+.search-input svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.4;}
+.search-input .input{padding-left:36px;}
+
+/* Detail page */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.detail-field{margin-bottom:12px;}
+.detail-key{font-size:11.5px;color:#5C6270;margin-bottom:3px;}
+.detail-val{font-size:14px;font-weight:500;}
+
+/* Canvas */
+canvas{border-radius:10px;cursor:crosshair;touch-action:none;}
+
+/* Responsive */
+@media(max-width:900px){
+.stat-grid{grid-template-columns:1fr 1fr;}
+.sidebar{width:60px;}
+.sb-item span,.sb-logo-title,.sb-logo-sub,.sb-section,.sb-uname,.sb-urole{display:none;}
+.main{margin-left:60px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="app/config.js"></script>
+<script>window.SAMRIT_CONFIG={API_BASE:(window.SAMRIT_API_BASE||''),tokenKey:'samrit_admin_token'};</script>
+<script src="app/api.js"></script>
+<script>
+// ─── State ──────────────────────────────────────────────────
+const S = {
+  screen: 'dashboard',
+  roomView: 'plan',
+  modal: null,
+  modalData: {},
+  search: '',
+  filterStatus: 'all',
+  selectedRoom: null,
+
+  rooms: [
+    {id:'r1',number:1,floor:3,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t1',size:'28 ตร.ม.'},
+    {id:'r2',number:2,floor:3,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.'},
+    {id:'r3',number:3,floor:3,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t2',size:'35 ตร.ม.'},
+    {id:'r4',number:4,floor:3,type:'ห้องคู่',price:4500,status:'repair',tenantId:null,size:'35 ตร.ม.'},
+    {id:'r5',number:5,floor:2,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t3',size:'28 ตร.ม.'},
+    {id:'r6',number:6,floor:2,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.'},
+    {id:'r7',number:7,floor:2,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t4',size:'35 ตร.ม.'},
+    {id:'r8',number:8,floor:2,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t5',size:'35 ตร.ม.'},
+    {id:'r9',number:9,floor:1,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.'},
+    {id:'r10',number:10,floor:1,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t6',size:'28 ตร.ม.'},
+    {id:'r11',number:11,floor:1,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t7',size:'35 ตร.ม.'},
+    {id:'r12',number:12,floor:1,type:'ห้องคู่',price:4500,status:'vacant',tenantId:null,size:'35 ตร.ม.'},
+  ],
+  tenants: [
+    {id:'t1',name:'สมชาย ใจดี',phone:'081-234-5678',idcard:'1-1234-56789-01-2',roomId:'r1',checkin:'2025-01-01',checkout:'2025-12-31',deposit:7000},
+    {id:'t2',name:'วิภา รักษ์สุข',phone:'082-345-6789',idcard:'1-2345-67890-12-3',roomId:'r3',checkin:'2025-02-01',checkout:'2026-01-31',deposit:9000},
+    {id:'t3',name:'ประสิทธิ์ มั่นคง',phone:'083-456-7890',idcard:'1-3456-78901-23-4',roomId:'r5',checkin:'2025-03-01',checkout:'2026-02-28',deposit:7000},
+    {id:'t4',name:'นภา สวรรค์',phone:'084-567-8901',idcard:'1-4567-89012-34-5',roomId:'r7',checkin:'2025-01-15',checkout:'2025-12-14',deposit:9000},
+    {id:'t5',name:'อภิชาติ ดวงดี',phone:'085-678-9012',idcard:'1-5678-90123-45-6',roomId:'r8',checkin:'2025-04-01',checkout:'2026-03-31',deposit:9000},
+    {id:'t6',name:'สุดา พรเจริญ',phone:'086-789-0123',idcard:'1-6789-01234-56-7',roomId:'r10',checkin:'2025-05-01',checkout:'2026-04-30',deposit:7000},
+    {id:'t7',name:'ธนากร ศรีสุข',phone:'087-890-1234',idcard:'1-7890-12345-67-8',roomId:'r11',checkin:'2025-06-01',checkout:'2026-05-31',deposit:9000},
+    {id:'t8',name:'มาลี รุ่งเรือง',phone:'088-901-2345',idcard:'1-8901-23456-78-9',roomId:null,checkin:'',checkout:'',deposit:0},
+  ],
+  bookings: [
+    {id:'b1',name:'อนันต์ ชัยชนะ',phone:'089-111-2222',roomId:'r2',date:'2026-06-25',status:'รอยืนยัน'},
+    {id:'b2',name:'กมลา สุขใจ',phone:'089-222-3333',roomId:'r6',date:'2026-07-01',status:'ยืนยันแล้ว'},
+    {id:'b3',name:'วิรัตน์ แก้วใส',phone:'089-333-4444',roomId:'r9',date:'2026-06-20',status:'ยกเลิก'},
+    {id:'b4',name:'ลัดดา หอมหวาน',phone:'089-444-5555',roomId:'r12',date:'2026-07-10',status:'รอยืนยัน'},
+  ],
+  contracts: [
+    {id:'c1',tenantId:'t1',tenantName:'สมชาย ใจดี',roomId:'r1',roomNumber:1,start:'2025-01-01',end:'2025-12-31',rent:3500,status:'active',signed:true,signature:'data:'},
+    {id:'c2',tenantId:'t2',tenantName:'วิภา รักษ์สุข',roomId:'r3',roomNumber:3,start:'2025-02-01',end:'2026-01-31',rent:4500,status:'active',signed:true,signature:'data:'},
+    {id:'c3',tenantId:'t3',tenantName:'ประสิทธิ์ มั่นคง',roomId:'r5',roomNumber:5,start:'2025-03-01',end:'2026-02-28',rent:3500,status:'active',signed:false,signature:''},
+    {id:'c4',tenantId:'t4',tenantName:'นภา สวรรค์',roomId:'r7',roomNumber:7,start:'2025-01-15',end:'2025-12-14',rent:4500,status:'active',signed:true,signature:'data:'},
+    {id:'c5',tenantId:'t5',tenantName:'อภิชาติ ดวงดี',roomId:'r8',roomNumber:8,start:'2025-04-01',end:'2026-03-31',rent:4500,status:'active',signed:false,signature:''},
+  ],
+  payments: [
+    {id:'p1',roomId:'r1',roomNumber:1,tenantName:'สมชาย ใจดี',month:'2026-05',rent:3500,waterUnit:8,electricUnit:45,internet:300,other:0,status:'paid',date:'2026-05-05',method:'โอนเงิน'},
+    {id:'p2',roomId:'r3',roomNumber:3,tenantName:'วิภา รักษ์สุข',month:'2026-05',rent:4500,waterUnit:10,electricUnit:60,internet:300,other:0,status:'paid',date:'2026-05-03',method:'เงินสด'},
+    {id:'p3',roomId:'r5',roomNumber:5,tenantName:'ประสิทธิ์ มั่นคง',month:'2026-05',rent:3500,waterUnit:7,electricUnit:50,internet:300,other:0,status:'unpaid',date:'',method:''},
+    {id:'p4',roomId:'r7',roomNumber:7,tenantName:'นภา สวรรค์',month:'2026-05',rent:4500,waterUnit:9,electricUnit:55,internet:300,other:0,status:'paid',date:'2026-05-07',method:'โอนเงิน'},
+    {id:'p5',roomId:'r8',roomNumber:8,tenantName:'อภิชาติ ดวงดี',month:'2026-05',rent:4500,waterUnit:11,electricUnit:65,internet:300,other:100,status:'unpaid',date:'',method:''},
+    {id:'p6',roomId:'r10',roomNumber:10,tenantName:'สุดา พรเจริญ',month:'2026-05',rent:3500,waterUnit:6,electricUnit:40,internet:300,other:0,status:'paid',date:'2026-05-04',method:'เงินสด'},
+    {id:'p7',roomId:'r11',roomNumber:11,tenantName:'ธนากร ศรีสุข',month:'2026-05',rent:4500,waterUnit:12,electricUnit:70,internet:300,other:200,status:'overdue',date:'',method:''},
+  ],
+  users: [
+    {id:'u1',name:'ผู้ดูแลระบบ',username:'admin',urole:'admin',perms:['จัดการห้อง','จัดการผู้เช่า','การเงิน','รายงาน','จัดการผู้ใช้','ดูบิล','ชำระเงิน','เซ็นสัญญา'],active:true},
+    {id:'u2',name:'สมศรี พนักงาน',username:'staff1',urole:'staff',perms:['จัดการห้อง','จัดการผู้เช่า','ดูบิล'],active:true},
+    {id:'u3',name:'วรรณา การเงิน',username:'finance1',urole:'staff',perms:['การเงิน','ดูบิล','ชำระเงิน'],active:true},
+    {id:'u4',name:'นิพนธ์ ทดสอบ',username:'test1',urole:'staff',perms:['ดูบิล'],active:false},
+  ],
+};
+
+const PERM_LIST = ['จัดการห้อง','จัดการผู้เช่า','การเงิน','รายงาน','จัดการผู้ใช้','ดูบิล','ชำระเงิน','เซ็นสัญญา'];
+
+// ─── Helpers ─────────────────────────────────────────────────
+function payTotal(p){return p.rent + p.waterUnit*18 + p.electricUnit*7 + p.internet + (p.other||0);}
+function rstatus(s){return s==='vacant'?'badge-green':s==='occupied'?'badge-red':'badge-yellow';}
+function rstatusLabel(s){return s==='vacant'?'ว่าง':s==='occupied'?'ไม่ว่าง':'ซ่อม';}
+function pstatus(s){return s==='paid'?'badge-green':s==='unpaid'?'badge-yellow':'badge-red';}
+function pstatusLabel(s){return s==='paid'?'ชำระแล้ว':s==='unpaid'?'รอชำระ':'เกินกำหนด';}
+function bstatus(s){return s==='ยืนยันแล้ว'?'badge-green':s==='รอยืนยัน'?'badge-yellow':'badge-gray';}
+function cstatus(s){return s==='active'?'badge-green':'badge-gray';}
+function fmtMoney(n){return n.toLocaleString('th-TH');}
+function fmtDate(d){if(!d)return '-';const dt=new Date(d);return dt.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});}
+function roomOf(id){return S.rooms.find(r=>r.id===id);}
+function tenantOf(id){return S.tenants.find(t=>t.id===id);}
+function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
+
+// ─── Backend-backed data layer (Samrit client: live API / demo) ─
+const DEFAULT_PAY={
+  promptpay:'089-000-0000',
+  qr:'',
+  banks:[
+    {bank:'ธนาคารกสิกรไทย',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'},
+    {bank:'ธนาคารไทยพาณิชย์',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'},
+  ],
+};
+function roomPhotos(roomId){return (S.photos&&S.photos[roomId])||[];}
+function setRoomPhotos(roomId,arr){S.photos=S.photos||{};S.photos[roomId]=arr;Samrit.setSetting('photos',S.photos).catch(e=>console.warn(e.message));}
+function persistColl(coll,obj){ if(Samrit.mode==='live'){Samrit.save(coll,obj).catch(e=>console.warn('save',coll,e.message));} else {Samrit.saveDemo(coll,S[coll]);} }
+function persistRemove(coll,id){ if(Samrit.mode==='live'){Samrit.remove(coll,id).catch(e=>console.warn('rm',coll,e.message));} else {Samrit.saveDemo(coll,S[coll]);} }
+function qrSVG(seed,px){
+  const N=25,cell=px/N;let s=0;for(const c of (seed||'samrit'))s=(s*31+c.charCodeAt(0))>>>0;
+  function rnd(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;}
+  const g=new Array(N*N).fill(-1);
+  function finder(x,y){for(let i=0;i<7;i++)for(let j=0;j<7;j++){const b=(i===0||i===6||j===0||j===6),inr=(i>=2&&i<=4&&j>=2&&j<=4);g[(y+i)*N+(x+j)]=(b||inr)?1:0;}}
+  finder(0,0);finder(N-7,0);finder(0,N-7);
+  let rects='';
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){let v=g[y*N+x];if(v===-1)v=rnd()>0.55?1:0;if(v===1)rects+=`<rect x="${(x*cell).toFixed(2)}" y="${(y*cell).toFixed(2)}" width="${cell.toFixed(2)}" height="${cell.toFixed(2)}"/>`;}
+  return`<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" xmlns="http://www.w3.org/2000/svg"><rect width="${px}" height="${px}" fill="#fff"/><g fill="#0B0C10">${rects}</g></svg>`;
+}
+// caches populated at boot from API / demo store
+const SEED=JSON.parse(JSON.stringify({rooms:S.rooms,tenants:S.tenants,bookings:S.bookings,contracts:S.contracts,payments:S.payments,users:S.users,paySettings:DEFAULT_PAY}));
+S.pay=DEFAULT_PAY;
+S.photos={};
+S.slips=[];
+S.payTab='settings';
+S.auth=null;
+S.needLogin=false;
+
+// ─── Boot & data load ────────────────────────────────────────
+async function loadAll(){
+  try{
+    const d=await Samrit.bootstrapAdmin(SEED);
+    S.rooms=d.rooms||[];S.tenants=d.tenants||[];S.bookings=d.bookings||[];
+    S.contracts=d.contracts||[];S.payments=d.payments||[];
+    S.users=(d.users||[]).map(u=>({...u,urole:u.role||u.urole}));
+    S.slips=d.slips||[];
+    S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;
+    S.photos=d.photos||{};
+  }catch(e){console.warn('bootstrap',e.message);}
+}
+async function boot(){
+  await Samrit.init();
+  if(Samrit.mode==='live'){
+    const u=Samrit.currentUser();
+    if(u&&Samrit.isAuthed()&&(u.role==='admin'||u.role==='staff')){S.auth=u;await loadAll();}
+    else{S.needLogin=true;}
+  }else{
+    S.auth={id:'demo-admin',name:'แอดมิน',username:'admin',role:'admin'};
+    await loadAll();
+  }
+  render();
+}
+async function adminLogin(){
+  const u=document.getElementById('alUser')?.value||'';
+  const p=document.getElementById('alPass')?.value||'';
+  try{
+    const user=await Samrit.login(u,p);
+    if(user.role!=='admin'&&user.role!=='staff'){Samrit.logout();alert('บัญชีนี้ไม่มีสิทธิ์เข้าระบบหลังบ้าน');return;}
+    S.auth=user;S.needLogin=false;await loadAll();render();
+  }catch(e){alert(e.message);}
+}
+function adminLogout(){Samrit.logout();S.auth=null;S.needLogin=true;render();}
+
+// ─── Signature Pad ───────────────────────────────────────────
+let sigPad = null;
+function initSigPad(){
+  const c=document.getElementById('sigCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  ctx.strokeStyle='#A990FF';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';
+  let drawing=false,lx=0,ly=0;
+  function pos(e){
+    const r=c.getBoundingClientRect();
+    const src=e.touches?e.touches[0]:e;
+    return{x:src.clientX-r.left,y:src.clientY-r.top};
+  }
+  function down(e){e.preventDefault();drawing=true;const p=pos(e);lx=p.x;ly=p.y;ctx.beginPath();ctx.arc(p.x,p.y,1,0,Math.PI*2);ctx.fillStyle='#A990FF';ctx.fill();}
+  function move(e){e.preventDefault();if(!drawing)return;const p=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(p.x,p.y);ctx.stroke();lx=p.x;ly=p.y;}
+  function up(){drawing=false;}
+  c.addEventListener('mousedown',down);c.addEventListener('mousemove',move);c.addEventListener('mouseup',up);c.addEventListener('mouseleave',up);
+  c.addEventListener('touchstart',down,{passive:false});c.addEventListener('touchmove',move,{passive:false});c.addEventListener('touchend',up);
+  sigPad={canvas:c,ctx,clear:()=>{ctx.clearRect(0,0,c.width,c.height);}};
+}
+function clearSig(){if(sigPad)sigPad.clear();}
+function getSig(){return sigPad?sigPad.canvas.toDataURL():'';}
+
+// ─── Navigation ──────────────────────────────────────────────
+function nav(screen){S.screen=screen;S.modal=null;render();}
+function openModal(type,data={}){S.modal=type;S.modalData=data;render();if(type==='signContract')setTimeout(initSigPad,50);}
+function closeModal(){S.modal=null;S.modalData={};render();}
+
+// ─── CRUD ─────────────────────────────────────────────────────
+function saveRoom(){
+  const f=getFormVals('roomForm');
+  const room={...f,number:+f.number,floor:+f.floor,price:+f.price,tenantId:f.tenantId||null};
+  let obj;
+  if(f._id){const i=S.rooms.findIndex(r=>r.id===f._id);if(i>=0){S.rooms[i]={...S.rooms[i],...room};obj=S.rooms[i];}}
+  else{obj={id:Samrit.newId(),facilities:[],photos:[],...room};S.rooms.push(obj);}
+  if(obj)persistColl('rooms',obj);
+  closeModal();
+}
+function deleteRoom(id){if(confirm('ลบห้องนี้?')){S.rooms=S.rooms.filter(r=>r.id!==id);persistRemove('rooms',id);render();}}
+function saveTenant(){
+  const f=getFormVals('tenantForm');
+  const t={...f,deposit:+f.deposit};
+  let obj;
+  if(f._id){const i=S.tenants.findIndex(x=>x.id===f._id);if(i>=0){S.tenants[i]={...S.tenants[i],...t};obj=S.tenants[i];}}
+  else{obj={id:Samrit.newId(),...t};S.tenants.push(obj);}
+  if(obj)persistColl('tenants',obj);
+  closeModal();
+}
+function deleteTenant(id){if(confirm('ลบผู้เช่านี้?')){S.tenants=S.tenants.filter(t=>t.id!==id);persistRemove('tenants',id);render();}}
+function saveBooking(){
+  const f=getFormVals('bookingForm');
+  let obj;
+  if(f._id){const i=S.bookings.findIndex(b=>b.id===f._id);if(i>=0){S.bookings[i]={...S.bookings[i],...f};obj=S.bookings[i];}}
+  else{obj={id:Samrit.newId(),...f,status:f.status||'รอยืนยัน'};S.bookings.push(obj);}
+  if(obj){const rm=roomOf(obj.roomId);if(rm)obj.roomNumber=rm.number;persistColl('bookings',obj);}
+  closeModal();
+}
+function deleteBooking(id){if(confirm('ลบการจองนี้?')){S.bookings=S.bookings.filter(b=>b.id!==id);persistRemove('bookings',id);render();}}
+function savePayment(){
+  const f=getFormVals('paymentForm');
+  const p={...f,rent:+f.rent,waterUnit:+f.waterUnit,electricUnit:+f.electricUnit,internet:+f.internet,other:+(f.other||0),roomNumber:+f.roomNumber};
+  let obj;
+  if(f._id){const i=S.payments.findIndex(x=>x.id===f._id);if(i>=0){S.payments[i]={...S.payments[i],...p};obj=S.payments[i];}}
+  else{obj={id:Samrit.newId(),...p,status:p.status||'unpaid'};S.payments.push(obj);}
+  if(obj)persistColl('payments',obj);
+  closeModal();
+}
+function deletePayment(id){if(confirm('ลบบิลนี้?')){S.payments=S.payments.filter(p=>p.id!==id);persistRemove('payments',id);render();}}
+async function saveUser(){
+  const f=getFormVals('userForm');
+  const perms=PERM_LIST.filter((_,i)=>document.getElementById('perm_'+i)?.checked);
+  const active=document.getElementById('userActive')?.checked;
+  const u={...f,perms,active,role:f.urole,urole:f.urole};
+  try{
+    if(f._id){
+      u.id=f._id;u._new=false;
+      const saved=await Samrit.saveUser(u,S.users);
+      const i=S.users.findIndex(x=>x.id===f._id);if(i>=0)S.users[i]={...S.users[i],...u,...(saved||{}),urole:u.urole};
+    }else{
+      u._new=true;u.active=active!==false;
+      const saved=await Samrit.saveUser(u,S.users);
+      S.users.push({...u,...(saved||{}),id:(saved&&saved.id)||Samrit.newId(),urole:u.urole});
+    }
+    if(Samrit.mode!=='live')Samrit.saveUser({},S.users);
+  }catch(e){alert(e.message);}
+  closeModal();
+}
+function deleteUser(id){if(confirm('ลบผู้ใช้นี้?')){S.users=S.users.filter(u=>u.id!==id);Samrit.removeUser(id,S.users).catch(e=>console.warn(e.message));render();}}
+function signContract(id){
+  const sig=getSig();
+  const i=S.contracts.findIndex(c=>c.id===id);
+  if(i>=0){S.contracts[i].signed=true;S.contracts[i].signature=sig;persistColl('contracts',S.contracts[i]);}
+  closeModal();
+}
+
+// ─── Payment settings (QR/banks) + slips ─────────────────────
+function savePay(){Samrit.setSetting('paySettings',S.pay).catch(e=>console.warn(e.message));}
+function onQRUpload(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{S.pay.qr=rd.result;savePay();render();};
+  rd.readAsDataURL(f);
+}
+function clearQR(){S.pay.qr='';savePay();render();}
+function setPromptpay(v){S.pay.promptpay=v;savePay();}
+function setBankField(i,field,v){S.pay.banks[i][field]=v;savePay();}
+function addBank(){S.pay.banks.push({bank:'ธนาคาร',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'});savePay();render();}
+function removeBank(i){S.pay.banks.splice(i,1);savePay();render();}
+function setSlipStatus(id,status){const s=(S.slips||[]).find(x=>x.id===id);if(s){s.status=status;persistColl('slips',s);}render();}
+function deleteSlip(id){if(!confirm('ลบสลิปนี้?'))return;S.slips=(S.slips||[]).filter(s=>s.id!==id);persistRemove('slips',id);render();}
+
+// ─── Room photos (admin upload) ──────────────────────────────
+function onRoomPhotoUpload(roomId,input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{const arr=roomPhotos(roomId).slice();arr.push(rd.result);setRoomPhotos(roomId,arr);render();};
+  rd.readAsDataURL(f);
+}
+function removeRoomPhoto(roomId,i){const arr=roomPhotos(roomId).slice();arr.splice(i,1);setRoomPhotos(roomId,arr);render();}
+
+function getFormVals(formId){
+  const form=document.getElementById(formId);
+  if(!form)return{};
+  const data={};
+  form.querySelectorAll('[name]').forEach(el=>{data[el.name]=el.value;});
+  return data;
+}
+function markPaid(id){
+  const i=S.payments.findIndex(p=>p.id===id);
+  if(i>=0){S.payments[i].status='paid';S.payments[i].date=new Date().toISOString().slice(0,10);S.payments[i].method='โอนเงิน';persistColl('payments',S.payments[i]);}
+  closeModal();render();
+}
+
+// ─── SVG Icons ───────────────────────────────────────────────
+const ico={
+  home:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V9l8-5 8 5v11" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><rect x="9" y="13" width="6" height="7" stroke="currentColor" stroke-width="1.6"/></svg>`,
+  grid:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>`,
+  room:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3 9h18M9 9v12" stroke="currentColor" stroke-width="1.5"/></svg>`,
+  user:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" stroke="currentColor" stroke-width="1.7"/></svg>`,
+  book:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 2v6M16 2v6M4 11h16" stroke="currentColor" stroke-width="1.5"/></svg>`,
+  contract:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6z" stroke="currentColor" stroke-width="1.7"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5"/></svg>`,
+  pay:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.5"/></svg>`,
+  users:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" stroke="currentColor" stroke-width="1.7"/><path d="M16 6c1.6.3 3 1.7 3 3.5s-1.4 3.2-3 3.5M20.5 20c0-2.5-1.5-4.5-4-5" stroke="currentColor" stroke-width="1.5"/></svg>`,
+  search:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  plus:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+  edit:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 4.5l3 3L7 20H4v-3L16.5 4.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>`,
+  trash:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 7h18M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 7l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
+  sign:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 17c3-3 4-6 6-6s1 4 3 4 3-7 5-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M3 21h18" stroke="currentColor" stroke-width="1.5"/></svg>`,
+  eye:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="12" rx="9" ry="6" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>`,
+  plan:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="3" width="9" height="4" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="11" width="9" height="10" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="2" y="15" width="9" height="6" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>`,
+  list:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  receipt:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 3h16v18l-2.5-2-2.5 2-2.5-2-2.5 2-2.5-2L4 21V3z" stroke="currentColor" stroke-width="1.7"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  qr:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.7"/><path d="M14 14h3v3M20 14v.01M17 20v.01M20 17v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
+};
+
+// ─── Render Sidebar ──────────────────────────────────────────
+function renderSidebar(){
+  const items=[
+    {id:'dashboard',label:'แดชบอร์ด',icon:'home'},
+    {id:'select',label:'เลือกห้อง',icon:'plan'},
+    {id:'rooms',label:'จัดการห้อง',icon:'room'},
+    {id:'tenants',label:'ผู้เช่า',icon:'user'},
+    {id:'bookings',label:'การจอง',icon:'book'},
+    {id:'contracts',label:'สัญญาเช่า',icon:'contract'},
+    {id:'payments',label:'การชำระเงิน',icon:'pay'},
+    {id:'paysettings',label:'QR & สลิปโอน',icon:'qr'},
+    {id:'users',label:'จัดการผู้ใช้',icon:'users'},
+  ];
+  return`<div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 20V9l8-5 8 5v11" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><rect x="9" y="13" width="6" height="7" stroke="#fff" stroke-width="1.6"/></svg></div>
+      <div class="sb-logo-title">หอพักสัมฤทธิ์</div>
+      <div class="sb-logo-sub">ADMIN</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">เมนูหลัก</div>
+      ${items.map(it=>`<div class="sb-item${S.screen===it.id?' active':''}" onclick="nav('${it.id}')">${ico[it.icon]}<span>${it.label}</span></div>`).join('')}
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar">${(S.auth?.name||'A')[0]}</div>
+        <div style="flex:1"><div class="sb-uname">${S.auth?.name||'แอดมิน'}</div><div class="sb-urole">${S.auth?.role==='staff'?'เจ้าหน้าที่':'ผู้ดูแลระบบ'}</div></div>
+        ${Samrit.mode==='live'?`<div class="sb-item" style="padding:6px;border:none" title="ออกจากระบบ" onclick="adminLogout()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 8l4 4-4 4M21 12H9M13 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>`:''}
+      </div>
+      <div style="font-size:10px;color:#3C414E;margin-top:8px;font-family:'JetBrains Mono',monospace">${Samrit.mode==='live'?'● LIVE · SQLite':'○ DEMO · local'}</div>
+    </div>
+  </div>`;
+}
+
+// ─── Dashboard ───────────────────────────────────────────────
+function renderDashboard(){
+  const totalRooms=S.rooms.length;
+  const occupied=S.rooms.filter(r=>r.status==='occupied').length;
+  const vacant=S.rooms.filter(r=>r.status==='vacant').length;
+  const repair=S.rooms.filter(r=>r.status==='repair').length;
+  const totalRevenue=S.payments.filter(p=>p.status==='paid').reduce((s,p)=>s+payTotal(p),0);
+  const unpaid=S.payments.filter(p=>p.status!=='paid').reduce((s,p)=>s+payTotal(p),0);
+  const pendingBook=S.bookings.filter(b=>b.status==='รอยืนยัน').length;
+  const unsignedContracts=S.contracts.filter(c=>!c.signed).length;
+  return`
+  <div class="topbar"><div class="topbar-title">แดชบอร์ด</div><div class="topbar-sub">${new Date().toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
+  <div class="page">
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">ห้องทั้งหมด</div><div class="stat-value">${totalRooms}</div><div class="stat-sub">3 ชั้น</div></div>
+      <div class="stat-card"><div class="stat-label">ห้องที่มีผู้เช่า</div><div class="stat-value" style="color:#F87171">${occupied}</div><div class="stat-sub">อัตราเข้าพัก ${Math.round(occupied/totalRooms*100)}%</div></div>
+      <div class="stat-card"><div class="stat-label">ห้องว่าง</div><div class="stat-value" style="color:#34D399">${vacant}</div><div class="stat-sub">พร้อมให้เช่า</div></div>
+      <div class="stat-card"><div class="stat-label">รายได้เดือนนี้</div><div class="stat-value stat-accent" style="font-size:22px">฿${fmtMoney(totalRevenue)}</div><div class="stat-sub" style="color:#F87171">ค้างชำระ ฿${fmtMoney(unpaid)}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:16px">สถิติห้องพัก</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${[['ไม่ว่าง',occupied,'#F87171'],['ว่าง',vacant,'#34D399'],['ซ่อมบำรุง',repair,'#FBBF24']].map(([l,v,c])=>`
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="flex:1;font-size:13.5px">${l}</div>
+            <div style="flex:3;height:8px;background:#0E1016;border-radius:4px;overflow:hidden"><div style="width:${Math.round(v/totalRooms*100)}%;height:100%;background:${c};border-radius:4px"></div></div>
+            <div style="font-size:13px;font-weight:700;color:${c};width:24px;text-align:right">${v}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:16px">สิ่งที่ต้องดำเนินการ</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px;cursor:pointer" onclick="S.payTab='slips';nav('paysettings')">
+            <div style="font-size:13.5px">สลิปโอนรอตรวจสอบ</div>
+            <span class="badge badge-purple"><span class="dot"></span>${(S.slips||[]).filter(s=>s.status==='รอตรวจสอบ').length} รายการ</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px">
+            <div style="font-size:13.5px">การจองรอยืนยัน</div>
+            <span class="badge badge-yellow"><span class="dot"></span>${pendingBook} รายการ</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px">
+            <div style="font-size:13.5px">สัญญารอเซ็น</div>
+            <span class="badge badge-red"><span class="dot"></span>${unsignedContracts} ฉบับ</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px">
+            <div style="font-size:13.5px">บิลค้างชำระ</div>
+            <span class="badge badge-red"><span class="dot"></span>${S.payments.filter(p=>p.status!=='paid').length} ใบ</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px">
+            <div style="font-size:13.5px">ห้องซ่อมบำรุง</div>
+            <span class="badge badge-yellow"><span class="dot"></span>${repair} ห้อง</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-weight:700">บิลล่าสุด</div>
+        <button class="btn btn-ghost btn-sm" onclick="nav('payments')"">ดูทั้งหมด</button>
+      </div>
+      <div class="table-wrap"><table>
+        <tr><th>ห้อง</th><th>ผู้เช่า</th><th>เดือน</th><th>รวม</th><th>สถานะ</th></tr>
+        ${S.payments.slice(0,5).map(p=>`<tr>
+          <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">0${p.roomNumber}</span></td>
+          <td>${p.tenantName}</td>
+          <td>${p.month}</td>
+          <td>฿${fmtMoney(payTotal(p))}</td>
+          <td><span class="badge ${pstatus(p.status)}">${pstatusLabel(p.status)}</span></td>
+        </tr>`).join('')}
+      </table></div>
+    </div>
+  </div>`;
+}
+
+// ─── Select Room ─────────────────────────────────────────────
+function renderSelect(){
+  const floors=[3,2,1];
+  function roomCard(r){
+    return`<div class="room-card ${r.status}" onclick="nav('roomDetail');S.selectedRoom='${r.id}';render()">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="room-num">${String(r.number).padStart(2,'0')}</div>
+        <span class="badge ${rstatus(r.status)}" style="font-size:10px">${rstatusLabel(r.status)}</span>
+      </div>
+      <div class="room-type">${r.type}</div>
+      <div class="room-price">฿${fmtMoney(r.price)}/เดือน</div>
+      ${r.status==='occupied'&&r.tenantId?`<div style="font-size:11px;color:#5C6270;margin-top:4px">${tenantOf(r.tenantId)?.name||''}</div>`:''}
+    </div>`;
+  }
+  function roomRow(r){
+    return`<tr style="cursor:pointer" onclick="nav('roomDetail');S.selectedRoom='${r.id}';render()">
+      <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">${String(r.number).padStart(2,'0')}</span></td>
+      <td>ชั้น ${r.floor}</td><td>${r.type}</td>
+      <td>฿${fmtMoney(r.price)}</td>
+      <td>${r.size}</td>
+      <td><span class="badge ${rstatus(r.status)}">${rstatusLabel(r.status)}</span></td>
+      <td>${r.tenantId?tenantOf(r.tenantId)?.name||'-':'-'}</td>
+    </tr>`;
+  }
+  return`
+  <div class="topbar"><div class="topbar-title">เลือกห้อง / ผังห้อง</div>
+    <div class="view-switch">
+      <button class="view-btn${S.roomView==='plan'?' active':''}" onclick="S.roomView='plan';render()">${ico.plan} ผัง</button>
+      <button class="view-btn${S.roomView==='grid'?' active':''}" onclick="S.roomView='grid';render()">${ico.grid} กริด</button>
+      <button class="view-btn${S.roomView==='list'?' active':''}" onclick="S.roomView='list';render()">${ico.list} รายการ</button>
+    </div>
+  </div>
+  <div class="page">
+    <div style="display:flex;gap:12px;margin-bottom:20px">
+      ${[['all','ทั้งหมด'],['vacant','ว่าง'],['occupied','ไม่ว่าง'],['repair','ซ่อม']].map(([v,l])=>`
+      <button class="btn btn-sm ${S.filterStatus===v?'btn-primary':'btn-ghost'}" onclick="S.filterStatus='${v}';render()">${l}</button>`).join('')}
+    </div>
+    ${S.roomView==='list'?`<div class="card"><div class="table-wrap"><table>
+      <tr><th>ห้อง</th><th>ชั้น</th><th>ประเภท</th><th>ราคา</th><th>ขนาด</th><th>สถานะ</th><th>ผู้เช่า</th></tr>
+      ${S.rooms.filter(r=>S.filterStatus==='all'||r.status===S.filterStatus).map(roomRow).join('')}
+    </table></div></div>`:
+    floors.map(fl=>{
+      const rms=S.rooms.filter(r=>r.floor===fl&&(S.filterStatus==='all'||r.status===S.filterStatus));
+      if(!rms.length)return'';
+      return`<div class="floor-block">
+        <div class="floor-label">— ชั้น ${fl} —</div>
+        <div class="${S.roomView==='plan'?'room-grid':'room-grid'}" style="${S.roomView==='plan'?'':'grid-template-columns:repeat(4,1fr)'}">
+          ${rms.map(roomCard).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// ─── Room Detail ─────────────────────────────────────────────
+function renderRoomDetail(){
+  const r=S.rooms.find(x=>x.id===S.selectedRoom)||S.rooms[0];
+  const t=r.tenantId?tenantOf(r.tenantId):null;
+  const pays=S.payments.filter(p=>p.roomId===r.id);
+  const cons=S.contracts.filter(c=>c.roomId===r.id);
+  const photos=roomPhotos(r.id);
+  return`
+  <div class="topbar">
+    <button class="btn btn-ghost btn-sm" onclick="nav('select')" style="margin-right:8px">← กลับ</button>
+    <div class="topbar-title">ห้อง ${String(r.number).padStart(2,'0')} — ชั้น ${r.floor}</div>
+  </div>
+  <div class="page">
+    <div class="card" style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-weight:700">รูปภาพห้อง</div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">${ico.plus} เพิ่มรูป<input type="file" accept="image/*" onchange="onRoomPhotoUpload('${r.id}',this)" style="display:none"></label>
+      </div>
+      ${photos.length?`<div style="display:flex;flex-wrap:wrap;gap:10px">
+        ${photos.map((p,i)=>`<div style="position:relative"><img src="${p}" style="width:140px;height:104px;object-fit:cover;border-radius:10px"><button onclick="removeRoomPhoto('${r.id}',${i})" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:none;background:#F87171;color:#fff;font-weight:700">×</button></div>`).join('')}
+      </div>`:`<div style="color:#5C6270;text-align:center;padding:24px">ยังไม่มีรูปภาพ — เพิ่มรูปเพื่อให้ผู้พักอาศัยดูได้</div>`}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-weight:700">ข้อมูลห้อง</div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('editRoom','${r.id}')">${ico.edit} แก้ไข</button>
+        </div>
+        <div class="detail-grid">
+          <div><div class="detail-key">เลขห้อง</div><div class="detail-val">${r.number}</div></div>
+          <div><div class="detail-key">ชั้น</div><div class="detail-val">${r.floor}</div></div>
+          <div><div class="detail-key">ประเภท</div><div class="detail-val">${r.type}</div></div>
+          <div><div class="detail-key">ขนาด</div><div class="detail-val">${r.size}</div></div>
+          <div><div class="detail-key">ราคา/เดือน</div><div class="detail-val">฿${fmtMoney(r.price)}</div></div>
+          <div><div class="detail-key">สถานะ</div><div class="detail-val"><span class="badge ${rstatus(r.status)}">${rstatusLabel(r.status)}</span></div></div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px">
+          ${['vacant','occupied','repair'].map(s=>`<button class="btn btn-sm ${r.status===s?'btn-primary':'btn-ghost'}" onclick="setRoomStatus('${r.id}','${s}')">${rstatusLabel(s)}</button>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-weight:700">ผู้เช่าปัจจุบัน</div>
+          ${t?`<button class="btn btn-ghost btn-sm" onclick="openModal('editTenant','${t.id}')">${ico.edit} แก้ไข</button>`:''}
+        </div>
+        ${t?`
+        <div class="detail-grid">
+          <div><div class="detail-key">ชื่อ-สกุล</div><div class="detail-val">${t.name}</div></div>
+          <div><div class="detail-key">โทรศัพท์</div><div class="detail-val">${t.phone}</div></div>
+          <div><div class="detail-key">บัตรประชาชน</div><div class="detail-val" style="font-size:12px">${t.idcard}</div></div>
+          <div><div class="detail-key">เงินประกัน</div><div class="detail-val">฿${fmtMoney(t.deposit)}</div></div>
+          <div><div class="detail-key">วันเข้าพัก</div><div class="detail-val">${fmtDate(t.checkin)}</div></div>
+          <div><div class="detail-key">วันออก</div><div class="detail-val">${fmtDate(t.checkout)}</div></div>
+        </div>`:
+        `<div style="color:#5C6270;text-align:center;padding:24px 0">ไม่มีผู้เช่า</div>`}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:14px">ประวัติการชำระเงิน</div>
+        ${pays.length?`<div class="table-wrap"><table>
+          <tr><th>เดือน</th><th>รวม</th><th>สถานะ</th></tr>
+          ${pays.map(p=>`<tr>
+            <td>${p.month}</td>
+            <td>฿${fmtMoney(payTotal(p))}</td>
+            <td><span class="badge ${pstatus(p.status)}">${pstatusLabel(p.status)}</span></td>
+          </tr>`).join('')}
+        </table></div>`:`<div style="color:#5C6270;text-align:center;padding:20px">ยังไม่มีประวัติ</div>`}
+      </div>
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:14px">สัญญาเช่า</div>
+        ${cons.length?cons.map(c=>`
+        <div style="padding:12px;background:#0E1016;border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:600;font-size:13.5px">${c.tenantName}</div>
+              <div style="font-size:11.5px;color:#5C6270">${fmtDate(c.start)} – ${fmtDate(c.end)}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="badge ${c.signed?'badge-green':'badge-yellow'}">${c.signed?'เซ็นแล้ว':'รอเซ็น'}</span>
+              ${!c.signed?`<button class="btn btn-sm btn-primary" onclick="openModal('signContract','${c.id}')">${ico.sign}</button>`:''}
+            </div>
+          </div>
+        </div>`).join(''):`<div style="color:#5C6270;text-align:center;padding:20px">ยังไม่มีสัญญา</div>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── Rooms CRUD ──────────────────────────────────────────────
+function renderRooms(){
+  const q=S.search.toLowerCase();
+  const rows=S.rooms.filter(r=>!q||String(r.number).includes(q)||r.type.includes(q)||r.status.includes(q));
+  return`
+  <div class="topbar"><div class="topbar-title">จัดการห้องพัก</div></div>
+  <div class="page">
+    <div class="search-bar">
+      <div class="search-input" style="max-width:320px">
+        ${ico.search}<input id="srch" class="input" placeholder="ค้นหาห้อง..." value="${S.search}" oninput="S.search=this.value;render()">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('addRoom')">${ico.plus} เพิ่มห้อง</button>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <tr><th>ห้อง</th><th>ชั้น</th><th>ประเภท</th><th>ราคา</th><th>ขนาด</th><th>สถานะ</th><th>ผู้เช่า</th><th></th></tr>
+      ${rows.map(r=>`<tr>
+        <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">${String(r.number).padStart(2,'0')}</span></td>
+        <td>ชั้น ${r.floor}</td><td>${r.type}</td>
+        <td>฿${fmtMoney(r.price)}</td><td>${r.size}</td>
+        <td><span class="badge ${rstatus(r.status)}">${rstatusLabel(r.status)}</span></td>
+        <td>${r.tenantId?tenantOf(r.tenantId)?.name||'-':'-'}</td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-icon btn-ghost" onclick="openModal('editRoom','${r.id}')" title="แก้ไข">${ico.edit}</button>
+            <button class="btn btn-icon btn-danger" onclick="deleteRoom('${r.id}')" title="ลบ">${ico.trash}</button>
+          </div>
+        </td>
+      </tr>`).join('')}
+    </table></div></div>
+  </div>`;
+}
+
+// ─── Tenants CRUD ────────────────────────────────────────────
+function renderTenants(){
+  const q=S.search.toLowerCase();
+  const rows=S.tenants.filter(t=>!q||t.name.toLowerCase().includes(q)||t.phone.includes(q));
+  return`
+  <div class="topbar"><div class="topbar-title">ผู้เช่า</div></div>
+  <div class="page">
+    <div class="search-bar">
+      <div class="search-input" style="max-width:320px">
+        ${ico.search}<input id="srch" class="input" placeholder="ค้นหาผู้เช่า..." value="${S.search}" oninput="S.search=this.value;render()">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('addTenant')">${ico.plus} เพิ่มผู้เช่า</button>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <tr><th>ชื่อ-สกุล</th><th>โทรศัพท์</th><th>บัตรประชาชน</th><th>ห้อง</th><th>เข้าพัก</th><th>วันออก</th><th>เงินประกัน</th><th></th></tr>
+      ${rows.map(t=>{
+        const r=t.roomId?roomOf(t.roomId):null;
+        return`<tr>
+          <td style="font-weight:600">${t.name}</td>
+          <td>${t.phone}</td>
+          <td style="font-size:12px;font-family:'JetBrains Mono',monospace">${t.idcard}</td>
+          <td>${r?`<span class="badge badge-purple">ห้อง ${r.number}</span>`:'-'}</td>
+          <td>${fmtDate(t.checkin)||'-'}</td>
+          <td>${fmtDate(t.checkout)||'-'}</td>
+          <td>฿${fmtMoney(t.deposit)}</td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-icon btn-ghost" onclick="openModal('editTenant','${t.id}')" title="แก้ไข">${ico.edit}</button>
+              <button class="btn btn-icon btn-danger" onclick="deleteTenant('${t.id}')" title="ลบ">${ico.trash}</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}
+    </table></div></div>
+  </div>`;
+}
+
+// ─── Bookings CRUD ───────────────────────────────────────────
+function renderBookings(){
+  const q=S.search.toLowerCase();
+  const rows=S.bookings.filter(b=>!q||b.name.toLowerCase().includes(q)||b.phone.includes(q));
+  return`
+  <div class="topbar"><div class="topbar-title">การจองห้องพัก</div></div>
+  <div class="page">
+    <div class="search-bar">
+      <div class="search-input" style="max-width:320px">
+        ${ico.search}<input id="srch" class="input" placeholder="ค้นหาการจอง..." value="${S.search}" oninput="S.search=this.value;render()">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('addBooking')">${ico.plus} เพิ่มการจอง</button>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <tr><th>ชื่อผู้จอง</th><th>โทรศัพท์</th><th>ห้องที่จอง</th><th>วันจอง</th><th>สถานะ</th><th></th></tr>
+      ${rows.map(b=>{
+        const r=b.roomId?roomOf(b.roomId):null;
+        return`<tr>
+          <td style="font-weight:600">${b.name}</td>
+          <td>${b.phone}</td>
+          <td>${r?`ห้อง ${r.number} ชั้น ${r.floor}`:'-'}</td>
+          <td>${fmtDate(b.date)}</td>
+          <td><span class="badge ${bstatus(b.status)}">${b.status}</span></td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-icon btn-ghost" onclick="openModal('editBooking','${b.id}')" title="แก้ไข">${ico.edit}</button>
+              <button class="btn btn-icon btn-danger" onclick="deleteBooking('${b.id}')" title="ลบ">${ico.trash}</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}
+    </table></div></div>
+  </div>`;
+}
+
+// ─── Contracts ───────────────────────────────────────────────
+function renderContracts(){
+  const q=S.search.toLowerCase();
+  const rows=S.contracts.filter(c=>!q||c.tenantName.toLowerCase().includes(q));
+  return`
+  <div class="topbar"><div class="topbar-title">สัญญาเช่า</div></div>
+  <div class="page">
+    <div class="search-bar">
+      <div class="search-input" style="max-width:320px">
+        ${ico.search}<input id="srch" class="input" placeholder="ค้นหาสัญญา..." value="${S.search}" oninput="S.search=this.value;render()">
+      </div>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <tr><th>ผู้เช่า</th><th>ห้อง</th><th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>ค่าเช่า</th><th>สถานะ</th><th>เซ็น</th><th></th></tr>
+      ${rows.map(c=>`<tr>
+        <td style="font-weight:600">${c.tenantName}</td>
+        <td>ห้อง ${c.roomNumber}</td>
+        <td>${fmtDate(c.start)}</td>
+        <td>${fmtDate(c.end)}</td>
+        <td>฿${fmtMoney(c.rent)}</td>
+        <td><span class="badge ${cstatus(c.status)}">${c.status==='active'?'มีผล':'หมดอายุ'}</span></td>
+        <td><span class="badge ${c.signed?'badge-green':'badge-yellow'}">${c.signed?'เซ็นแล้ว':'รอเซ็น'}</span></td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-sm btn-ghost" onclick="openModal('viewContract','${c.id}')">${ico.eye} ดู</button>
+            ${!c.signed?`<button class="btn btn-sm btn-primary" onclick="openModal('signContract','${c.id}')">${ico.sign} เซ็น</button>`:''}
+          </div>
+        </td>
+      </tr>`).join('')}
+    </table></div></div>
+  </div>`;
+}
+
+// ─── Payments CRUD ───────────────────────────────────────────
+function renderPayments(){
+  const q=S.search.toLowerCase();
+  const rows=S.payments.filter(p=>!q||p.tenantName.toLowerCase().includes(q)||String(p.roomNumber).includes(q));
+  const totalPaid=rows.filter(p=>p.status==='paid').reduce((s,p)=>s+payTotal(p),0);
+  const totalUnpaid=rows.filter(p=>p.status!=='paid').reduce((s,p)=>s+payTotal(p),0);
+  return`
+  <div class="topbar"><div class="topbar-title">การชำระเงิน</div></div>
+  <div class="page">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+      <div class="stat-card"><div class="stat-label">ชำระแล้ว</div><div class="stat-value" style="color:#34D399;font-size:22px">฿${fmtMoney(totalPaid)}</div></div>
+      <div class="stat-card"><div class="stat-label">ค้างชำระ</div><div class="stat-value" style="color:#F87171;font-size:22px">฿${fmtMoney(totalUnpaid)}</div></div>
+      <div class="stat-card"><div class="stat-label">บิลทั้งหมด</div><div class="stat-value" style="font-size:22px">${rows.length}</div></div>
+    </div>
+    <div class="search-bar">
+      <div class="search-input" style="max-width:320px">
+        ${ico.search}<input id="srch" class="input" placeholder="ค้นหา..." value="${S.search}" oninput="S.search=this.value;render()">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('addPayment')">${ico.plus} เพิ่มบิล</button>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <tr><th>ห้อง</th><th>ผู้เช่า</th><th>เดือน</th><th>ค่าเช่า</th><th>น้ำ</th><th>ไฟ</th><th>เน็ต</th><th>รวม</th><th>สถานะ</th><th></th></tr>
+      ${rows.map(p=>`<tr>
+        <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">0${p.roomNumber}</span></td>
+        <td>${p.tenantName}</td>
+        <td>${p.month}</td>
+        <td>฿${fmtMoney(p.rent)}</td>
+        <td>${p.waterUnit}×18=฿${p.waterUnit*18}</td>
+        <td>${p.electricUnit}×7=฿${p.electricUnit*7}</td>
+        <td>฿${p.internet}</td>
+        <td style="font-weight:700">฿${fmtMoney(payTotal(p))}</td>
+        <td><span class="badge ${pstatus(p.status)}">${pstatusLabel(p.status)}</span></td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-icon btn-ghost" onclick="openModal('receipt','${p.id}')" title="ใบเสร็จ">${ico.receipt}</button>
+            <button class="btn btn-icon btn-ghost" onclick="openModal('editPayment','${p.id}')" title="แก้ไข">${ico.edit}</button>
+            <button class="btn btn-icon btn-danger" onclick="deletePayment('${p.id}')" title="ลบ">${ico.trash}</button>
+          </div>
+        </td>
+      </tr>`).join('')}
+    </table></div></div>
+  </div>`;
+}
+
+// ─── Users CRUD ──────────────────────────────────────────────
+function renderUsers(){
+  const q=S.search.toLowerCase();
+  const rows=S.users.filter(u=>!q||u.name.toLowerCase().includes(q)||u.username.includes(q));
+  return`
+  <div class="topbar"><div class="topbar-title">จัดการผู้ใช้และสิทธิ์</div></div>
+  <div class="page">
+    <div class="search-bar">
+      <div class="search-input" style="max-width:320px">
+        ${ico.search}<input id="srch" class="input" placeholder="ค้นหาผู้ใช้..." value="${S.search}" oninput="S.search=this.value;render()">
+      </div>
+      <button class="btn btn-primary" onclick="openModal('addUser')">${ico.plus} เพิ่มผู้ใช้</button>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <tr><th>ชื่อ</th><th>Username</th><th>บทบาท</th><th>สิทธิ์</th><th>สถานะ</th><th></th></tr>
+      ${rows.map(u=>`<tr>
+        <td style="font-weight:600">${u.name}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:12.5px">${u.username}</td>
+        <td><span class="badge ${u.urole==='admin'?'badge-purple':'badge-blue'}">${u.urole==='admin'?'แอดมิน':'พนักงาน'}</span></td>
+        <td>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            ${u.perms.slice(0,3).map(p=>`<span class="badge badge-gray" style="font-size:10px">${p}</span>`).join('')}
+            ${u.perms.length>3?`<span class="badge badge-gray" style="font-size:10px">+${u.perms.length-3}</span>`:''}
+          </div>
+        </td>
+        <td><span class="badge ${u.active?'badge-green':'badge-gray'}">${u.active?'ใช้งาน':'ปิด'}</span></td>
+        <td>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-icon btn-ghost" onclick="openModal('editUser','${u.id}')" title="แก้ไข">${ico.edit}</button>
+            <button class="btn btn-icon btn-danger" onclick="deleteUser('${u.id}')" title="ลบ">${ico.trash}</button>
+          </div>
+        </td>
+      </tr>`).join('')}
+    </table></div></div>
+  </div>`;
+}
+
+// ─── Pay Settings & Slips ────────────────────────────────────
+function renderPaySettings(){
+  const slips=S.slips||[];
+  const pending=slips.filter(s=>s.status==='รอตรวจสอบ').length;
+  const qrPreview=S.pay.qr?`<img src="${S.pay.qr}" style="width:170px;height:170px;object-fit:contain;display:block">`:qrSVG('samrit'+(S.pay.promptpay||''),170);
+  return`
+  <div class="topbar"><div class="topbar-title">QR & สลิปการโอนเงิน</div></div>
+  <div class="page">
+    <div class="tabs" style="max-width:380px">
+      <button class="tab${S.payTab==='settings'?' active':''}" onclick="S.payTab='settings';render()">ตั้งค่า QR / บัญชี</button>
+      <button class="tab${S.payTab==='slips'?' active':''}" onclick="S.payTab='slips';render()">หลักฐานการโอน${pending?` (${pending})`:''}</button>
+    </div>
+    ${S.payTab==='settings'?`
+    <div style="display:grid;grid-template-columns:240px 1fr;gap:20px">
+      <div class="card" style="text-align:center">
+        <div style="font-weight:700;margin-bottom:14px;text-align:left">QR พร้อมเพย์</div>
+        <div style="background:#fff;border-radius:12px;padding:10px;display:inline-block">${qrPreview}</div>
+        <div style="display:flex;gap:8px;margin-top:14px;justify-content:center">
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer">อัปโหลด QR<input type="file" accept="image/*" onchange="onQRUpload(this)" style="display:none"></label>
+          ${S.pay.qr?`<button class="btn btn-danger btn-sm" onclick="clearQR()">ลบรูป</button>`:''}
+        </div>
+        <div style="font-size:11.5px;color:#5C6270;margin-top:8px">${S.pay.qr?'ใช้รูป QR ที่อัปโหลด':'QR จำลอง (อัปโหลดรูปจริงเพื่อใช้งาน)'}</div>
+      </div>
+      <div class="card">
+        <div class="form-group" style="max-width:280px"><label class="form-label">เบอร์พร้อมเพย์ / อ้างอิง QR จำลอง</label><input class="input" value="${S.pay.promptpay||''}" onchange="setPromptpay(this.value);render()"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 12px">
+          <div style="font-weight:700">บัญชีธนาคาร</div>
+          <button class="btn btn-ghost btn-sm" onclick="addBank()">${ico.plus} เพิ่มบัญชี</button>
+        </div>
+        ${S.pay.banks.map((b,i)=>`
+        <div style="background:#0E1016;border-radius:12px;padding:14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:-8px"><button class="btn btn-icon btn-danger" onclick="removeBank(${i})">${ico.trash}</button></div>
+          <div class="form-row"><div class="form-group"><label class="form-label">ธนาคาร</label><input class="input" value="${b.bank}" onchange="setBankField(${i},'bank',this.value)"></div>
+          <div class="form-group"><label class="form-label">เลขบัญชี</label><input class="input" value="${b.acc}" onchange="setBankField(${i},'acc',this.value)"></div></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">ชื่อบัญชี</label><input class="input" value="${b.holder}" onchange="setBankField(${i},'holder',this.value)"></div>
+        </div>`).join('')}
+        <div style="font-size:12px;color:#5C6270;margin-top:6px">บันทึกอัตโนมัติ — ข้อมูลจะแสดงในหน้าชำระเงินของผู้พักอาศัยทันที</div>
+      </div>
+    </div>`:`
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:14px">หลักฐานการโอนเงินจากผู้พักอาศัย (${slips.length})</div>
+      ${slips.length===0?`<div style="color:#5C6270;text-align:center;padding:40px">ยังไม่มีสลิปที่ส่งเข้ามา — ลองชำระเงินจากฝั่งผู้พักอาศัย</div>`:`
+      <div class="table-wrap"><table>
+        <tr><th>สลิป</th><th>ผู้โอน</th><th>ห้อง</th><th>ประเภท</th><th>ยอด</th><th>วันที่</th><th>สถานะ</th><th></th></tr>
+        ${slips.map(s=>`<tr>
+          <td>${s.slip?`<img src="${s.slip}" style="width:46px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openModal('viewSlip','${s.id}')">`:'<span style="color:#5C6270">ไม่มีรูป</span>'}</td>
+          <td>${s.name||'-'}</td>
+          <td>ห้อง ${s.roomNumber}${s.month?`<div style="font-size:11px;color:#5C6270">${s.month}</div>`:''}</td>
+          <td>${s.kind||'-'}</td>
+          <td style="font-weight:700">฿${fmtMoney(s.amount||0)}</td>
+          <td>${fmtDate(s.date)}</td>
+          <td><span class="badge ${s.status==='อนุมัติ'?'badge-green':s.status==='ปฏิเสธ'?'badge-red':'badge-yellow'}">${s.status}</span></td>
+          <td>
+            <div style="display:flex;gap:4px">
+              ${s.status!=='อนุมัติ'?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','อนุมัติ')" style="color:#34D399">อนุมัติ</button>`:''}
+              ${s.status!=='ปฏิเสธ'?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','ปฏิเสธ')" style="color:#F87171">ปฏิเสธ</button>`:''}
+              <button class="btn btn-icon btn-danger" onclick="deleteSlip('${s.id}')">${ico.trash}</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </table></div>`}
+    </div>`}
+  </div>`;
+}
+
+// ─── Modals ──────────────────────────────────────────────────
+function renderModal(){
+  if(!S.modal)return'';
+  const {modal:type,modalData:data}=S;
+
+  if(type==='addRoom'||type==='editRoom'){
+    const r=type==='editRoom'?roomOf(data):null;
+    return modal('addRoom'===type?'เพิ่มห้อง':'แก้ไขห้อง',`
+      <form id="roomForm">
+        ${r?`<input type="hidden" name="_id" value="${r.id}">`:''}
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">เลขห้อง</label><input name="number" class="input" type="number" value="${r?.number||''}" required></div>
+          <div class="form-group"><label class="form-label">ชั้น</label><select name="floor" class="input">
+            ${[1,2,3].map(f=>`<option value="${f}"${r?.floor===f?' selected':''}>${f}</option>`).join('')}
+          </select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ประเภท</label><select name="type" class="input">
+            ${['ห้องเดี่ยว','ห้องคู่','สตูดิโอ'].map(t=>`<option${r?.type===t?' selected':''}>${t}</option>`).join('')}
+          </select></div>
+          <div class="form-group"><label class="form-label">ขนาด</label><input name="size" class="input" value="${r?.size||'28 ตร.ม.'}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ราคา/เดือน (฿)</label><input name="price" class="input" type="number" value="${r?.price||3500}" required></div>
+          <div class="form-group"><label class="form-label">สถานะ</label><select name="status" class="input">
+            ${[['vacant','ว่าง'],['occupied','ไม่ว่าง'],['repair','ซ่อม']].map(([v,l])=>`<option value="${v}"${r?.status===v?' selected':''}>${l}</option>`).join('')}
+          </select></div>
+        </div>
+      </form>
+      ${r?`<div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:6px;padding-top:14px">
+        <label class="form-label">รูปภาพห้อง (ผู้พักอาศัยดูได้)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          ${roomPhotos(r.id).map((p,i)=>`<div style="position:relative"><img src="${p}" style="width:72px;height:56px;object-fit:cover;border-radius:8px"><button onclick="removeRoomPhoto('${r.id}',${i})" style="position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:none;background:#F87171;color:#fff;font-weight:700;font-size:12px;line-height:1">×</button></div>`).join('')||`<span style="color:#5C6270;font-size:12.5px;align-self:center">ยังไม่มีรูปภาพ</span>`}
+        </div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">${ico.plus} เพิ่มรูปภาพ<input type="file" accept="image/*" onchange="onRoomPhotoUpload('${r.id}',this)" style="display:none"></label>
+        <div style="font-size:11.5px;color:#5C6270;margin-top:6px">บันทึกอัตโนมัติ (รูปภาพ/แก้ไขข้อมูลห้องกดบันทึกแยกกัน)</div>
+      </div>`:`<div style="font-size:12px;color:#5C6270;margin-top:4px">💡 บันทึกห้องก่อน แล้วเปิดแก้ไขอีกครั้งเพื่อเพิ่มรูปภาพ</div>`}
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="saveRoom()">บันทึก</button>`);
+  }
+
+  if(type==='addTenant'||type==='editTenant'){
+    const t=type==='editTenant'?tenantOf(data):null;
+    return modal(t?'แก้ไขผู้เช่า':'เพิ่มผู้เช่า',`
+      <form id="tenantForm">
+        ${t?`<input type="hidden" name="_id" value="${t.id}">`:''}
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ชื่อ-สกุล</label><input name="name" class="input" value="${t?.name||''}" required></div>
+          <div class="form-group"><label class="form-label">โทรศัพท์</label><input name="phone" class="input" value="${t?.phone||''}"></div>
+        </div>
+        <div class="form-group"><label class="form-label">บัตรประชาชน</label><input name="idcard" class="input" value="${t?.idcard||''}" placeholder="x-xxxx-xxxxx-xx-x"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ห้องพัก</label><select name="roomId" class="input">
+            <option value="">-- ไม่มีห้อง --</option>
+            ${S.rooms.map(r=>`<option value="${r.id}"${t?.roomId===r.id?' selected':''}>ห้อง ${r.number} ชั้น ${r.floor}</option>`).join('')}
+          </select></div>
+          <div class="form-group"><label class="form-label">เงินประกัน (฿)</label><input name="deposit" class="input" type="number" value="${t?.deposit||0}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">วันเข้าพัก</label><input name="checkin" class="input" type="date" value="${t?.checkin||''}"></div>
+          <div class="form-group"><label class="form-label">วันออก</label><input name="checkout" class="input" type="date" value="${t?.checkout||''}"></div>
+        </div>
+      </form>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="saveTenant()">บันทึก</button>`);
+  }
+
+  if(type==='addBooking'||type==='editBooking'){
+    const b=type==='editBooking'?S.bookings.find(x=>x.id===data):null;
+    return modal(b?'แก้ไขการจอง':'เพิ่มการจอง',`
+      <form id="bookingForm">
+        ${b?`<input type="hidden" name="_id" value="${b.id}">`:''}
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ชื่อผู้จอง</label><input name="name" class="input" value="${b?.name||''}" required></div>
+          <div class="form-group"><label class="form-label">โทรศัพท์</label><input name="phone" class="input" value="${b?.phone||''}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ห้องที่จอง</label><select name="roomId" class="input">
+            ${S.rooms.filter(r=>r.status==='vacant'||r.id===b?.roomId).map(r=>`<option value="${r.id}"${b?.roomId===r.id?' selected':''}>ห้อง ${r.number} ชั้น ${r.floor}</option>`).join('')}
+          </select></div>
+          <div class="form-group"><label class="form-label">วันที่จอง</label><input name="date" class="input" type="date" value="${b?.date||new Date().toISOString().slice(0,10)}"></div>
+        </div>
+        <div class="form-group"><label class="form-label">สถานะ</label><select name="status" class="input">
+          ${['รอยืนยัน','ยืนยันแล้ว','ยกเลิก'].map(s=>`<option${b?.status===s?' selected':''}>${s}</option>`).join('')}
+        </select></div>
+      </form>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="saveBooking()">บันทึก</button>`);
+  }
+
+  if(type==='addPayment'||type==='editPayment'){
+    const p=type==='editPayment'?S.payments.find(x=>x.id===data):null;
+    return modal(p?'แก้ไขบิล':'เพิ่มบิล',`
+      <form id="paymentForm">
+        ${p?`<input type="hidden" name="_id" value="${p.id}">`:''}
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ห้อง</label><select name="roomId" class="input" id="payRoomSel" onchange="onPayRoomChange(this.value)">
+            ${S.rooms.map(r=>`<option value="${r.id}"${p?.roomId===r.id?' selected':''}>ห้อง ${r.number}</option>`).join('')}
+          </select></div>
+          <div class="form-group"><label class="form-label">ชื่อผู้เช่า</label><input name="tenantName" id="payTenantName" class="input" value="${p?.tenantName||''}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">เดือน</label><input name="month" class="input" type="month" value="${p?.month||new Date().toISOString().slice(0,7)}"></div>
+          <div class="form-group"><label class="form-label">เลขห้อง</label><input name="roomNumber" id="payRoomNum" class="input" type="number" value="${p?.roomNumber||''}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ค่าเช่า (฿)</label><input name="rent" id="payRent" class="input" type="number" value="${p?.rent||3500}"></div>
+          <div class="form-group"><label class="form-label">หน่วยน้ำ (×฿18)</label><input name="waterUnit" class="input" type="number" value="${p?.waterUnit||0}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">หน่วยไฟ (×฿7)</label><input name="electricUnit" class="input" type="number" value="${p?.electricUnit||0}"></div>
+          <div class="form-group"><label class="form-label">ค่าเน็ต (฿)</label><input name="internet" class="input" type="number" value="${p?.internet||300}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ค่าอื่นๆ (฿)</label><input name="other" class="input" type="number" value="${p?.other||0}"></div>
+          <div class="form-group"><label class="form-label">สถานะ</label><select name="status" class="input">
+            ${[['unpaid','รอชำระ'],['paid','ชำระแล้ว'],['overdue','เกินกำหนด']].map(([v,l])=>`<option value="${v}"${p?.status===v?' selected':''}>${l}</option>`).join('')}
+          </select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">วันชำระ</label><input name="date" class="input" type="date" value="${p?.date||''}"></div>
+          <div class="form-group"><label class="form-label">วิธีชำระ</label><select name="method" class="input">
+            ${['','เงินสด','โอนเงิน','บัตรเครดิต'].map(m=>`<option${p?.method===m?' selected':''}>${m}</option>`).join('')}
+          </select></div>
+        </div>
+      </form>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="savePayment()">บันทึก</button>`,'modal-lg');
+  }
+
+  if(type==='addUser'||type==='editUser'){
+    const u=type==='editUser'?S.users.find(x=>x.id===data):null;
+    return modal(u?'แก้ไขผู้ใช้':'เพิ่มผู้ใช้',`
+      <form id="userForm">
+        ${u?`<input type="hidden" name="_id" value="${u.id}">`:''}
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ชื่อ-สกุล</label><input name="name" class="input" value="${u?.name||''}" required></div>
+          <div class="form-group"><label class="form-label">Username</label><input name="username" class="input" value="${u?.username||''}" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">รหัสผ่าน</label><input name="password" class="input" type="password" placeholder="${u?'ไม่เปลี่ยนหากว่าง':'รหัสผ่าน'}"></div>
+          <div class="form-group"><label class="form-label">บทบาท</label><select name="urole" class="input">
+            <option value="admin"${u?.urole==='admin'?' selected':''}>แอดมิน</option>
+            <option value="staff"${u?.urole==='staff'?' selected':''}>พนักงาน</option>
+          </select></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">สิทธิ์การใช้งาน</label>
+          <div class="perm-grid">
+            ${PERM_LIST.map((p,i)=>`<label class="perm-item"><input type="checkbox" id="perm_${i}" ${u?.perms?.includes(p)?'checked':''}>${p}</label>`).join('')}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="perm-item" style="background:transparent;padding:0">
+            <input type="checkbox" id="userActive" ${u?.active!==false?'checked':''}>
+            <span>เปิดใช้งานบัญชี</span>
+          </label>
+        </div>
+      </form>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="saveUser()">บันทึก</button>`);
+  }
+
+  if(type==='viewContract'||type==='signContract'){
+    const c=S.contracts.find(x=>x.id===data);
+    if(!c)return'';
+    const contractText=`
+      <div style="background:#0E1016;border-radius:12px;padding:20px;max-height:320px;overflow-y:auto;font-size:13px;line-height:1.8;color:#C8CCDA">
+        <div style="text-align:center;font-weight:700;font-size:15px;margin-bottom:12px">สัญญาเช่าห้องพัก<br>หอพักสัมฤทธิ์</div>
+        <p>สัญญาฉบับนี้ทำขึ้น ณ หอพักสัมฤทธิ์ ระหว่าง <strong>นายสมฤทธิ์ ศรีสว่าง</strong> ผู้ให้เช่า และ <strong>${c.tenantName}</strong> ผู้เช่า ตกลงทำสัญญาเช่าห้องพักหมายเลข ${c.roomNumber}</p>
+        <p><strong>ข้อ 1.</strong> ผู้ให้เช่าตกลงให้เช่าและผู้เช่าตกลงเช่าห้องพักหมายเลข ${c.roomNumber} อัตราค่าเช่า ฿${fmtMoney(c.rent)} ต่อเดือน</p>
+        <p><strong>ข้อ 2.</strong> สัญญาเช่ามีกำหนด 1 ปี ตั้งแต่วันที่ ${fmtDate(c.start)} ถึงวันที่ ${fmtDate(c.end)}</p>
+        <p><strong>ข้อ 3.</strong> ผู้เช่าต้องชำระค่าเช่าทุกวันที่ 1-5 ของทุกเดือน หากเกินกำหนดจะมีค่าปรับ 100 บาทต่อวัน</p>
+        <p><strong>ข้อ 4.</strong> ผู้เช่าต้องชำระค่าน้ำในอัตรา 18 บาทต่อหน่วย ค่าไฟในอัตรา 7 บาทต่อหน่วย</p>
+        <p><strong>ข้อ 5.</strong> ผู้เช่าต้องวางเงินประกันจำนวน 2 เดือน ซึ่งจะคืนให้ภายใน 30 วันหลังสิ้นสุดสัญญา</p>
+        <p><strong>ข้อ 6.</strong> ผู้เช่าต้องรักษาห้องพักให้สะอาดเป็นระเบียบ ห้ามดัดแปลงแก้ไขโครงสร้าง</p>
+        <p><strong>ข้อ 7.</strong> ห้ามนำสัตว์เลี้ยงเข้ามาในหอพักโดยเด็ดขาด</p>
+        <p><strong>ข้อ 8.</strong> ห้ามส่งเสียงดังรบกวนผู้อื่นหลังเวลา 22.00 น.</p>
+        <p><strong>ข้อ 9.</strong> ผู้เช่าต้องแจ้งล่วงหน้า 30 วันก่อนออกห้องพัก</p>
+        <p><strong>ข้อ 10.</strong> ผู้ให้เช่ามีสิทธิ์บอกเลิกสัญญาทันทีหากผู้เช่าผิดสัญญา</p>
+        <p><strong>ข้อ 11.</strong> หากทรัพย์สินของหอพักเสียหายผู้เช่าต้องรับผิดชอบค่าซ่อมแซม</p>
+        <p><strong>ข้อ 12.</strong> ข้อพิพาทใดๆ ให้ถือเอาคำตัดสินของศาลจังหวัดเป็นที่สุด</p>
+      </div>`;
+    if(type==='viewContract'){
+      return modal('ดูสัญญาเช่า',`${contractText}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+          <div style="padding:12px;background:#0E1016;border-radius:10px">
+            <div class="detail-key">สถานะ</div>
+            <span class="badge ${cstatus(c.status)}">${c.status==='active'?'มีผล':'หมดอายุ'}</span>
+          </div>
+          <div style="padding:12px;background:#0E1016;border-radius:10px">
+            <div class="detail-key">การเซ็น</div>
+            <span class="badge ${c.signed?'badge-green':'badge-yellow'}">${c.signed?'เซ็นแล้ว':'รอเซ็น'}</span>
+          </div>
+        </div>
+      `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${!c.signed?`<button class="btn btn-primary" onclick="openModal('signContract','${c.id}')">${ico.sign} เซ็นสัญญา</button>`:''}`,
+      'modal-lg');
+    }
+    return modal('เซ็นสัญญาออนไลน์',`${contractText}
+      <div style="margin-top:16px">
+        <div class="form-label" style="margin-bottom:8px">ลายเซ็นผู้เช่า</div>
+        <canvas id="sigCanvas" width="460" height="120" style="background:#0E1016;width:100%;border:1px solid rgba(255,255,255,0.1)"></canvas>
+        <button class="btn btn-ghost btn-sm" onclick="clearSig()" style="margin-top:8px">ล้างลายเซ็น</button>
+      </div>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="signContract('${c.id}')">${ico.sign} ยืนยันเซ็นสัญญา</button>`,
+    'modal-lg');
+  }
+
+  if(type==='viewSlip'){
+    const s=(S.slips||[]).find(x=>x.id===data);
+    if(!s)return'';
+    return modal('หลักฐานการโอนเงิน',`
+      <div style="text-align:center;margin-bottom:14px">${s.slip?`<img src="${s.slip}" style="max-width:100%;max-height:50vh;border-radius:12px;border:1px solid rgba(255,255,255,0.1)">`:'<div style="color:#5C6270;padding:40px">ไม่มีรูปสลิป</div>'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="padding:10px;background:#0E1016;border-radius:10px"><div class="detail-key">ผู้โอน</div><div class="detail-val">${s.name||'-'}</div></div>
+        <div style="padding:10px;background:#0E1016;border-radius:10px"><div class="detail-key">ยอด</div><div class="detail-val" style="color:#A990FF">฿${fmtMoney(s.amount||0)}</div></div>
+        <div style="padding:10px;background:#0E1016;border-radius:10px"><div class="detail-key">ห้อง / ประเภท</div><div class="detail-val">ห้อง ${s.roomNumber} · ${s.kind||'-'}</div></div>
+        <div style="padding:10px;background:#0E1016;border-radius:10px"><div class="detail-key">สถานะ</div><div class="detail-val"><span class="badge ${s.status==='อนุมัติ'?'badge-green':s.status==='ปฏิเสธ'?'badge-red':'badge-yellow'}">${s.status}</span></div></div>
+      </div>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${s.status!=='อนุมัติ'?`<button class="btn btn-primary" onclick="setSlipStatus('${s.id}','อนุมัติ');closeModal()">อนุมัติการชำระ</button>`:''}`,'modal-lg');
+  }
+
+  if(type==='receipt'){
+    const p=S.payments.find(x=>x.id===data);
+    if(!p)return'';
+    return modal('ใบเสร็จรับเงิน',`
+      <div style="background:#0E1016;border-radius:12px;padding:20px">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-weight:700;font-size:16px">หอพักสัมฤทธิ์</div>
+          <div style="font-size:11px;color:#5C6270;font-family:'JetBrains Mono',monospace">SAMRIT RESIDENCE</div>
+          <div style="font-size:12px;color:#5C6270;margin-top:4px">ใบเสร็จรับเงิน</div>
+        </div>
+        <div style="border-top:1px dashed rgba(255,255,255,0.1);padding-top:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ห้อง</span><span style="font-weight:600">0${p.roomNumber}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ผู้เช่า</span><span>${p.tenantName}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">เดือน</span><span>${p.month}</span></div>
+          ${p.date?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">วันชำระ</span><span>${fmtDate(p.date)}</span></div>`:''}
+          ${p.method?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">วิธีชำระ</span><span>${p.method}</span></div>`:''}
+        </div>
+        <div style="border-top:1px dashed rgba(255,255,255,0.1);padding-top:14px;margin-top:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าเช่า</span><span>฿${fmtMoney(p.rent)}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าน้ำ (${p.waterUnit} หน่วย)</span><span>฿${fmtMoney(p.waterUnit*18)}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าไฟ (${p.electricUnit} หน่วย)</span><span>฿${fmtMoney(p.electricUnit*7)}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าอินเทอร์เน็ต</span><span>฿${fmtMoney(p.internet)}</span></div>
+          ${p.other?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">อื่นๆ</span><span>฿${fmtMoney(p.other)}</span></div>`:''}
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;font-size:15px">รวมทั้งสิ้น</span>
+          <span style="font-weight:700;font-size:20px;color:#A990FF">฿${fmtMoney(payTotal(p))}</span>
+        </div>
+        <div style="text-align:center;margin-top:12px">
+          <span class="badge ${pstatus(p.status)}">${pstatusLabel(p.status)}</span>
+        </div>
+      </div>
+    `,p.status!=='paid'?`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" onclick="markPaid('${p.id}')">บันทึกชำระเงิน</button>`:`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" onclick="window.print()">พิมพ์</button>`);
+  }
+
+  return'';
+}
+
+function modal(title,body,footer='',extraClass=''){
+  return`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal ${extraClass}">
+    <div class="modal-title">${title}</div>
+    ${body}
+    <div class="modal-footer">${footer}</div>
+  </div></div>`;
+}
+
+function onPayRoomChange(roomId){
+  const r=roomOf(roomId);
+  if(!r)return;
+  const tn=document.getElementById('payTenantName');
+  const rn=document.getElementById('payRoomNum');
+  const rent=document.getElementById('payRent');
+  if(tn&&r.tenantId){const t=tenantOf(r.tenantId);if(t)tn.value=t.name;}
+  if(rn)rn.value=r.number;
+  if(rent)rent.value=r.price;
+}
+function setRoomStatus(id,s){const r=S.rooms.find(x=>x.id===id);if(r){r.status=s;persistColl('rooms',r);}render();}
+
+// ─── Admin login screen (live mode only) ─────────────────────
+function renderLogin(){
+  return`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;width:100%">
+    <div style="background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:36px;width:100%;max-width:380px">
+      <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;margin-bottom:18px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 20V9l8-5 8 5v11" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><rect x="9" y="13" width="6" height="7" stroke="#fff" stroke-width="1.6"/></svg>
+      </div>
+      <div style="font-size:19px;font-weight:700">ระบบจัดการหอพักสัมฤทธิ์</div>
+      <div style="font-size:13px;color:#5C6270;margin-bottom:22px">เข้าสู่ระบบสำหรับผู้ดูแล / เจ้าหน้าที่</div>
+      <div class="form-group"><label class="form-label">ชื่อผู้ใช้</label><input id="alUser" class="input" value="admin" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <div class="form-group"><label class="form-label">รหัสผ่าน</label><input id="alPass" class="input" type="password" value="admin1234" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="adminLogin()">เข้าสู่ระบบ</button>
+      <div style="text-align:center;margin-top:12px;font-size:12px;color:#5C6270">ทดสอบ: <span style="color:#A990FF">admin / admin1234</span></div>
+    </div>
+  </div>`;
+}
+
+// ─── Main Render ─────────────────────────────────────────────
+function render(){
+  const active=document.activeElement;
+  const activeId=active?.id;
+  const activeStart=active?.selectionStart;
+  const activeEnd=active?.selectionEnd;
+
+  if(S.needLogin&&!S.auth){
+    document.getElementById('app').innerHTML=renderLogin();
+    if(activeId){const el=document.getElementById(activeId);if(el){el.focus();try{if(activeStart!==undefined){el.selectionStart=activeStart;el.selectionEnd=activeEnd;}}catch(_){}}}
+    return;
+  }
+
+  let content='';
+  switch(S.screen){
+    case'dashboard':content=renderDashboard();break;
+    case'select':content=renderSelect();break;
+    case'roomDetail':content=renderRoomDetail();break;
+    case'rooms':content=renderRooms();break;
+    case'tenants':content=renderTenants();break;
+    case'bookings':content=renderBookings();break;
+    case'contracts':content=renderContracts();break;
+    case'payments':content=renderPayments();break;
+    case'paysettings':content=renderPaySettings();break;
+    case'users':content=renderUsers();break;
+    default:content=renderDashboard();
+  }
+
+  document.getElementById('app').innerHTML=`${renderSidebar()}<div class="main">${content}</div>${renderModal()}`;
+
+  if(activeId){
+    const el=document.getElementById(activeId);
+    if(el){el.focus();try{if(activeStart!==undefined){el.selectionStart=activeStart;el.selectionEnd=activeEnd;}}catch(_){}}
+  }
+  if(S.modal==='signContract')setTimeout(initSigPad,50);
+}
+
+boot();
+</script>
+</body>
+</html>
