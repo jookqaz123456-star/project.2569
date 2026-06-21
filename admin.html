@@ -213,6 +213,7 @@ const S = {
     {id:'p6',roomId:'r10',roomNumber:10,tenantName:'สุดา พรเจริญ',month:'2026-05',rent:3500,waterUnit:6,electricUnit:40,internet:300,other:0,status:'paid',date:'2026-05-04',method:'เงินสด'},
     {id:'p7',roomId:'r11',roomNumber:11,tenantName:'ธนากร ศรีสุข',month:'2026-05',rent:4500,waterUnit:12,electricUnit:70,internet:300,other:200,status:'overdue',date:'',method:''},
   ],
+  bills: [],
   users: [
     {id:'u1',name:'ผู้ดูแลระบบ',username:'admin',urole:'admin',perms:['จัดการห้อง','จัดการผู้เช่า','การเงิน','รายงาน','จัดการผู้ใช้','ดูบิล','ชำระเงิน','เซ็นสัญญา'],active:true},
     {id:'u2',name:'สมศรี พนักงาน',username:'staff1',urole:'staff',perms:['จัดการห้อง','จัดการผู้เช่า','ดูบิล'],active:true},
@@ -235,6 +236,8 @@ function fmtMoney(n){return n.toLocaleString('th-TH');}
 function fmtDate(d){if(!d)return '-';const dt=new Date(d);return dt.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});}
 function roomOf(id){return S.rooms.find(r=>r.id===id);}
 function tenantOf(id){return S.tenants.find(t=>t.id===id);}
+// Resident accounts (so a bill can be sent to a specific resident's portal)
+function residentAccounts(){return (S.users||[]).filter(u=>(u.urole||u.role)==='resident');}
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
 
 // ─── Backend-backed data layer (Samrit client: live API / demo) ─
@@ -261,7 +264,7 @@ function qrSVG(seed,px){
   return`<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" xmlns="http://www.w3.org/2000/svg"><rect width="${px}" height="${px}" fill="#fff"/><g fill="#0B0C10">${rects}</g></svg>`;
 }
 // caches populated at boot from API / demo store
-const SEED=JSON.parse(JSON.stringify({rooms:S.rooms,tenants:S.tenants,bookings:S.bookings,contracts:S.contracts,payments:S.payments,users:S.users,paySettings:DEFAULT_PAY}));
+const SEED=JSON.parse(JSON.stringify({rooms:S.rooms,tenants:S.tenants,bookings:S.bookings,contracts:S.contracts,payments:S.payments,bills:S.bills,users:S.users,paySettings:DEFAULT_PAY}));
 S.pay=DEFAULT_PAY;
 S.photos={};
 S.slips=[];
@@ -273,9 +276,16 @@ S.needLogin=false;
 async function loadAll(){
   try{
     const d=await Samrit.bootstrapAdmin(SEED);
-    S.rooms=d.rooms||[];S.tenants=d.tenants||[];S.bookings=d.bookings||[];
-    S.contracts=d.contracts||[];S.payments=d.payments||[];
+    S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);S.tenants=d.tenants||[];S.bookings=d.bookings||[];
+    S.contracts=d.contracts||[];S.payments=d.payments||[];S.bills=d.bills||[];
     S.users=(d.users||[]).map(u=>({...u,urole:u.role||u.urole}));
+    // DEMO mode: portal residents live in a separate localStorage store — merge
+    // them in so bills can be addressed to them (LIVE mode already includes them).
+    if(Samrit.mode!=='live'&&Samrit.demoAccounts){
+      const have=new Set(S.users.map(u=>u.id));
+      Samrit.demoAccounts().filter(a=>(a.role||'resident')==='resident'&&!have.has(a.id))
+        .forEach(a=>S.users.push({...a,urole:a.role||'resident',perms:a.perms||[]}));
+    }
     S.slips=d.slips||[];
     S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;
     S.photos=d.photos||{};
@@ -339,6 +349,7 @@ function saveRoom(){
   let obj;
   if(f._id){const i=S.rooms.findIndex(r=>r.id===f._id);if(i>=0){S.rooms[i]={...S.rooms[i],...room};obj=S.rooms[i];}}
   else{obj={id:Samrit.newId(),facilities:[],photos:[],...room};S.rooms.push(obj);}
+  S.rooms.sort((a,b)=>a.number-b.number);
   if(obj)persistColl('rooms',obj);
   closeModal();
 }
@@ -364,14 +375,37 @@ function saveBooking(){
 function deleteBooking(id){if(confirm('ลบการจองนี้?')){S.bookings=S.bookings.filter(b=>b.id!==id);persistRemove('bookings',id);render();}}
 function savePayment(){
   const f=getFormVals('paymentForm');
-  const p={...f,rent:+f.rent,waterUnit:+f.waterUnit,electricUnit:+f.electricUnit,internet:+f.internet,other:+(f.other||0),roomNumber:+f.roomNumber};
+  const p={...f,rent:+f.rent,waterUnit:+f.waterUnit,electricUnit:+f.electricUnit,internet:+f.internet,other:+(f.other||0),roomNumber:+f.roomNumber,userId:f.userId||''};
   let obj;
   if(f._id){const i=S.payments.findIndex(x=>x.id===f._id);if(i>=0){S.payments[i]={...S.payments[i],...p};obj=S.payments[i];}}
   else{obj={id:Samrit.newId(),...p,status:p.status||'unpaid'};S.payments.push(obj);}
-  if(obj)persistColl('payments',obj);
+  if(obj){persistColl('payments',obj);syncBillForPayment(obj);}
   closeModal();
 }
-function deletePayment(id){if(confirm('ลบบิลนี้?')){S.payments=S.payments.filter(p=>p.id!==id);persistRemove('payments',id);render();}}
+// Mirror a payment into the resident-facing `bills` collection so the chosen
+// resident sees the bill in their portal and can pay it via QR. The bill id is
+// derived from the payment id, so editing updates the same bill; clearing the
+// resident on a bill removes the resident-facing copy.
+function syncBillForPayment(p){
+  const billId='bl_'+p.id;
+  const idx=S.bills.findIndex(b=>b.id===billId);
+  if(p.userId){
+    const existing=idx>=0?S.bills[idx]:null;
+    const bill={id:billId,userId:p.userId,roomNumber:p.roomNumber,month:p.month,
+      rent:p.rent,waterUnit:p.waterUnit,electricUnit:p.electricUnit,internet:p.internet,
+      status:p.status||'unpaid',date:p.date||'',slip:existing?existing.slip:'',srcPayment:p.id};
+    if(idx>=0)S.bills[idx]=bill; else S.bills.push(bill);
+    persistColl('bills',bill);
+  } else if(idx>=0){
+    const removed=S.bills.splice(idx,1)[0];
+    persistRemove('bills',removed.id);
+  }
+}
+function deletePayment(id){if(confirm('ลบบิลนี้?')){
+  S.payments=S.payments.filter(p=>p.id!==id);persistRemove('payments',id);
+  const billId='bl_'+id,bi=S.bills.findIndex(b=>b.id===billId);
+  if(bi>=0){S.bills.splice(bi,1);persistRemove('bills',billId);}
+  render();}}
 async function saveUser(){
   const f=getFormVals('userForm');
   const perms=PERM_LIST.filter((_,i)=>document.getElementById('perm_'+i)?.checked);
@@ -873,7 +907,7 @@ function renderPayments(){
       <tr><th>ห้อง</th><th>ผู้เช่า</th><th>เดือน</th><th>ค่าเช่า</th><th>น้ำ</th><th>ไฟ</th><th>เน็ต</th><th>รวม</th><th>สถานะ</th><th></th></tr>
       ${rows.map(p=>`<tr>
         <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">0${p.roomNumber}</span></td>
-        <td>${p.tenantName}</td>
+        <td>${p.tenantName}${p.userId?` <span class="badge badge-green" style="font-size:9.5px;vertical-align:middle">${ico.pay} ส่งให้ผู้ใช้แล้ว</span>`:''}</td>
         <td>${p.month}</td>
         <td>฿${fmtMoney(p.rent)}</td>
         <td>${p.waterUnit}×18=฿${p.waterUnit*18}</td>
@@ -896,7 +930,8 @@ function renderPayments(){
 // ─── Users CRUD ──────────────────────────────────────────────
 function renderUsers(){
   const q=S.search.toLowerCase();
-  const rows=S.users.filter(u=>!q||u.name.toLowerCase().includes(q)||u.username.includes(q));
+  // Staff/permissions screen — residents are managed via the portal, not here.
+  const rows=S.users.filter(u=>(u.urole||u.role)!=='resident').filter(u=>!q||u.name.toLowerCase().includes(q)||u.username.includes(q));
   return`
   <div class="topbar"><div class="topbar-title">จัดการผู้ใช้และสิทธิ์</div></div>
   <div class="page">
@@ -1092,6 +1127,14 @@ function renderModal(){
             ${S.rooms.map(r=>`<option value="${r.id}"${p?.roomId===r.id?' selected':''}>ห้อง ${r.number}</option>`).join('')}
           </select></div>
           <div class="form-group"><label class="form-label">ชื่อผู้เช่า</label><input name="tenantName" id="payTenantName" class="input" value="${p?.tenantName||''}"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ส่งบิลให้ผู้พักอาศัย (บัญชีผู้ใช้)</label>
+          <select name="userId" class="input">
+            <option value="">— ไม่ส่งให้ผู้ใช้ (เก็บไว้ในระบบ) —</option>
+            ${residentAccounts().map(u=>`<option value="${u.id}"${p?.userId===u.id?' selected':''}>${u.name} (${u.username})</option>`).join('')}
+          </select>
+          <div style="font-size:11.5px;color:#5C6270;margin-top:5px">เลือกบัญชีผู้พักอาศัยเพื่อให้บิลไปแสดงในพอร์ทัลและชำระผ่าน QR ได้</div>
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">เดือน</label><input name="month" class="input" type="month" value="${p?.month||new Date().toISOString().slice(0,7)}"></div>

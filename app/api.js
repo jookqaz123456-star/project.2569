@@ -122,6 +122,9 @@
     },
     async removeUser(id, arr) { if (mode === 'live') return api('/api/users/' + id, { method: 'DELETE' }); if (arr) dSet('users', arr); return true; },
 
+    // Resident accounts registered through the portal (DEMO mode, shared origin).
+    demoAccounts() { return dList('accounts') || []; },
+
     newId: uid,
   };
 
