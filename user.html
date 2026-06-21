@@ -143,6 +143,8 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 <script src="app/config.js"></script>
 <script>window.SAMRIT_CONFIG={API_BASE:(window.SAMRIT_API_BASE||''),tokenKey:'samrit_token'};</script>
 <script src="app/api.js"></script>
+<script src="app/qrcode.js"></script>
+<script src="app/promptpay.js"></script>
 <script>
 // ─── State ──────────────────────────────────────────────────
 const S = {
@@ -243,13 +245,28 @@ function qrSVG(seed,px){
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){let v=g[y*N+x];if(v===-1)v=rnd()>0.55?1:0;if(v===1)rects+=`<rect x="${(x*cell).toFixed(2)}" y="${(y*cell).toFixed(2)}" width="${cell.toFixed(2)}" height="${cell.toFixed(2)}"/>`;}
   return`<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" xmlns="http://www.w3.org/2000/svg"><rect width="${px}" height="${px}" fill="#fff"/><g fill="#0B0C10">${rects}</g></svg>`;
 }
-function qrBox(){
+function qrBox(amount){
   const pay=S.pay||DEFAULT_PAY;
-  const qr=pay.qr?`<img src="${pay.qr}" style="width:150px;height:150px;object-fit:contain;display:block">`:qrSVG('samrit'+(pay.promptpay||''),150);
+  const ppDigits=(pay.promptpay||'').replace(/[^0-9]/g,'');
+  let qr,note;
+  if(ppDigits.length>=10 && window.PromptPay){
+    // Real, scannable PromptPay QR — encodes this bill's exact amount so every
+    // room/bill produces a different QR that opens with the amount pre-filled.
+    qr=PromptPay.svg(pay.promptpay, amount, 160);
+    note='สแกนด้วยแอปธนาคารใดก็ได้ — ยอดเงินจะถูกกรอกให้อัตโนมัติ';
+  }else if(pay.qr){
+    qr=`<img src="${pay.qr}" style="width:160px;height:160px;object-fit:contain;display:block">`;
+    note='สแกนเพื่อชำระเงิน หรือโอนผ่านบัญชี:';
+  }else{
+    qr=qrSVG('samrit'+(pay.promptpay||''),160);
+    note='สแกนเพื่อชำระเงิน หรือโอนผ่านบัญชี:';
+  }
+  const amtLine=amount!=null?`<div style="text-align:center;margin-top:8px;font-size:14px;color:#0B0C10;font-weight:700;font-family:'JetBrains Mono',monospace">฿${(+amount).toLocaleString('th-TH',{minimumFractionDigits:2})}</div>`:'';
+  const ppLine=ppDigits.length>=10?`<div style="font-size:13px;margin-bottom:10px"><span style="color:#6B7180">พร้อมเพย์:</span> <span style="color:#A990FF;font-family:'JetBrains Mono',monospace">${pay.promptpay}</span></div>`:'';
   const banks=pay.banks.map(b=>`<div style="margin-bottom:10px"><div style="font-weight:600;font-size:13.5px">${b.bank}</div><div style="font-size:13px;color:#A990FF;font-family:'JetBrains Mono',monospace">${b.acc} <span style="color:#6B7180">${b.holder}</span></div></div>`).join('');
   return`<div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
-    <div style="background:#fff;border-radius:12px;padding:10px;flex-shrink:0">${qr}</div>
-    <div style="flex:1;min-width:180px"><div style="font-size:13px;color:#6B7180;margin-bottom:10px">สแกนเพื่อชำระเงิน หรือโอนผ่านบัญชี:</div>${banks}</div>
+    <div style="background:#fff;border-radius:12px;padding:10px;flex-shrink:0">${qr}${amtLine}</div>
+    <div style="flex:1;min-width:180px"><div style="font-size:13px;color:#6B7180;margin-bottom:10px">${note}</div>${ppLine}${banks}</div>
   </div>`;
 }
 function slipUploadField(){
@@ -757,7 +774,7 @@ function renderModal(){
     return modal(title,`
       <div style="background:#0E1016;border-radius:14px;padding:20px;margin-bottom:4px">
         <div style="font-size:13.5px;color:#6B7180;margin-bottom:14px">ยอดที่ต้องชำระ: <span style="font-size:18px;font-weight:700;color:#A990FF">฿${fmtMoney(amount)}</span></div>
-        ${qrBox()}
+        ${qrBox(amount)}
         ${slipUploadField()}
       </div>
       <div style="font-size:12px;color:#5C6270;margin-top:10px">${desc}</div>

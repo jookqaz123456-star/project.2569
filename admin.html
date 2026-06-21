@@ -156,6 +156,8 @@ canvas{border-radius:10px;cursor:crosshair;touch-action:none;}
 <script src="app/config.js"></script>
 <script>window.SAMRIT_CONFIG={API_BASE:(window.SAMRIT_API_BASE||''),tokenKey:'samrit_admin_token'};</script>
 <script src="app/api.js"></script>
+<script src="app/qrcode.js"></script>
+<script src="app/promptpay.js"></script>
 <script>
 // ─── State ──────────────────────────────────────────────────
 const S = {
@@ -969,7 +971,11 @@ function renderUsers(){
 function renderPaySettings(){
   const slips=S.slips||[];
   const pending=slips.filter(s=>s.status==='รอตรวจสอบ').length;
-  const qrPreview=S.pay.qr?`<img src="${S.pay.qr}" style="width:170px;height:170px;object-fit:contain;display:block">`:qrSVG('samrit'+(S.pay.promptpay||''),170);
+  const ppDigits=(S.pay.promptpay||'').replace(/[^0-9]/g,'');
+  const ppReady=ppDigits.length>=10&&window.PromptPay;
+  // Preview is a static PromptPay QR (no amount). Each resident bill renders its
+  // own QR with that bill's exact total embedded.
+  const qrPreview=ppReady?PromptPay.svg(S.pay.promptpay,null,170):(S.pay.qr?`<img src="${S.pay.qr}" style="width:170px;height:170px;object-fit:contain;display:block">`:qrSVG('samrit'+(S.pay.promptpay||''),170));
   return`
   <div class="topbar"><div class="topbar-title">QR & สลิปการโอนเงิน</div></div>
   <div class="page">
@@ -986,10 +992,10 @@ function renderPaySettings(){
           <label class="btn btn-ghost btn-sm" style="cursor:pointer">อัปโหลด QR<input type="file" accept="image/*" onchange="onQRUpload(this)" style="display:none"></label>
           ${S.pay.qr?`<button class="btn btn-danger btn-sm" onclick="clearQR()">ลบรูป</button>`:''}
         </div>
-        <div style="font-size:11.5px;color:#5C6270;margin-top:8px">${S.pay.qr?'ใช้รูป QR ที่อัปโหลด':'QR จำลอง (อัปโหลดรูปจริงเพื่อใช้งาน)'}</div>
+        <div style="font-size:11.5px;color:${ppReady?'#34D399':'#5C6270'};margin-top:8px">${ppReady?'✓ QR จริง — แต่ละบิลจะสร้าง QR พร้อมยอดเงินอัตโนมัติ':(S.pay.qr?'ใช้รูป QR ที่อัปโหลด':'ใส่เบอร์พร้อมเพย์เพื่อสร้าง QR จริง')}</div>
       </div>
       <div class="card">
-        <div class="form-group" style="max-width:280px"><label class="form-label">เบอร์พร้อมเพย์ / อ้างอิง QR จำลอง</label><input class="input" value="${S.pay.promptpay||''}" onchange="setPromptpay(this.value);render()"></div>
+        <div class="form-group" style="max-width:280px"><label class="form-label">เบอร์พร้อมเพย์ (มือถือ 10 หลัก หรือเลขบัตรประชาชน 13 หลัก)</label><input class="input" value="${S.pay.promptpay||''}" onchange="setPromptpay(this.value);render()"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 12px">
           <div style="font-weight:700">บัญชีธนาคาร</div>
           <button class="btn btn-ghost btn-sm" onclick="addBank()">${ico.plus} เพิ่มบัญชี</button>

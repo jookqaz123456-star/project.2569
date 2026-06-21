@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p _site/app
           cp index.html admin.html user.html _site/
-          cp app/config.js app/api.js _site/app/
+          cp app/config.js app/api.js app/qrcode.js app/promptpay.js _site/app/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
