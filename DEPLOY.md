@@ -1,28 +1,16 @@
 # หอพักสัมฤทธิ์ — Samrit Residence
 
 ระบบจัดการหอพัก: **ฝั่งแอดมิน** (`admin.html`) + **พอร์ทัลผู้พักอาศัย** (`user.html`)
-พร้อม REST API + ฐานข้อมูล **MongoDB / SQLite** และ JWT auth
+พร้อม REST API + ฐานข้อมูล SQLite และ JWT auth
 
 แอปทำงานได้ 2 โหมดอัตโนมัติ:
 
 | โหมด | เมื่อไหร่ | ข้อมูลเก็บที่ |
 |------|----------|----------------|
-| **LIVE** | เสิร์ฟผ่าน Node server (เครื่องตัวเอง / Render) | **MongoDB** (ถ้าตั้ง `MONGODB_URI`) หรือ SQLite |
+| **LIVE** | เสิร์ฟผ่าน Node server (เครื่องตัวเอง / Render) | ฐานข้อมูล SQLite จริง (ใช้ร่วมกันหลายเครื่อง) |
 | **DEMO** | เปิดไฟล์ตรง ๆ / GitHub Pages (ไม่มี backend) | `localStorage` ในเบราว์เซอร์ |
 
 แอปจะ "ตรวจ" `/api/health` ตอนเปิด ถ้าเจอ backend → LIVE, ถ้าไม่เจอ → DEMO
-
----
-
-## ฐานข้อมูล — MongoDB หรือ SQLite (เลือกอัตโนมัติ)
-
-| ตั้งค่า `MONGODB_URI` | ฐานข้อมูลที่ใช้ | ข้อมูลถาวรไหม |
-|---|---|---|
-| **ตั้งไว้** | **MongoDB** (เช่น MongoDB Atlas) | ✅ ถาวร — ไม่หายตอน redeploy |
-| ไม่ตั้ง | SQLite (ไฟล์ `data/samrit.db`) | ⚠️ หายตอน Render free restart |
-
-ระบบจะเช็ก `MONGODB_URI` ตอนเริ่ม ถ้ามี → ใช้ MongoDB, ถ้าไม่มี → SQLite
-(ดูได้จาก `GET /api/health` ฟิลด์ `db`)
 
 ---
 
@@ -30,12 +18,7 @@
 
 ```bash
 npm install
-
-# ก) ใช้ SQLite (ไม่ต้องมี DB แยก — เหมาะลองเล่น)
 npm start
-
-# ข) ใช้ MongoDB
-MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net/" npm start
 # เปิด http://localhost:3000
 ```
 
@@ -43,15 +26,7 @@ MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net/" npm start
 - **แอดมิน** — `admin / admin1234` (เจ้าหน้าที่: `staff1 / staff1234`, `finance1 / finance1234`)
 - **ผู้พักอาศัย** — `demo / demo1234` (หรือกดสมัครสมาชิกใหม่)
 
-> ต้องใช้ Node.js เวอร์ชัน **22.5 ขึ้นไป** (โหมด SQLite ใช้โมดูล `node:sqlite` ในตัว ไม่ต้องคอมไพล์ native)
-
-### สร้าง MongoDB ฟรีด้วย MongoDB Atlas
-1. สมัคร [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas) → สร้าง **Cluster ฟรี (M0)**
-2. **Database Access** → สร้าง user/password
-3. **Network Access** → Add IP `0.0.0.0/0` (อนุญาตทุกที่ — สำหรับ Render)
-4. **Connect → Drivers** → คัดลอก connection string
-   เช่น `mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority`
-5. เอาค่านี้ไปใส่เป็น `MONGODB_URI`
+> ต้องใช้ Node.js เวอร์ชัน **22.5 ขึ้นไป** (ใช้โมดูล `node:sqlite` ในตัว ไม่ต้องคอมไพล์ native)
 
 ---
 
@@ -60,22 +35,19 @@ MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net/" npm start
 1. Push repo นี้ขึ้น GitHub
 2. ไปที่ [render.com](https://render.com) → **New → Blueprint** → เชื่อม repo
    (Render อ่านไฟล์ `render.yaml` ให้อัตโนมัติ)
-3. **สำคัญ:** ใส่ตัวแปร **`MONGODB_URI`** ในหน้า dashboard (วาง connection string
-   จาก MongoDB Atlas) → เพื่อให้ข้อมูล**ถาวร ไม่หายตอน redeploy**
-4. กด **Apply / Deploy** → ได้ URL เช่น `https://samrit-residence.onrender.com`
+3. กด **Apply / Deploy** → ได้ URL เช่น `https://samrit-residence.onrender.com`
    เปิด URL นั้นได้เลยทั้งแอดมินและผู้พักอาศัย (โหมด LIVE)
 
-> ถ้า **ไม่ใส่** `MONGODB_URI` ระบบจะ fallback เป็น SQLite ซึ่งบนแพลนฟรีของ Render
-> ดิสก์เป็นแบบชั่วคราว → ข้อมูลรีเซ็ตเมื่อ service restart (เหมาะแค่เดโม)
+> แพลนฟรีของ Render มี filesystem แบบชั่วคราว ข้อมูล SQLite จะรีเซ็ตเมื่อ
+> service restart — ถ้าต้องการให้ข้อมูลถาวร ให้ uncomment ส่วน `disk:` ใน
+> `render.yaml` (ต้องใช้แพลนแบบเสียเงิน) หรือเปลี่ยนไปใช้ Postgres
 
 **ทางเลือกอื่น:** มี `Dockerfile` ให้แล้ว → deploy บน Railway / Fly.io / Cloud Run / VPS ได้
 
 ตัวแปรแวดล้อม:
-- `MONGODB_URI` — connection string ของ MongoDB (ถ้าใส่ = ใช้ MongoDB, ถ้าไม่ใส่ = SQLite)
-- `MONGODB_DB` — ชื่อฐานข้อมูล (ค่าเริ่มต้น `samrit`)
 - `JWT_SECRET` — คีย์เซ็น JWT (ตั้งให้เดายาก; Render generate ให้อัตโนมัติ)
 - `PORT` — พอร์ต (ค่าเริ่มต้น 3000)
-- `DATA_DIR` — ที่เก็บไฟล์ SQLite เมื่อใช้โหมด fallback (ค่าเริ่มต้น `./data`)
+- `DATA_DIR` — ที่เก็บไฟล์ฐานข้อมูล (ค่าเริ่มต้น `./data`)
 
 ---
 
@@ -108,7 +80,7 @@ app/
   api.js                API client (live + demo fallback)
 server/
   server.js             Express: REST API + เสิร์ฟไฟล์ static
-  db.js                 ชั้นข้อมูล MongoDB / SQLite (เลือกตาม MONGODB_URI) + seed
+  db.js                 SQLite (node:sqlite) + seed ข้อมูลเริ่มต้น
   auth.js               JWT (HS256) + scrypt password hashing
   seed.js               ข้อมูลตัวอย่าง
 render.yaml             Render blueprint

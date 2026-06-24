@@ -1,13 +1,11 @@
-# Render.com blueprint — deploy the full app (frontend + API + database).
+# Render.com blueprint — deploy the full app (frontend + API + SQLite).
 # 1. Push this repo to GitHub.
 # 2. On render.com: New → Blueprint → connect the repo. Render reads this file.
-# 3. Set MONGODB_URI in the dashboard (see below), then Deploy.
-#    You get a URL like https://samrit-residence.onrender.com
+# 3. Deploy. You get a URL like https://samrit-residence.onrender.com
 #
-# DATA PERSISTENCE:
-#   • Set MONGODB_URI  → data lives in MongoDB Atlas and SURVIVES redeploys. ✅
-#   • Leave it unset   → falls back to a local SQLite file, which RESETS on the
-#                        free plan (ephemeral disk). Fine for a quick demo only.
+# NOTE: the free plan has an EPHEMERAL filesystem — the SQLite file resets
+# when the service restarts/redeploys. For permanent data, uncomment the
+# `disk:` block below (requires a paid instance) or switch DATA_DIR to a disk.
 services:
   - type: web
     name: samrit-residence
@@ -20,7 +18,8 @@ services:
         generateValue: true   # Render generates a strong secret
       - key: NODE_VERSION
         value: "22.22.2"
-      - key: MONGODB_URI
-        sync: false           # ← paste your MongoDB Atlas connection string in the dashboard
-      # - key: MONGODB_DB     # optional, defaults to "samrit"
-      #   value: samrit
+    # disk:                   # ← uncomment for persistent SQLite (paid plan)
+    #   name: samrit-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # then also add:  - key: DATA_DIR  value: /var/data
