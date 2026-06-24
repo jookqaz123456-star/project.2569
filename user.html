@@ -37,7 +37,7 @@ input,select,textarea{font-family:inherit;}
 /* App Layout */
 .app-wrap{display:flex;min-height:100vh;}
 .topnav{position:fixed;top:0;left:0;right:0;height:56px;background:#0E1016;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:100;}
-.topnav-logo{font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px;}
+.topnav-logo{font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px;white-space:nowrap;flex-shrink:0;}
 .topnav-logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;}
 .topnav-menu{display:flex;gap:4px;flex:1;margin-left:16px;}
 .nav-item{padding:6px 14px;border-radius:8px;font-size:13.5px;color:#6B7180;cursor:pointer;border:none;background:transparent;transition:all .15s;}
@@ -46,6 +46,8 @@ input,select,textarea{font-family:inherit;}
 .topnav-user{display:flex;align-items:center;gap:10px;margin-left:auto;}
 .user-avatar{width:32px;height:32px;border-radius:9px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
 .page-wrap{margin-top:56px;padding:28px 24px;max-width:1200px;margin-left:auto;margin-right:auto;}
+.history-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.bill-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px;background:#0E1016;border-radius:10px;margin-bottom:12px;}
 
 /* Cards */
 .card{background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px;}
@@ -131,9 +133,17 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 @media(max-width:640px){
 .auth-left{display:none;}
 .auth-right{padding:20px;}
-.rooms-grid{grid-template-columns:1fr 1fr;}
+.rooms-grid{grid-template-columns:1fr 1fr;gap:12px;}
+.topnav{padding:0 12px;gap:6px;}
+.topnav-menu{margin-left:4px;gap:2px;justify-content:flex-end;}
 .topnav-menu .nav-item span{display:none;}
-.page-wrap{padding:20px 16px;}
+.nav-item{padding:7px 9px;}
+.topnav-user{gap:6px;}
+.brand-text{display:none;}
+.uname{display:none;}
+.history-grid{grid-template-columns:1fr;}
+.bill-breakdown{grid-template-columns:repeat(2,1fr);}
+.page-wrap{padding:18px 14px;}
 }
 </style>
 </head>
@@ -457,14 +467,14 @@ function renderTopNav(){
   return`<div class="topnav">
     <div class="topnav-logo">
       <div class="topnav-logo-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V9l8-5 8 5v11" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><rect x="9" y="13" width="6" height="7" stroke="#fff" stroke-width="1.6"/></svg></div>
-      หอพักสัมฤทธิ์
+      <span class="brand-text">หอพักสัมฤทธิ์</span>
     </div>
     <div class="topnav-menu">
       ${menus.map(m=>`<button class="nav-item${S.screen===m.id?' active':''}" onclick="nav('${m.id}')">${ico[m.ico]} <span>${m.label}</span></button>`).join('')}
     </div>
     <div class="topnav-user">
       <div class="user-avatar">${(S.auth?.name||'?')[0]}</div>
-      <div style="font-size:13px;font-weight:600">${S.auth?.name}</div>
+      <div class="uname" style="font-size:13px;font-weight:600">${S.auth?.name}</div>
       <button class="btn btn-ghost btn-sm" onclick="logout()">${ico.logout}</button>
     </div>
   </div>`;
@@ -592,7 +602,7 @@ function renderPayments(){
           </div>
           <span class="badge ${pstatus(b.status)}">${pstatusLabel(b.status)}</span>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px;background:#0E1016;border-radius:10px;margin-bottom:12px">
+        <div class="bill-breakdown">
           ${[['ค่าเช่า',b.rent],['ค่าน้ำ',b.waterUnit*18],['ค่าไฟ',b.electricUnit*7],['อินเทอร์เน็ต',b.internet]].map(([l,v])=>`
           <div style="text-align:center"><div style="font-size:11.5px;color:#5C6270;margin-bottom:3px">${l}</div><div style="font-weight:600">฿${fmtMoney(v)}</div></div>`).join('')}
         </div>
@@ -617,7 +627,7 @@ function renderHistory(){
       <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">ประวัติ</h1>
       <p style="font-size:13.5px;color:#6B7180">ประวัติการเข้าพัก การชำระเงิน และการแจ้งซ่อม</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="history-grid">
       <div>
         <div style="font-weight:700;margin-bottom:14px">ประวัติการเข้าพัก</div>
         <div class="timeline">
@@ -651,12 +661,12 @@ function renderHistory(){
         ${repairs.length===0?`<div style="color:#5C6270;font-size:13px">ยังไม่มีประวัติแจ้งซ่อม</div>`:`
         <div style="display:flex;flex-direction:column;gap:10px">
           ${repairs.map(r=>`<div class="card-sm">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start">
-              <div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+              <div style="min-width:0">
                 <div style="font-weight:600;font-size:13.5px">${r.issue}</div>
                 <div style="font-size:12px;color:#5C6270;margin-top:2px">ห้อง ${r.roomNumber} · ${fmtDate(r.date)}</div>
               </div>
-              <span class="badge ${r.status==='เสร็จสิ้น'?'badge-green':r.status==='กำลังดำเนินการ'?'badge-blue':'badge-yellow'}">${r.status}</span>
+              <span class="badge ${r.status==='เสร็จสิ้น'?'badge-green':r.status==='กำลังดำเนินการ'?'badge-blue':'badge-yellow'}" style="flex-shrink:0;white-space:nowrap">${r.status}</span>
             </div>
           </div>`).join('')}
         </div>`}
