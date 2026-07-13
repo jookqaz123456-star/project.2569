@@ -84,6 +84,23 @@
       out.photos = dGetSetting('photos', {});
       return out;
     },
+    // Public catalog (rooms/prices/photos) shown before login — always live in LIVE mode.
+    async bootstrapPublic(seed) {
+      if (mode === 'live') {
+        const [rooms, paySettings, photos] = await Promise.all([
+          api('/api/coll/rooms').catch(() => []),
+          api('/api/settings/paySettings').catch(() => null),
+          api('/api/settings/photos').catch(() => ({})),
+        ]);
+        return { rooms: rooms || [], paySettings: paySettings || {}, photos: photos || {} };
+      }
+      const ens = (c) => { let a = dList(c); if (a === null) { a = (seed && seed[c]) || []; dSet(c, a); } return a; };
+      return {
+        rooms: ens('rooms'),
+        paySettings: dGetSetting('paySettings', (seed && seed.paySettings) || {}),
+        photos: dGetSetting('photos', {}),
+      };
+    },
     async bootstrapResident(seed) {
       if (mode === 'live') return api('/api/me/bootstrap');
       const u = this.currentUser() || {};
