@@ -365,11 +365,21 @@ async function loadResidentData(){
     autoCancelStaleBookings();
   }catch(e){console.warn('bootstrap',e.message);}
 }
+// Public catalog (rooms/prices/photos) for visitors who haven't logged in yet —
+// pulled live from the server so admin changes show up without needing an account.
+async function loadPublicData(){
+  try{
+    const d=await Samrit.bootstrapPublic(SEED);
+    S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);
+    S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;S.photos=d.photos||{};
+  }catch(e){console.warn('public bootstrap',e.message);}
+}
 async function boot(){
   await Samrit.init();
   // restore session if token present
   const u=Samrit.currentUser();
   if(u&&Samrit.isAuthed()){S.auth=u;await loadResidentData();}
+  else{await loadPublicData();}
   render();
 }
 
