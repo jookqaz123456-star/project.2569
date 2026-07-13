@@ -1,0 +1,48 @@
+# Deploy the static frontend to GitHub Pages.
+#
+# GitHub Pages serves static files only — it cannot run the Node backend,
+# so the app runs in DEMO mode (data stored in the visitor's browser).
+# To make the Pages site talk to a real backend, set API_BASE in
+# app/config.js to your deployed backend URL (e.g. a Render URL).
+#
+# Enable: repo Settings → Pages → Source = "GitHub Actions".
+name: Deploy static demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble static site
+        run: |
+          mkdir -p _site/app
+          cp index.html admin.html user.html _site/
+          cp app/config.js app/api.js app/qrcode.js app/promptpay.js _site/app/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
