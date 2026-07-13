@@ -42,8 +42,9 @@ function mongoBackend(uri) {
     async collList(c) { return mdb.collection(c).find({}, noId).toArray(); },
     async collUpsert(c, obj) {
       if (!obj.id) obj.id = genId();
-      await mdb.collection(c).updateOne({ id: obj.id }, { $set: { ...obj } }, { upsert: true });
-      return obj;
+      const { _id, ...rest } = obj;               // never $set the immutable _id
+      await mdb.collection(c).updateOne({ id: rest.id }, { $set: rest }, { upsert: true });
+      return rest;
     },
     async collRemove(c, id) { await mdb.collection(c).deleteOne({ id }); },
     async collGet(c, id) { return mdb.collection(c).findOne({ id }, noId); },
@@ -53,7 +54,7 @@ function mongoBackend(uri) {
     async userByUsername(u) { return mdb.collection('users').findOne({ username: u }, noId); },     // incl. pass
     async userById(id) { return mdb.collection('users').findOne({ id }, noIdPass); },               // no pass
     async userList() { return mdb.collection('users').find({}, noIdPass).toArray(); },
-    async userUpdate(id, doc) { await mdb.collection('users').updateOne({ id }, { $set: { ...doc } }); return doc; },
+    async userUpdate(id, doc) { const { _id, ...rest } = doc; await mdb.collection('users').updateOne({ id }, { $set: rest }); return rest; },
     async userDelete(id) { await mdb.collection('users').deleteOne({ id }); },
   };
 }
