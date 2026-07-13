@@ -86,6 +86,9 @@ const residents = [
 const paySettings = {
   promptpay:'089-000-0000',
   qr:'',
+  waterRate:18,
+  electricRate:7,
+  bookingHoldDays:7,
   banks:[
     {bank:'ธนาคารกสิกรไทย',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'},
     {bank:'ธนาคารไทยพาณิชย์',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'},

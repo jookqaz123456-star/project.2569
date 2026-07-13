@@ -28,13 +28,17 @@ function verify(token) {
   } catch { return null; }
 }
 
-// Express middleware factory
+// Express middleware factory (async — db lookups may hit MongoDB)
 function authMiddleware(db) {
-  return (req, _res, next) => {
-    const hdr = req.headers.authorization || '';
-    const token = hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
-    const payload = verify(token);
-    req.user = payload ? db.findUserById(payload.sub) : null;
+  return async (req, _res, next) => {
+    try {
+      const hdr = req.headers.authorization || '';
+      const token = hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
+      const payload = verify(token);
+      req.user = payload ? await db.findUserById(payload.sub) : null;
+    } catch (e) {
+      req.user = null;
+    }
     next();
   };
 }
