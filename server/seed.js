@@ -2,18 +2,18 @@
 // Used to populate the SQLite database on first run.
 
 const rooms = [
-  {id:'r1',number:1,floor:3,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t1',size:'28 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น'],photos:[]},
-  {id:'r2',number:2,floor:3,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.',facilities:['เครื่องปรับอากาศ','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น'],photos:[]},
-  {id:'r3',number:3,floor:3,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t2',size:'35 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น','โซฟา'],photos:[]},
-  {id:'r4',number:4,floor:3,type:'ห้องคู่',price:4500,status:'repair',tenantId:null,size:'35 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น'],photos:[]},
-  {id:'r5',number:5,floor:2,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t3',size:'28 ตร.ม.',facilities:['เครื่องปรับอากาศ','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น'],photos:[]},
-  {id:'r6',number:6,floor:2,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น'],photos:[]},
-  {id:'r7',number:7,floor:2,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t4',size:'35 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น','โซฟา','เครื่องซักผ้า'],photos:[]},
-  {id:'r8',number:8,floor:2,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t5',size:'35 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น'],photos:[]},
-  {id:'r9',number:9,floor:1,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.',facilities:['เครื่องปรับอากาศ','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น'],photos:[]},
-  {id:'r10',number:10,floor:1,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t6',size:'28 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น'],photos:[]},
-  {id:'r11',number:11,floor:1,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t7',size:'35 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น','โซฟา'],photos:[]},
-  {id:'r12',number:12,floor:1,type:'ห้องคู่',price:4500,status:'vacant',tenantId:null,size:'35 ตร.ม.',facilities:['เครื่องปรับอากาศ','ตู้เย็น','โต๊ะทำงาน','Wi-Fi','น้ำอุ่น','โซฟา','เครื่องซักผ้า'],photos:[]},
+  {id:'r1',number:1,floor:3,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t1',size:'28 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r2',number:2,floor:3,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r3',number:3,floor:3,type:'ห้องเดี่ยว',price:4500,status:'occupied',tenantId:'t2',size:'35 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r4',number:4,floor:3,type:'ห้องเดี่ยว',price:4500,status:'repair',tenantId:null,size:'35 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r5',number:5,floor:2,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t3',size:'28 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r6',number:6,floor:2,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r7',number:7,floor:2,type:'ห้องเดี่ยว',price:4500,status:'occupied',tenantId:'t4',size:'35 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r8',number:8,floor:2,type:'ห้องเดี่ยว',price:4500,status:'occupied',tenantId:'t5',size:'35 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r9',number:9,floor:1,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r10',number:10,floor:1,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t6',size:'28 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r11',number:11,floor:1,type:'ห้องเดี่ยว',price:4500,status:'occupied',tenantId:'t7',size:'35 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
+  {id:'r12',number:12,floor:1,type:'ห้องเดี่ยว',price:4500,status:'vacant',tenantId:null,size:'35 ตร.ม.',facilities:['ตู้เสื้อผ้า','เครื่องปรับอากาศ','Wi-Fi','เตียง'],photos:[]},
 ];
 
 const tenants = [

@@ -173,16 +173,16 @@ const S = {
   rooms: [
     {id:'r1',number:1,floor:3,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t1',size:'28 ตร.ม.'},
     {id:'r2',number:2,floor:3,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.'},
-    {id:'r3',number:3,floor:3,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t2',size:'35 ตร.ม.'},
-    {id:'r4',number:4,floor:3,type:'ห้องคู่',price:4500,status:'repair',tenantId:null,size:'35 ตร.ม.'},
+    {id:'r3',number:3,floor:3,type:'ห้องเดี่ยว',price:4500,status:'occupied',tenantId:'t2',size:'35 ตร.ม.'},
+    {id:'r4',number:4,floor:3,type:'ห้องเดี่ยว',price:4500,status:'repair',tenantId:null,size:'35 ตร.ม.'},
     {id:'r5',number:5,floor:2,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t3',size:'28 ตร.ม.'},
     {id:'r6',number:6,floor:2,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.'},
-    {id:'r7',number:7,floor:2,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t4',size:'35 ตร.ม.'},
-    {id:'r8',number:8,floor:2,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t5',size:'35 ตร.ม.'},
+    {id:'r7',number:7,floor:2,type:'ห้องเดี่ยว',price:4500,status:'occupied',tenantId:'t4',size:'35 ตร.ม.'},
+    {id:'r8',number:8,floor:2,type:'ห้องเดี่ยว',price:4500,status:'occupied',tenantId:'t5',size:'35 ตร.ม.'},
     {id:'r9',number:9,floor:1,type:'ห้องเดี่ยว',price:3500,status:'vacant',tenantId:null,size:'28 ตร.ม.'},
     {id:'r10',number:10,floor:1,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t6',size:'28 ตร.ม.'},
-    {id:'r11',number:11,floor:1,type:'ห้องคู่',price:4500,status:'occupied',tenantId:'t7',size:'35 ตร.ม.'},
-    {id:'r12',number:12,floor:1,type:'ห้องคู่',price:4500,status:'vacant',tenantId:null,size:'35 ตร.ม.'},
+    {id:'r11',number:11,floor:1,type:'ห้องเดี่ยว',price:4500,status:'occupied',tenantId:'t7',size:'35 ตร.ม.'},
+    {id:'r12',number:12,floor:1,type:'ห้องเดี่ยว',price:4500,status:'vacant',tenantId:null,size:'35 ตร.ม.'},
   ],
   tenants: [
     {id:'t1',name:'สมชาย ใจดี',phone:'081-234-5678',idcard:'1-1234-56789-01-2',roomId:'r1',checkin:'2025-01-01',checkout:'2025-12-31',deposit:7000},
@@ -228,7 +228,12 @@ const S = {
 const PERM_LIST = ['จัดการห้อง','จัดการผู้เช่า','การเงิน','รายงาน','จัดการผู้ใช้','ดูบิล','ชำระเงิน','เซ็นสัญญา'];
 
 // ─── Helpers ─────────────────────────────────────────────────
-function payTotal(p){return p.rent + p.waterUnit*18 + p.electricUnit*7 + p.internet + (p.other||0);}
+function wRate(){return +(S.pay&&S.pay.waterRate!=null?S.pay.waterRate:18);}
+function eRate(){return +(S.pay&&S.pay.electricRate!=null?S.pay.electricRate:7);}
+// ค่าน้ำ/ค่าไฟ เป็นบาทโดยตรง (waterCost/electricCost) — ข้อมูลเก่าที่เก็บเป็นหน่วย fallback มาคูณอัตรา
+function waterCost(p){return p.waterCost!=null?+p.waterCost:(+p.waterUnit||0)*wRate();}
+function electricCost(p){return p.electricCost!=null?+p.electricCost:(+p.electricUnit||0)*eRate();}
+function payTotal(p){return p.rent + waterCost(p) + electricCost(p) + p.internet + (p.other||0);}
 function rstatus(s){return s==='vacant'?'badge-green':s==='occupied'?'badge-red':'badge-yellow';}
 function rstatusLabel(s){return s==='vacant'?'ว่าง':s==='occupied'?'ไม่ว่าง':'ซ่อม';}
 function pstatus(s){return s==='paid'?'badge-green':s==='unpaid'?'badge-yellow':'badge-red';}
@@ -247,6 +252,8 @@ function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
 const DEFAULT_PAY={
   promptpay:'089-000-0000',
   qr:'',
+  waterRate:18,
+  electricRate:7,
   banks:[
     {bank:'ธนาคารกสิกรไทย',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'},
     {bank:'ธนาคารไทยพาณิชย์',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'},
@@ -342,7 +349,7 @@ function getSig(){return sigPad?sigPad.canvas.toDataURL():'';}
 
 // ─── Navigation ──────────────────────────────────────────────
 function nav(screen){S.screen=screen;S.modal=null;render();}
-function openModal(type,data={}){S.modal=type;S.modalData=data;render();if(type==='signContract')setTimeout(initSigPad,50);}
+function openModal(type,data={}){S.modal=type;S.modalData=data;render();if(type==='signContract')setTimeout(initSigPad,50);if(type==='addPayment'||type==='editPayment')setTimeout(updateBillCalc,50);}
 function closeModal(){S.modal=null;S.modalData={};render();}
 
 // ─── CRUD ─────────────────────────────────────────────────────
@@ -378,7 +385,7 @@ function saveBooking(){
 function deleteBooking(id){if(confirm('ลบการจองนี้?')){S.bookings=S.bookings.filter(b=>b.id!==id);persistRemove('bookings',id);render();}}
 function savePayment(){
   const f=getFormVals('paymentForm');
-  const p={...f,rent:+f.rent,waterUnit:+f.waterUnit,electricUnit:+f.electricUnit,internet:+f.internet,other:+(f.other||0),roomNumber:+f.roomNumber,userId:f.userId||''};
+  const p={...f,rent:+f.rent,waterCost:+f.waterCost,electricCost:+f.electricCost,internet:+f.internet,other:+(f.other||0),roomNumber:+f.roomNumber,userId:f.userId||''};
   let obj;
   if(f._id){const i=S.payments.findIndex(x=>x.id===f._id);if(i>=0){S.payments[i]={...S.payments[i],...p};obj=S.payments[i];}}
   else{obj={id:Samrit.newId(),...p,status:p.status||'unpaid'};S.payments.push(obj);}
@@ -395,7 +402,7 @@ function syncBillForPayment(p){
   if(p.userId){
     const existing=idx>=0?S.bills[idx]:null;
     const bill={id:billId,userId:p.userId,roomNumber:p.roomNumber,month:p.month,
-      rent:p.rent,waterUnit:p.waterUnit,electricUnit:p.electricUnit,internet:p.internet,
+      rent:p.rent,waterCost:waterCost(p),electricCost:electricCost(p),internet:p.internet,
       status:p.status||'unpaid',date:p.date||'',slip:existing?existing.slip:'',srcPayment:p.id};
     if(idx>=0)S.bills[idx]=bill; else S.bills.push(bill);
     persistColl('bills',bill);
@@ -436,6 +443,29 @@ function signContract(id){
   closeModal();
 }
 
+// ─── Live bill calculator (updates preview in payment form) ───
+function updateBillCalc(){
+  const get=n=>+(document.querySelector(`[name=${n}]`)?.value||0);
+  const wc=get('waterCost'),ec=get('electricCost'),rent=get('rent'),internet=get('internet'),other=get('other');
+  const total=rent+wc+ec+internet+other;
+  const el=document.getElementById('billCalcPreview');
+  if(!el)return;
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8892A4;margin-bottom:4px"><span>ค่าเช่า</span><span>฿${fmtMoney(rent)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8892A4;margin-bottom:4px"><span>ค่าน้ำ</span><span>฿${fmtMoney(wc)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8892A4;margin-bottom:4px"><span>ค่าไฟ</span><span>฿${fmtMoney(ec)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8892A4;margin-bottom:4px"><span>ค่าเน็ต + อื่นๆ</span><span>฿${fmtMoney(internet+other)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#A990FF;border-top:1px solid rgba(255,255,255,0.08);padding-top:7px;margin-top:3px"><span>ยอดรวม</span><span>฿${fmtMoney(total)}</span></div>`;
+}
+// ─── Quick room price edit ─────────────────────────────────────
+function saveQuickPrice(){
+  const f=getFormVals('quickPriceForm');
+  const r=S.rooms.find(x=>x.id===f._id);
+  if(!r)return;
+  r.price=+f.price;
+  persistColl('rooms',r);
+  closeModal();
+}
 // ─── Payment settings (QR/banks) + slips ─────────────────────
 function savePay(){Samrit.setSetting('paySettings',S.pay).catch(e=>console.warn(e.message));}
 function onQRUpload(input){
@@ -767,7 +797,7 @@ function renderRooms(){
       ${rows.map(r=>`<tr>
         <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">${String(r.number).padStart(2,'0')}</span></td>
         <td>ชั้น ${r.floor}</td><td>${r.type}</td>
-        <td>฿${fmtMoney(r.price)}</td><td>${r.size}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="openModal('quickPrice','${r.id}')" style="font-weight:600;padding:2px 8px" title="คลิกเพื่อแก้ไขราคา">฿${fmtMoney(r.price)}</button></td><td>${r.size}</td>
         <td><span class="badge ${rstatus(r.status)}">${rstatusLabel(r.status)}</span></td>
         <td>${r.tenantId?tenantOf(r.tenantId)?.name||'-':'-'}</td>
         <td>
@@ -913,8 +943,8 @@ function renderPayments(){
         <td>${p.tenantName}${p.userId?` <span class="badge badge-green" style="font-size:9.5px;vertical-align:middle">${ico.pay} ส่งให้ผู้ใช้แล้ว</span>`:''}</td>
         <td>${p.month}</td>
         <td>฿${fmtMoney(p.rent)}</td>
-        <td>${p.waterUnit}×18=฿${p.waterUnit*18}</td>
-        <td>${p.electricUnit}×7=฿${p.electricUnit*7}</td>
+        <td>฿${fmtMoney(waterCost(p))}</td>
+        <td>฿${fmtMoney(electricCost(p))}</td>
         <td>฿${p.internet}</td>
         <td style="font-weight:700">฿${fmtMoney(payTotal(p))}</td>
         <td><span class="badge ${pstatus(p.status)}">${pstatusLabel(p.status)}</span></td>
@@ -1042,6 +1072,20 @@ function renderModal(){
   if(!S.modal)return'';
   const {modal:type,modalData:data}=S;
 
+  if(type==='quickPrice'){
+    const r=roomOf(data);
+    if(!r)return'';
+    return modal(`แก้ไขราคาห้อง ${String(r.number).padStart(2,'0')}`,`
+      <form id="quickPriceForm">
+        <input type="hidden" name="_id" value="${r.id}">
+        <div class="form-group">
+          <label class="form-label">ราคา/เดือน (฿)</label>
+          <input name="price" class="input" type="number" value="${r.price}" autofocus style="font-size:22px;text-align:center;padding:14px">
+        </div>
+        <div style="font-size:12px;color:#5C6270;margin-top:2px">ราคาปัจจุบัน: ฿${fmtMoney(r.price)} · จะถูกดึงอัตโนมัติเมื่อสร้างบิล</div>
+      </form>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="saveQuickPrice()">บันทึก</button>`);
+  }
   if(type==='addRoom'||type==='editRoom'){
     const r=type==='editRoom'?roomOf(data):null;
     return modal('addRoom'===type?'เพิ่มห้อง':'แก้ไขห้อง',`
@@ -1055,7 +1099,7 @@ function renderModal(){
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">ประเภท</label><select name="type" class="input">
-            ${['ห้องเดี่ยว','ห้องคู่','สตูดิโอ'].map(t=>`<option${r?.type===t?' selected':''}>${t}</option>`).join('')}
+            ${['ห้องเดี่ยว','สตูดิโอ'].map(t=>`<option${r?.type===t?' selected':''}>${t}</option>`).join('')}
           </select></div>
           <div class="form-group"><label class="form-label">ขนาด</label><input name="size" class="input" value="${r?.size||'28 ตร.ม.'}"></div>
         </div>
@@ -1148,15 +1192,15 @@ function renderModal(){
           <div class="form-group"><label class="form-label">เลขห้อง</label><input name="roomNumber" id="payRoomNum" class="input" type="number" value="${p?.roomNumber||''}"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">ค่าเช่า (฿)</label><input name="rent" id="payRent" class="input" type="number" value="${p?.rent||3500}"></div>
-          <div class="form-group"><label class="form-label">หน่วยน้ำ (×฿18)</label><input name="waterUnit" class="input" type="number" value="${p?.waterUnit||0}"></div>
+          <div class="form-group"><label class="form-label">ค่าเช่า (฿)</label><input name="rent" id="payRent" class="input" type="number" value="${p?.rent||3500}" oninput="updateBillCalc()"></div>
+          <div class="form-group"><label class="form-label">ค่าน้ำ (฿)</label><input name="waterCost" class="input" type="number" value="${p?waterCost(p):0}" oninput="updateBillCalc()"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">หน่วยไฟ (×฿7)</label><input name="electricUnit" class="input" type="number" value="${p?.electricUnit||0}"></div>
-          <div class="form-group"><label class="form-label">ค่าเน็ต (฿)</label><input name="internet" class="input" type="number" value="${p?.internet||300}"></div>
+          <div class="form-group"><label class="form-label">ค่าไฟ (฿)</label><input name="electricCost" class="input" type="number" value="${p?electricCost(p):0}" oninput="updateBillCalc()"></div>
+          <div class="form-group"><label class="form-label">ค่าเน็ต (฿)</label><input name="internet" class="input" type="number" value="${p?.internet||300}" oninput="updateBillCalc()"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">ค่าอื่นๆ (฿)</label><input name="other" class="input" type="number" value="${p?.other||0}"></div>
+          <div class="form-group"><label class="form-label">ค่าอื่นๆ (฿)</label><input name="other" class="input" type="number" value="${p?.other||0}" oninput="updateBillCalc()"></div>
           <div class="form-group"><label class="form-label">สถานะ</label><select name="status" class="input">
             ${[['unpaid','รอชำระ'],['paid','ชำระแล้ว'],['overdue','เกินกำหนด']].map(([v,l])=>`<option value="${v}"${p?.status===v?' selected':''}>${l}</option>`).join('')}
           </select></div>
@@ -1168,6 +1212,7 @@ function renderModal(){
           </select></div>
         </div>
       </form>
+      <div id="billCalcPreview" style="background:#0E1016;border-radius:10px;padding:12px 14px;margin-top:4px"></div>
     `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="savePayment()">บันทึก</button>`,'modal-lg');
   }
 
@@ -1235,6 +1280,11 @@ function renderModal(){
             <span class="badge ${c.signed?'badge-green':'badge-yellow'}">${c.signed?'เซ็นแล้ว':'รอเซ็น'}</span>
           </div>
         </div>
+        ${c.signed&&c.signature&&c.signature.startsWith('data:image')?`
+        <div style="margin-top:14px;padding:14px;background:#0E1016;border-radius:10px">
+          <div class="detail-key" style="margin-bottom:8px">ลายเซ็นผู้เช่า</div>
+          <img src="${c.signature}" style="width:100%;max-height:110px;object-fit:contain;border-radius:6px;background:#181b23">
+        </div>`:''}
       `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${!c.signed?`<button class="btn btn-primary" onclick="openModal('signContract','${c.id}')">${ico.sign} เซ็นสัญญา</button>`:''}`,
       'modal-lg');
     }
@@ -1281,8 +1331,8 @@ function renderModal(){
         </div>
         <div style="border-top:1px dashed rgba(255,255,255,0.1);padding-top:14px;margin-top:8px">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าเช่า</span><span>฿${fmtMoney(p.rent)}</span></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าน้ำ (${p.waterUnit} หน่วย)</span><span>฿${fmtMoney(p.waterUnit*18)}</span></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าไฟ (${p.electricUnit} หน่วย)</span><span>฿${fmtMoney(p.electricUnit*7)}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าน้ำ</span><span>฿${fmtMoney(waterCost(p))}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าไฟ</span><span>฿${fmtMoney(electricCost(p))}</span></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าอินเทอร์เน็ต</span><span>฿${fmtMoney(p.internet)}</span></div>
           ${p.other?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">อื่นๆ</span><span>฿${fmtMoney(p.other)}</span></div>`:''}
         </div>
@@ -1372,6 +1422,7 @@ function render(){
     if(el){el.focus();try{if(activeStart!==undefined){el.selectionStart=activeStart;el.selectionEnd=activeEnd;}}catch(_){}}
   }
   if(S.modal==='signContract')setTimeout(initSigPad,50);
+  if(S.modal==='addPayment'||S.modal==='editPayment')setTimeout(updateBillCalc,50);
 }
 
 boot();
