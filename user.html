@@ -213,13 +213,18 @@ function pstatus(s){return s==='paid'?'badge-green':'badge-yellow';}
 function pstatusLabel(s){return s==='paid'?'ชำระแล้ว':'รอชำระ';}
 function bstatus(s){return s==='ยืนยันแล้ว'?'badge-green':s==='รอยืนยัน'?'badge-yellow':'badge-gray';}
 function bookingHoldDays(){return +((S.pay&&S.pay.bookingHoldDays)||7);}
+// คืนห้องเป็น "ว่าง" เมื่อการจองถูกยกเลิก (เฉพาะห้องที่ไม่ว่างเพราะการจอง ไม่มีผู้เช่าจริง)
+function freeRoomIfBooked(roomId){
+  const r=roomOf(roomId);
+  if(r&&r.status==='occupied'&&!r.tenantId){r.status='vacant';persistColl('rooms',r);}
+}
 // ยกเลิกการจองอัตโนมัติ ถ้ายัง "รอยืนยัน" เกินจำนวนวันที่กำหนดนับจากวันจอง
 function autoCancelStaleBookings(){
   const now=Date.now(), ms=bookingHoldDays()*86400000;
   (S.bookings||[]).forEach(b=>{
     if(b.status==='รอยืนยัน'&&b.createdAt){
       const t=new Date(b.createdAt).getTime();
-      if(!isNaN(t)&&now-t>ms){b.status='ยกเลิก';b.autoCancelled=true;persistColl('bookings',b);}
+      if(!isNaN(t)&&now-t>ms){b.status='ยกเลิก';b.autoCancelled=true;persistColl('bookings',b);freeRoomIfBooked(b.roomId);}
     }
   });
 }
@@ -424,6 +429,8 @@ function confirmPay(){
       bookerFirstName:payCtx.firstName,bookerLastName:payCtx.lastName,bookerStreet:payCtx.street,bookerDistrict:payCtx.district,bookerProvince:payCtx.province,bookerPostal:payCtx.postal,
       status:'รอยืนยัน',createdAt:today,slip:payCtx.slip,amount:BOOK_DEPOSIT};
     S.bookings.push(bk);persistColl('bookings',bk);
+    // จองแล้วห้องเปลี่ยนเป็น "ไม่ว่าง" ทันที กันคนอื่นจองซ้ำ
+    if(r&&r.status==='vacant'){r.status='occupied';persistColl('rooms',r);}
     pushSlip({roomNumber:r.number,name:payCtx.name||S.auth.name,amount:BOOK_DEPOSIT,slip:payCtx.slip,kind:'จองห้อง',month:''});
     payCtx=null;closeModal();nav('bookings');
   }else{
@@ -436,7 +443,7 @@ function confirmPay(){
 function cancelBooking(id){
   if(!confirm('ยกเลิกการจองนี้?'))return;
   const b=S.bookings.find(x=>x.id===id);
-  if(b){b.status='ยกเลิก';persistColl('bookings',b);}
+  if(b){b.status='ยกเลิก';persistColl('bookings',b);freeRoomIfBooked(b.roomId);}
   render();
 }
 function saveBookingEdit(id){

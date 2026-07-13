@@ -242,17 +242,22 @@ function bstatus(s){return s==='ยืนยันแล้ว'?'badge-green':s=
 function bookName(b){return b.name||b.bookerName||'';}
 function bookPhone(b){return b.phone||b.bookerPhone||'';}
 function bookingHoldDays(){return +((S.pay&&S.pay.bookingHoldDays)||7);}
+// ─── สถานะห้องตามการจอง ───
+function freeRoomIfBooked(roomId){const r=S.rooms.find(x=>x.id===roomId);if(r&&r.status==='occupied'&&!r.tenantId){r.status='vacant';persistColl('rooms',r);}}
+function occupyRoom(roomId){const r=S.rooms.find(x=>x.id===roomId);if(r&&r.status==='vacant'){r.status='occupied';persistColl('rooms',r);}}
 // ยกเลิกการจองอัตโนมัติ ถ้าสถานะยัง "รอยืนยัน" เกินจำนวนวันที่กำหนดนับจากวันจอง
 function autoCancelStaleBookings(){
   const now=Date.now(), ms=bookingHoldDays()*86400000;
   (S.bookings||[]).forEach(b=>{
     if(b.status==='รอยืนยัน'&&b.createdAt){
       const t=new Date(b.createdAt).getTime();
-      if(!isNaN(t)&&now-t>ms){b.status='ยกเลิก';b.autoCancelled=true;persistColl('bookings',b);}
+      if(!isNaN(t)&&now-t>ms){b.status='ยกเลิก';b.autoCancelled=true;persistColl('bookings',b);freeRoomIfBooked(b.roomId);}
     }
   });
 }
-function confirmBookingStay(id){const b=S.bookings.find(x=>x.id===id);if(b){b.status='ยืนยันแล้ว';b.autoCancelled=false;persistColl('bookings',b);}render();}
+function confirmBookingStay(id){const b=S.bookings.find(x=>x.id===id);if(b){b.status='ยืนยันแล้ว';b.autoCancelled=false;occupyRoom(b.roomId);persistColl('bookings',b);}render();}
+// ยกเลิกการจองจากหลังบ้าน → ห้องกลับมาว่าง
+function cancelBookingAdmin(id){const b=S.bookings.find(x=>x.id===id);if(b){b.status='ยกเลิก';persistColl('bookings',b);freeRoomIfBooked(b.roomId);}render();}
 function setHoldDays(v){S.pay.bookingHoldDays=Math.max(1,+v||7);savePay();autoCancelStaleBookings();render();}
 function cstatus(s){return s==='active'?'badge-green':'badge-gray';}
 function fmtMoney(n){return n.toLocaleString('th-TH');}
@@ -396,10 +401,12 @@ function saveBooking(){
   let obj;
   if(f._id){const i=S.bookings.findIndex(b=>b.id===f._id);if(i>=0){S.bookings[i]={...S.bookings[i],...f};obj=S.bookings[i];}}
   else{obj={id:Samrit.newId(),...f,status:f.status||'รอยืนยัน'};S.bookings.push(obj);}
-  if(obj){const rm=roomOf(obj.roomId);if(rm)obj.roomNumber=rm.number;persistColl('bookings',obj);}
+  if(obj){const rm=roomOf(obj.roomId);if(rm)obj.roomNumber=rm.number;persistColl('bookings',obj);
+    if(obj.status==='ยกเลิก')freeRoomIfBooked(obj.roomId); else occupyRoom(obj.roomId);
+  }
   closeModal();
 }
-function deleteBooking(id){if(confirm('ลบการจองนี้?')){S.bookings=S.bookings.filter(b=>b.id!==id);persistRemove('bookings',id);render();}}
+function deleteBooking(id){if(confirm('ลบการจองนี้?')){const b=S.bookings.find(x=>x.id===id);S.bookings=S.bookings.filter(x=>x.id!==id);persistRemove('bookings',id);if(b&&b.status!=='ยกเลิก')freeRoomIfBooked(b.roomId);render();}}
 function savePayment(){
   const f=getFormVals('paymentForm');
   const p={...f,rent:+f.rent,waterCost:+f.waterCost,electricCost:+f.electricCost,internet:+f.internet,other:+(f.other||0),roomNumber:+f.roomNumber,userId:f.userId||''};
@@ -895,6 +902,7 @@ function renderBookings(){
           <td>
             <div style="display:flex;gap:4px">
               ${b.status==='รอยืนยัน'?`<button class="btn btn-sm btn-primary" onclick="confirmBookingStay('${b.id}')" title="ยืนยันเข้าพัก">ยืนยัน</button>`:''}
+              ${b.status!=='ยกเลิก'?`<button class="btn btn-sm btn-ghost" onclick="cancelBookingAdmin('${b.id}')" title="ยกเลิกการจอง (คืนห้องเป็นว่าง)" style="color:#F0A952">ยกเลิก</button>`:''}
               <button class="btn btn-icon btn-ghost" onclick="openModal('editBooking','${b.id}')" title="แก้ไข">${ico.edit}</button>
               <button class="btn btn-icon btn-danger" onclick="deleteBooking('${b.id}')" title="ลบ">${ico.trash}</button>
             </div>
