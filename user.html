@@ -933,6 +933,9 @@ function render(){
 
   document.getElementById('app').innerHTML=`${renderTopNav()}<div>${content}</div>${renderModal()}`;
 
+  // ปิด autocomplete/autofill ของเบราว์เซอร์ (กล่องแนะนำสีขาว) ทุกช่องกรอก
+  document.querySelectorAll('#app input').forEach(i=>{i.setAttribute('autocomplete','off');i.setAttribute('autocorrect','off');i.setAttribute('spellcheck','false');});
+
   if(activeId){
     const el=document.getElementById(activeId);
     if(el){el.focus();try{if(activeStart!==undefined){el.selectionStart=activeStart;el.selectionEnd=activeEnd;}}catch(_){}}

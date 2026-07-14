@@ -421,6 +421,15 @@ function saveTenant(){
   closeModal();
 }
 function deleteTenant(id){if(confirm('ลบผู้เช่านี้?')){S.tenants=S.tenants.filter(t=>t.id!==id);persistRemove('tenants',id);render();}}
+// ย้ายออก → คืนห้องเป็นว่าง แล้วเอาผู้เช่าออกจากรายการ
+function checkoutTenant(id){
+  const t=S.tenants.find(x=>x.id===id);
+  if(!t)return;
+  if(!confirm(`ยืนยันให้ "${t.name}" ย้ายออก? ห้องจะกลับเป็นว่าง`))return;
+  if(t.roomId){const r=S.rooms.find(x=>x.id===t.roomId);if(r){r.tenantId=null;r.status='vacant';persistColl('rooms',r);}}
+  S.tenants=S.tenants.filter(x=>x.id!==id);persistRemove('tenants',id);
+  render();
+}
 function saveBooking(){
   const f=getFormVals('bookingForm');
   let obj;
@@ -886,6 +895,7 @@ function renderTenants(){
           <td>
             <div style="display:flex;gap:4px">
               ${!checkedIn?`<button class="btn btn-sm btn-primary" onclick="confirmTenantCheckin('${t.id}')" title="ยืนยันเข้าพัก">ยืนยันเข้าพัก</button>`:''}
+              ${t.roomId?`<button class="btn btn-sm btn-ghost" onclick="checkoutTenant('${t.id}')" title="ย้ายออก (คืนห้องเป็นว่าง)" style="color:#F0A952">ย้ายออก</button>`:''}
               <button class="btn btn-icon btn-ghost" onclick="openModal('editTenant','${t.id}')" title="แก้ไข">${ico.edit}</button>
               <button class="btn btn-icon btn-danger" onclick="deleteTenant('${t.id}')" title="ลบ">${ico.trash}</button>
             </div>
