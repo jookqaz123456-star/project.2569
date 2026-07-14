@@ -790,25 +790,34 @@ function renderModal(){
         <div style="font-size:12px;color:#5C6270;margin-bottom:8px">สิ่งอำนวยความสะดวก</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">${r.facilities.map(f=>`<span class="fac-tag" style="font-size:12px;padding:4px 10px">${f}</span>`).join('')}</div>
       </div>
-      ${r.status==='vacant'?`
-      <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:16px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="form-group"><label class="form-label">ชื่อ<span style="color:#F87171">*</span></label><input id="bookFirstName" class="input" placeholder="ชื่อจริง"></div>
-          <div class="form-group"><label class="form-label">นามสกุล<span style="color:#F87171">*</span></label><input id="bookLastName" class="input" placeholder="นามสกุล"></div>
-        </div>
-        <div class="form-group"><label class="form-label">ถนน<span style="color:#F87171">*</span></label><input id="bookStreet" class="input" placeholder="บ้านเลขที่ / ถนน / ซอย"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="form-group"><label class="form-label">รหัสไปรษณีย์<span style="color:#F87171">*</span></label><input id="bookPostal" class="input" type="text" inputmode="numeric" maxlength="5" placeholder="เช่น 10250"></div>
-          <div class="form-group"><label class="form-label">อำเภอ/เขต<span style="color:#F87171">*</span></label><input id="bookDistrict" class="input" placeholder="อำเภอ หรือ เขต"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div class="form-group"><label class="form-label">จังหวัด<span style="color:#F87171">*</span></label><select id="bookProvince" class="input">${THAI_PROVINCES.map(p=>`<option${p==='กรุงเทพมหานคร'?' selected':''}>${p}</option>`).join('')}</select></div>
-          <div class="form-group"><label class="form-label">โทรศัพท์<span style="color:#F87171">*</span></label><input id="bookPhone" class="input" type="tel" inputmode="numeric" maxlength="10" placeholder="เบอร์ติดต่อ"></div>
-        </div>
-        <div class="form-group"><label class="form-label">วันที่ต้องการเข้าพัก<span style="color:#F87171">*</span></label><input id="bookDate" class="input" type="date" value="${new Date(Date.now()+86400000*7).toISOString().slice(0,10)}"></div>
-        <div style="font-size:12px;color:#5C6270">ค่าจอง ฿${fmtMoney(BOOK_DEPOSIT)} (หักจากค่าเช่าเดือนแรก)</div>
-      </div>`:''}
-    `,r.status==='vacant'?`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" onclick="startBookingPay('${r.id}')">จองห้องนี้</button>`:`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" style="opacity:.4;cursor:not-allowed">ห้องนี้ไม่ว่าง</button>`);
+      ${r.status==='vacant'?`<div style="font-size:12px;color:#5C6270;border-top:1px solid rgba(255,255,255,0.07);padding-top:14px">💜 ห้องนี้ว่าง — กด "จองห้องนี้" เพื่อกรอกข้อมูลและชำระค่าจอง ฿${fmtMoney(BOOK_DEPOSIT)}</div>`:''}
+    `,r.status==='vacant'?`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" onclick="openModal('bookingForm','${r.id}')">จองห้องนี้</button>`:`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" style="opacity:.4;cursor:not-allowed">ห้องนี้ไม่ว่าง</button>`);
+  }
+
+  if(type==='bookingForm'){
+    const r=S.rooms.find(x=>x.id===data);
+    if(!r)return'';
+    return modal(`จองห้อง ${String(r.number).padStart(2,'0')} — กรอกข้อมูลผู้จอง`,`
+      <div style="margin-bottom:14px;padding:10px 12px;background:#0E1016;border-radius:10px;display:flex;justify-content:space-between;font-size:13px">
+        <span style="color:#6B7180">ห้อง ${String(r.number).padStart(2,'0')} · ชั้น ${r.floor} · ${r.type}</span>
+        <span style="color:#A990FF;font-weight:700">฿${fmtMoney(r.price)}/เดือน</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">ชื่อ<span style="color:#F87171">*</span></label><input id="bookFirstName" class="input" placeholder="ชื่อจริง"></div>
+        <div class="form-group"><label class="form-label">นามสกุล<span style="color:#F87171">*</span></label><input id="bookLastName" class="input" placeholder="นามสกุล"></div>
+      </div>
+      <div class="form-group"><label class="form-label">ถนน<span style="color:#F87171">*</span></label><input id="bookStreet" class="input" placeholder="บ้านเลขที่ / ถนน / ซอย"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">รหัสไปรษณีย์<span style="color:#F87171">*</span></label><input id="bookPostal" class="input" type="text" inputmode="numeric" maxlength="5" placeholder="เช่น 10250"></div>
+        <div class="form-group"><label class="form-label">อำเภอ/เขต<span style="color:#F87171">*</span></label><input id="bookDistrict" class="input" placeholder="อำเภอ หรือ เขต"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">จังหวัด<span style="color:#F87171">*</span></label><select id="bookProvince" class="input">${THAI_PROVINCES.map(p=>`<option${p==='กรุงเทพมหานคร'?' selected':''}>${p}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">โทรศัพท์<span style="color:#F87171">*</span></label><input id="bookPhone" class="input" type="tel" inputmode="numeric" maxlength="10" placeholder="เบอร์ติดต่อ"></div>
+      </div>
+      <div class="form-group"><label class="form-label">วันที่ต้องการเข้าพัก<span style="color:#F87171">*</span></label><input id="bookDate" class="input" type="date" value="${new Date(Date.now()+86400000*7).toISOString().slice(0,10)}"></div>
+      <div style="font-size:12px;color:#5C6270">ค่าจอง ฿${fmtMoney(BOOK_DEPOSIT)} (หักจากค่าเช่าเดือนแรก)</div>
+    `,`<button class="btn btn-ghost" onclick="openModal('roomDetail','${r.id}')">ย้อนกลับ</button><button class="btn btn-primary" onclick="startBookingPay('${r.id}')">ดำเนินการชำระเงิน →</button>`);
   }
 
   if(type==='editBooking'){

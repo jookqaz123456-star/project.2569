@@ -901,6 +901,7 @@ function renderBookings(){
           <td><span class="badge ${bstatus(b.status)}">${b.status}</span>${b.autoCancelled?`<div style="font-size:10px;color:#F87171">ยกเลิกอัตโนมัติ</div>`:''}</td>
           <td>
             <div style="display:flex;gap:4px">
+              <button class="btn btn-sm btn-ghost" onclick="openModal('viewBooking','${b.id}')" title="ดูรายละเอียด">${ico.eye} ดู</button>
               ${b.status==='รอยืนยัน'?`<button class="btn btn-sm btn-primary" onclick="confirmBookingStay('${b.id}')" title="ยืนยันเข้าพัก">ยืนยัน</button>`:''}
               ${b.status!=='ยกเลิก'?`<button class="btn btn-sm btn-ghost" onclick="cancelBookingAdmin('${b.id}')" title="ยกเลิกการจอง (คืนห้องเป็นว่าง)" style="color:#F0A952">ยกเลิก</button>`:''}
               <button class="btn btn-icon btn-ghost" onclick="openModal('editBooking','${b.id}')" title="แก้ไข">${ico.edit}</button>
@@ -1176,6 +1177,29 @@ function renderModal(){
     `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="saveTenant()">บันทึก</button>`);
   }
 
+  if(type==='viewBooking'){
+    const b=S.bookings.find(x=>x.id===data);
+    if(!b)return'';
+    const r=b.roomId?roomOf(b.roomId):null;
+    const rows=[
+      ['ชื่อผู้จอง',bookName(b)||'-'],
+      ['โทรศัพท์',bookPhone(b)||'-'],
+      ['ห้องที่จอง',r?`ห้อง ${r.number} ชั้น ${r.floor} · ${r.type}`:'-'],
+      ['วันที่ต้องการเข้าพัก',fmtDate(b.date)],
+      ['วันที่จอง',fmtDate(b.createdAt)||'-'],
+      ['ที่อยู่',b.bookerAddress||'-'],
+      ['จังหวัด',b.bookerProvince||'-'],
+      ['รหัสไปรษณีย์',b.bookerPostal||'-'],
+      ['ค่าจอง',`฿${fmtMoney(b.amount||0)}`],
+    ];
+    return modal('รายละเอียดการจอง',`
+      <div style="display:grid;gap:9px">
+        <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#0E1016;border-radius:10px"><span style="color:#6B7180;font-size:13px">สถานะ</span><span class="badge ${bstatus(b.status)}">${b.status}</span></div>
+        ${rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;background:#0E1016;border-radius:10px"><span style="color:#6B7180;font-size:13px;white-space:nowrap">${k}</span><span style="font-weight:600;text-align:right">${v}</span></div>`).join('')}
+        ${b.slip?`<div style="padding:10px 12px;background:#0E1016;border-radius:10px"><div style="color:#6B7180;font-size:13px;margin-bottom:8px">สลิปค่าจอง</div><img src="${b.slip}" style="max-width:100%;max-height:44vh;border-radius:8px;display:block;margin:0 auto"></div>`:''}
+      </div>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${b.status==='รอยืนยัน'?`<button class="btn btn-primary" onclick="confirmBookingStay('${b.id}');closeModal()">${ico.check||''} ยืนยันเข้าพัก</button>`:''}`,'modal-lg');
+  }
   if(type==='addBooking'||type==='editBooking'){
     const b=type==='editBooking'?S.bookings.find(x=>x.id===data):null;
     return modal(b?'แก้ไขการจอง':'เพิ่มการจอง',`
