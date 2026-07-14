@@ -251,11 +251,15 @@ function autoCancelStaleBookings(){
   (S.bookings||[]).forEach(b=>{
     if(b.status==='รอยืนยัน'&&b.createdAt){
       const t=new Date(b.createdAt).getTime();
-      if(!isNaN(t)&&now-t>ms){b.status='ยกเลิก';b.autoCancelled=true;persistColl('bookings',b);freeRoomIfBooked(b.roomId);}
+      if(!isNaN(t)&&now-t>ms){b.status='ยกเลิก';b.autoCancelled=true;persistColl('bookings',b);freeRoomIfBooked(b.roomId);
+        const tn=(S.tenants||[]).find(x=>x.fromBooking===b.id&&x.checkinStatus!=='เข้าพักแล้ว');
+        if(tn){S.tenants=S.tenants.filter(x=>x.id!==tn.id);persistRemove('tenants',tn.id);}
+      }
     }
   });
 }
-function confirmBookingStay(id){const b=S.bookings.find(x=>x.id===id);if(b){b.status='ยืนยันแล้ว';b.autoCancelled=false;occupyRoom(b.roomId);persistColl('bookings',b);createTenantFromBooking(b);}render();}
+// ปุ่ม "ยืนยัน" ในหน้าการจอง = ส่งข้อมูลไปสร้างผู้เช่า (ยังไม่หยุดนับถอยหลัง — รอกด "ยืนยันเข้าพัก")
+function confirmBookingStay(id){const b=S.bookings.find(x=>x.id===id);if(b){b.sentToTenant=true;occupyRoom(b.roomId);persistColl('bookings',b);createTenantFromBooking(b);}render();}
 // ยืนยันการจอง → สร้างข้อมูลผู้เช่าจากที่ผู้จองกรอก แล้วผูกกับห้อง
 function createTenantFromBooking(b){
   if(!b)return;
@@ -268,7 +272,15 @@ function createTenantFromBooking(b){
   S.tenants.push(tenant);persistColl('tenants',tenant);
   if(r){r.tenantId=tenant.id;persistColl('rooms',r);}
 }
-function confirmTenantCheckin(id){const t=S.tenants.find(x=>x.id===id);if(t){t.checkinStatus='เข้าพักแล้ว';persistColl('tenants',t);}render();}
+function confirmTenantCheckin(id){
+  const t=S.tenants.find(x=>x.id===id);
+  if(t){
+    t.checkinStatus='เข้าพักแล้ว';persistColl('tenants',t);
+    // ยืนยันเข้าพัก → การจองที่ผูกกันถือว่ายืนยันแล้ว หยุดระบบยกเลิกอัตโนมัติ (นับถอยหลัง)
+    if(t.fromBooking){const b=S.bookings.find(x=>x.id===t.fromBooking);if(b&&b.status==='รอยืนยัน'){b.status='ยืนยันแล้ว';b.autoCancelled=false;persistColl('bookings',b);}}
+  }
+  render();
+}
 // ยกเลิกการจองจากหลังบ้าน → ห้องกลับมาว่าง
 function cancelBookingAdmin(id){const b=S.bookings.find(x=>x.id===id);if(b){b.status='ยกเลิก';persistColl('bookings',b);freeRoomIfBooked(b.roomId);}render();}
 function setHoldDays(v){S.pay.bookingHoldDays=Math.max(1,+v||7);savePay();autoCancelStaleBookings();render();}
@@ -914,7 +926,8 @@ function renderBookings(){
           <td>
             <div style="display:flex;gap:4px">
               <button class="btn btn-sm btn-ghost" onclick="openModal('viewBooking','${b.id}')" title="ดูรายละเอียด">${ico.eye} ดู</button>
-              ${b.status==='รอยืนยัน'?`<button class="btn btn-sm btn-primary" onclick="confirmBookingStay('${b.id}')" title="ยืนยันเข้าพัก">ยืนยัน</button>`:''}
+              ${b.status==='รอยืนยัน'&&!b.sentToTenant?`<button class="btn btn-sm btn-primary" onclick="confirmBookingStay('${b.id}')" title="ยืนยันการจอง → ส่งไปหน้าผู้เช่า">ยืนยัน</button>`:''}
+              ${b.sentToTenant&&b.status==='รอยืนยัน'?`<span style="font-size:11px;color:#34D399;align-self:center">✓ ส่งผู้เช่าแล้ว</span>`:''}
               ${b.status!=='ยกเลิก'?`<button class="btn btn-sm btn-ghost" onclick="cancelBookingAdmin('${b.id}')" title="ยกเลิกการจอง (คืนห้องเป็นว่าง)" style="color:#F0A952">ยกเลิก</button>`:''}
               <button class="btn btn-icon btn-ghost" onclick="openModal('editBooking','${b.id}')" title="แก้ไข">${ico.edit}</button>
               <button class="btn btn-icon btn-danger" onclick="deleteBooking('${b.id}')" title="ลบ">${ico.trash}</button>
