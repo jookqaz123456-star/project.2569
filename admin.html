@@ -255,7 +255,20 @@ function autoCancelStaleBookings(){
     }
   });
 }
-function confirmBookingStay(id){const b=S.bookings.find(x=>x.id===id);if(b){b.status='ยืนยันแล้ว';b.autoCancelled=false;occupyRoom(b.roomId);persistColl('bookings',b);}render();}
+function confirmBookingStay(id){const b=S.bookings.find(x=>x.id===id);if(b){b.status='ยืนยันแล้ว';b.autoCancelled=false;occupyRoom(b.roomId);persistColl('bookings',b);createTenantFromBooking(b);}render();}
+// ยืนยันการจอง → สร้างข้อมูลผู้เช่าจากที่ผู้จองกรอก แล้วผูกกับห้อง
+function createTenantFromBooking(b){
+  if(!b)return;
+  if((S.tenants||[]).some(t=>t.fromBooking===b.id))return; // กันซ้ำ
+  const r=b.roomId?roomOf(b.roomId):null;
+  const tenant={id:Samrit.newId(),name:bookName(b)||'-',phone:bookPhone(b)||'',
+    address:b.bookerAddress||'',province:b.bookerProvince||'',postal:b.bookerPostal||'',
+    roomId:b.roomId||null,checkin:b.date||new Date().toISOString().slice(0,10),checkout:'',
+    checkinStatus:'รอเข้าพัก',fromBooking:b.id};
+  S.tenants.push(tenant);persistColl('tenants',tenant);
+  if(r){r.tenantId=tenant.id;persistColl('rooms',r);}
+}
+function confirmTenantCheckin(id){const t=S.tenants.find(x=>x.id===id);if(t){t.checkinStatus='เข้าพักแล้ว';persistColl('tenants',t);}render();}
 // ยกเลิกการจองจากหลังบ้าน → ห้องกลับมาว่าง
 function cancelBookingAdmin(id){const b=S.bookings.find(x=>x.id===id);if(b){b.status='ยกเลิก';persistColl('bookings',b);freeRoomIfBooked(b.roomId);}render();}
 function setHoldDays(v){S.pay.bookingHoldDays=Math.max(1,+v||7);savePay();autoCancelStaleBookings();render();}
@@ -388,7 +401,7 @@ function saveRoom(){
 function deleteRoom(id){if(confirm('ลบห้องนี้?')){S.rooms=S.rooms.filter(r=>r.id!==id);persistRemove('rooms',id);render();}}
 function saveTenant(){
   const f=getFormVals('tenantForm');
-  const t={...f,deposit:+f.deposit};
+  const t={...f};
   let obj;
   if(f._id){const i=S.tenants.findIndex(x=>x.id===f._id);if(i>=0){S.tenants[i]={...S.tenants[i],...t};obj=S.tenants[i];}}
   else{obj={id:Samrit.newId(),...t};S.tenants.push(obj);}
@@ -763,8 +776,6 @@ function renderRoomDetail(){
         <div class="detail-grid">
           <div><div class="detail-key">ชื่อ-สกุล</div><div class="detail-val">${t.name}</div></div>
           <div><div class="detail-key">โทรศัพท์</div><div class="detail-val">${t.phone}</div></div>
-          <div><div class="detail-key">บัตรประชาชน</div><div class="detail-val" style="font-size:12px">${t.idcard}</div></div>
-          <div><div class="detail-key">เงินประกัน</div><div class="detail-val">฿${fmtMoney(t.deposit)}</div></div>
           <div><div class="detail-key">วันเข้าพัก</div><div class="detail-val">${fmtDate(t.checkin)}</div></div>
           <div><div class="detail-key">วันออก</div><div class="detail-val">${fmtDate(t.checkout)}</div></div>
         </div>`:
@@ -849,19 +860,20 @@ function renderTenants(){
       <button class="btn btn-primary" onclick="openModal('addTenant')">${ico.plus} เพิ่มผู้เช่า</button>
     </div>
     <div class="card"><div class="table-wrap"><table>
-      <tr><th>ชื่อ-สกุล</th><th>โทรศัพท์</th><th>บัตรประชาชน</th><th>ห้อง</th><th>เข้าพัก</th><th>วันออก</th><th>เงินประกัน</th><th></th></tr>
+      <tr><th>ชื่อ-สกุล</th><th>โทรศัพท์</th><th>ห้อง</th><th>เข้าพัก</th><th>วันออก</th><th>สถานะ</th><th></th></tr>
       ${rows.map(t=>{
         const r=t.roomId?roomOf(t.roomId):null;
+        const checkedIn=t.checkinStatus?t.checkinStatus==='เข้าพักแล้ว':!!t.checkin;
         return`<tr>
           <td style="font-weight:600">${t.name}</td>
           <td>${t.phone}</td>
-          <td style="font-size:12px;font-family:'JetBrains Mono',monospace">${t.idcard}</td>
           <td>${r?`<span class="badge badge-purple">ห้อง ${r.number}</span>`:'-'}</td>
           <td>${fmtDate(t.checkin)||'-'}</td>
           <td>${fmtDate(t.checkout)||'-'}</td>
-          <td>฿${fmtMoney(t.deposit)}</td>
+          <td><span class="badge ${checkedIn?'badge-green':'badge-yellow'}">${checkedIn?'เข้าพักแล้ว':'รอเข้าพัก'}</span></td>
           <td>
             <div style="display:flex;gap:4px">
+              ${!checkedIn?`<button class="btn btn-sm btn-primary" onclick="confirmTenantCheckin('${t.id}')" title="ยืนยันเข้าพัก">ยืนยันเข้าพัก</button>`:''}
               <button class="btn btn-icon btn-ghost" onclick="openModal('editTenant','${t.id}')" title="แก้ไข">${ico.edit}</button>
               <button class="btn btn-icon btn-danger" onclick="deleteTenant('${t.id}')" title="ลบ">${ico.trash}</button>
             </div>
@@ -1161,14 +1173,10 @@ function renderModal(){
           <div class="form-group"><label class="form-label">ชื่อ-สกุล</label><input name="name" class="input" value="${t?.name||''}" required></div>
           <div class="form-group"><label class="form-label">โทรศัพท์</label><input name="phone" class="input" value="${t?.phone||''}"></div>
         </div>
-        <div class="form-group"><label class="form-label">บัตรประชาชน</label><input name="idcard" class="input" value="${t?.idcard||''}" placeholder="x-xxxx-xxxxx-xx-x"></div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">ห้องพัก</label><select name="roomId" class="input">
-            <option value="">-- ไม่มีห้อง --</option>
-            ${S.rooms.map(r=>`<option value="${r.id}"${t?.roomId===r.id?' selected':''}>ห้อง ${r.number} ชั้น ${r.floor}</option>`).join('')}
-          </select></div>
-          <div class="form-group"><label class="form-label">เงินประกัน (฿)</label><input name="deposit" class="input" type="number" value="${t?.deposit||0}"></div>
-        </div>
+        <div class="form-group"><label class="form-label">ห้องพัก</label><select name="roomId" class="input">
+          <option value="">-- ไม่มีห้อง --</option>
+          ${S.rooms.map(r=>`<option value="${r.id}"${t?.roomId===r.id?' selected':''}>ห้อง ${r.number} ชั้น ${r.floor}</option>`).join('')}
+        </select></div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">วันเข้าพัก</label><input name="checkin" class="input" type="date" value="${t?.checkin||''}"></div>
           <div class="form-group"><label class="form-label">วันออก</label><input name="checkout" class="input" type="date" value="${t?.checkout||''}"></div>
@@ -1262,7 +1270,7 @@ function renderModal(){
         <div class="form-row">
           <div class="form-group"><label class="form-label">วันชำระ</label><input name="date" class="input" type="date" value="${p?.date||''}"></div>
           <div class="form-group"><label class="form-label">วิธีชำระ</label><select name="method" class="input">
-            ${['','เงินสด','โอนเงิน','บัตรเครดิต'].map(m=>`<option${p?.method===m?' selected':''}>${m}</option>`).join('')}
+            ${['','เงินสด','โอนเงิน'].map(m=>`<option${p?.method===m?' selected':''}>${m}</option>`).join('')}
           </select></div>
         </div>
       </form>
