@@ -234,6 +234,12 @@ function eRate(){return +(S.pay&&S.pay.electricRate!=null?S.pay.electricRate:7);
 function waterCost(p){return p.waterCost!=null?+p.waterCost:(+p.waterUnit||0)*wRate();}
 function electricCost(p){return p.electricCost!=null?+p.electricCost:(+p.electricUnit||0)*eRate();}
 function payTotal(p){return p.rent + waterCost(p) + electricCost(p) + p.internet + (p.other||0);}
+// เรียงบิลจากใหม่สุด → เก่าสุด (เดือนล่าสุดก่อน, แล้ววันที่, แล้วลำดับที่สร้าง)
+function sortBillsDesc(arr){return (arr||[]).slice().sort((a,b)=>{
+  const m=(b.month||'').localeCompare(a.month||'');if(m)return m;
+  const d=(b.date||'').localeCompare(a.date||'');if(d)return d;
+  return String(b.id||'').localeCompare(String(a.id||''));
+});}
 function rstatus(s){return s==='vacant'?'badge-green':s==='occupied'?'badge-red':'badge-yellow';}
 function rstatusLabel(s){return s==='vacant'?'ว่าง':s==='occupied'?'ไม่ว่าง':'ซ่อม';}
 function pstatus(s){return s==='paid'?'badge-green':s==='unpaid'?'badge-yellow':'badge-red';}
@@ -682,7 +688,7 @@ function renderDashboard(){
       </div>
       <div class="table-wrap"><table>
         <tr><th>ห้อง</th><th>ผู้เช่า</th><th>เดือน</th><th>รวม</th><th>สถานะ</th></tr>
-        ${S.payments.slice(0,5).map(p=>`<tr>
+        ${sortBillsDesc(S.payments).slice(0,5).map(p=>`<tr>
           <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">0${p.roomNumber}</span></td>
           <td>${p.tenantName}</td>
           <td>${p.month}</td>
@@ -985,7 +991,7 @@ function renderContracts(){
 // ─── Payments CRUD ───────────────────────────────────────────
 function renderPayments(){
   const q=S.search.toLowerCase();
-  const rows=S.payments.filter(p=>!q||p.tenantName.toLowerCase().includes(q)||String(p.roomNumber).includes(q));
+  const rows=sortBillsDesc(S.payments.filter(p=>!q||p.tenantName.toLowerCase().includes(q)||String(p.roomNumber).includes(q)));
   const totalPaid=rows.filter(p=>p.status==='paid').reduce((s,p)=>s+payTotal(p),0);
   const totalUnpaid=rows.filter(p=>p.status!=='paid').reduce((s,p)=>s+payTotal(p),0);
   return`
@@ -1027,10 +1033,12 @@ function renderPayments(){
 }
 
 // ─── Users CRUD ──────────────────────────────────────────────
+function roleLabel(r){return r==='admin'?'แอดมิน':r==='resident'?'ผู้พักอาศัย':'พนักงาน';}
+function roleBadge(r){return r==='admin'?'badge-purple':r==='resident'?'badge-green':'badge-blue';}
 function renderUsers(){
   const q=S.search.toLowerCase();
-  // Staff/permissions screen — residents are managed via the portal, not here.
-  const rows=S.users.filter(u=>(u.urole||u.role)!=='resident').filter(u=>!q||u.name.toLowerCase().includes(q)||u.username.includes(q));
+  // แสดงทั้งพนักงานและผู้พักอาศัยที่สมัครสมาชิกผ่านพอร์ทัล
+  const rows=(S.users||[]).filter(u=>!q||(u.name||'').toLowerCase().includes(q)||(u.username||'').includes(q));
   return`
   <div class="topbar"><div class="topbar-title">จัดการผู้ใช้และสิทธิ์</div></div>
   <div class="page">
@@ -1042,14 +1050,13 @@ function renderUsers(){
     </div>
     <div class="card"><div class="table-wrap"><table>
       <tr><th>ชื่อ</th><th>Username</th><th>บทบาท</th><th>สิทธิ์</th><th>สถานะ</th><th></th></tr>
-      ${rows.map(u=>`<tr>
+      ${rows.map(u=>{const ro=u.urole||u.role||'staff';return`<tr>
         <td style="font-weight:600">${u.name}</td>
         <td style="font-family:'JetBrains Mono',monospace;font-size:12.5px">${u.username}</td>
-        <td><span class="badge ${u.urole==='admin'?'badge-purple':'badge-blue'}">${u.urole==='admin'?'แอดมิน':'พนักงาน'}</span></td>
+        <td><span class="badge ${roleBadge(ro)}">${roleLabel(ro)}</span></td>
         <td>
           <div style="display:flex;flex-wrap:wrap;gap:4px">
-            ${u.perms.slice(0,3).map(p=>`<span class="badge badge-gray" style="font-size:10px">${p}</span>`).join('')}
-            ${u.perms.length>3?`<span class="badge badge-gray" style="font-size:10px">+${u.perms.length-3}</span>`:''}
+            ${ro==='resident'?`<span style="color:#5C6270;font-size:12px">—</span>`:`${(u.perms||[]).slice(0,3).map(p=>`<span class="badge badge-gray" style="font-size:10px">${p}</span>`).join('')}${(u.perms||[]).length>3?`<span class="badge badge-gray" style="font-size:10px">+${u.perms.length-3}</span>`:''}`}
           </div>
         </td>
         <td><span class="badge ${u.active?'badge-green':'badge-gray'}">${u.active?'ใช้งาน':'ปิด'}</span></td>
@@ -1059,7 +1066,7 @@ function renderUsers(){
             <button class="btn btn-icon btn-danger" onclick="deleteUser('${u.id}')" title="ลบ">${ico.trash}</button>
           </div>
         </td>
-      </tr>`).join('')}
+      </tr>`;}).join('')}
     </table></div></div>
   </div>`;
 }
@@ -1313,11 +1320,16 @@ function renderModal(){
         <div class="form-row">
           <div class="form-group"><label class="form-label">รหัสผ่าน</label><input name="password" class="input" type="password" placeholder="${u?'ไม่เปลี่ยนหากว่าง':'รหัสผ่าน'}"></div>
           <div class="form-group"><label class="form-label">บทบาท</label><select name="urole" class="input">
-            <option value="admin"${u?.urole==='admin'?' selected':''}>แอดมิน</option>
-            <option value="staff"${u?.urole==='staff'?' selected':''}>พนักงาน</option>
+            <option value="admin"${(u?.urole||u?.role)==='admin'?' selected':''}>แอดมิน</option>
+            <option value="staff"${(u?.urole||u?.role)==='staff'?' selected':''}>พนักงาน</option>
+            <option value="resident"${(u?.urole||u?.role)==='resident'?' selected':''}>ผู้พักอาศัย</option>
           </select></div>
         </div>
-        <div class="form-group">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">อีเมล</label><input name="email" class="input" value="${u?.email||''}"></div>
+          <div class="form-group"><label class="form-label">โทรศัพท์</label><input name="phone" class="input" value="${u?.phone||''}"></div>
+        </div>
+        <div class="form-group" ${(u?.urole||u?.role)==='resident'?'style="display:none"':''}>
           <label class="form-label">สิทธิ์การใช้งาน</label>
           <div class="perm-grid">
             ${PERM_LIST.map((p,i)=>`<label class="perm-item"><input type="checkbox" id="perm_${i}" ${u?.perms?.includes(p)?'checked':''}>${p}</label>`).join('')}

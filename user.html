@@ -233,7 +233,10 @@ function fmtDate(d){if(!d)return'ปัจจุบัน';const dt=new Date(d);
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
 function roomOf(id){return S.rooms.find(r=>r.id===id);}
 function myBookings(){return S.bookings.filter(b=>b.userId===S.auth?.id);}
-function myBills(){return S.bills.filter(b=>b.userId===S.auth?.id);}
+function myBills(){return S.bills.filter(b=>b.userId===S.auth?.id).slice().sort((a,b)=>{
+  const m=(b.month||'').localeCompare(a.month||'');if(m)return m;
+  return (b.date||'').localeCompare(a.date||'');
+});}
 function myStays(){return S.stays.filter(b=>b.userId===S.auth?.id);}
 function myRepairs(){return S.repairs.filter(b=>b.userId===S.auth?.id);}
 
