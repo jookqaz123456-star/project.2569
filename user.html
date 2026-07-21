@@ -755,17 +755,12 @@ function openRoomPhotoFull(roomId,start){
 
 // ─── สัญญาเช่า (สร้างเอกสาร → ดาวน์โหลดไปเซ็น → อัปโหลดกลับ) ──
 function cf(){
-  if(!S.cform){
-    let saved=null;try{saved=JSON.parse(localStorage.getItem('samrit_cform'));}catch(_){}
-    const bk=(myBookings()[0])||{};
-    S.cform=saved||{place:'',cdate:'',lessor:'นายสมฤทธิ์ ศรีสว่าง',lessee:S.auth?.name||'',
-      addrNo:'',village:'',road:bk.bookerStreet||'',subdistrict:'',district:bk.bookerDistrict||'',province:bk.bookerProvince||'',phone:bk.bookerPhone||bk.phone||'',
-      roomNo:bk.roomNumber||'',floor:'',rent:'',advMonths:'1',payDay:'5',discHalf:'6',photoCount:'1'};
-  }
+  // เริ่มว่างเสมอเมื่อเปิดใหม่ (ไม่จำข้อมูลเก่า)
+  if(!S.cform){S.cform={place:'',cdate:'',lessor:'',lessee:'',addrNo:'',village:'',road:'',subdistrict:'',district:'',province:'',phone:'',roomNo:'',floor:'',rent:'',advMonths:'',payDay:'',discHalf:'',photoCount:''};}
   return S.cform;
 }
 function updateContractPreview(){const el=document.getElementById('contractPreview');if(el)el.innerHTML=contractDocHTML(cf());}
-function setCF(k,v){cf();S.cform[k]=v;try{localStorage.setItem('samrit_cform',JSON.stringify(S.cform));}catch(_){}updateContractPreview();}
+function setCF(k,v){cf();S.cform[k]=v;updateContractPreview();}
 function ub(v){return `<u>&nbsp;${(v===0||v)?String(v):'……………'}&nbsp;</u>`;}
 function contractDocHTML(f){
   const d=f.cdate?new Date(f.cdate):null;
@@ -799,22 +794,27 @@ function contractDocHTML(f){
     </tr></table>
   </div>`;
 }
-// PDF ที่รูปแบบสวยเหมือนตัวอย่าง — เปิดหน้าพิมพ์ให้เลือก "บันทึกเป็น PDF"
-function contractPrintDoc(f){
-  return `<html><head><meta charset="utf-8"><title>สัญญาเช่าห้องพัก</title>`+
-    `<style>@page{size:A4;margin:2cm}html,body{margin:0}body{font-family:'Sarabun','TH Sarabun New',sans-serif;color:#000;background:#fff;padding:0}#c{max-width:760px;margin:0 auto}u{text-decoration:underline}</style></head>`+
-    `<body><div id="c">${contractDocHTML(f)}</div></body></html>`;
+// โหลดตัวสร้าง PDF เมื่อจำเป็น (ไฟล์ใหญ่ โหลดครั้งเดียวตอนกดดาวน์โหลด)
+function ensureHtml2pdf(cb){
+  if(window.html2pdf){cb();return;}
+  const s=document.createElement('script');s.src='app/html2pdf.bundle.min.js';
+  s.onload=()=>cb();s.onerror=()=>alert('โหลดตัวสร้าง PDF ไม่สำเร็จ');
+  document.head.appendChild(s);
+}
+function makeContractPDF(f,filename){
+  ensureHtml2pdf(()=>{
+    const el=document.createElement('div');
+    el.style.cssText='width:720px;padding:36px;background:#fff;color:#111;position:fixed;left:-9999px;top:0';
+    el.innerHTML=contractDocHTML(f);
+    document.body.appendChild(el);
+    window.html2pdf().set({margin:[8,8,8,8],filename:filename||'สัญญาเช่าห้องพัก.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}})
+      .from(el).save().then(()=>{el.remove();}).catch(e=>{el.remove();alert('สร้าง PDF ไม่สำเร็จ: '+e.message);});
+  });
 }
 function downloadContract(){
   const f=cf();
-  // บันทึกสัญญาส่งให้ผู้ดูแล (หลังบ้าน) ดู/โหลด/ยืนยันได้
-  saveContractToAdmin(f);
-  const w=window.open('','_blank');
-  if(!w){alert('กรุณาอนุญาต pop-up เพื่อบันทึกเป็น PDF');return;}
-  w.document.write(contractPrintDoc(f));
-  w.document.close();
-  w.focus();
-  setTimeout(()=>{try{w.print();}catch(_){}} ,400);
+  saveContractToAdmin(f); // ส่งสัญญาเข้าหลังบ้านให้ดู/โหลด/ยืนยัน
+  makeContractPDF(f);
 }
 // ส่งข้อมูลสัญญาเข้าหลังบ้าน (1 ฉบับต่อผู้เช่า, อัปเดตทับได้)
 function saveContractToAdmin(f){
@@ -1071,6 +1071,7 @@ function render(){
 
   if(!S.auth){
     document.getElementById('app').innerHTML=renderAuth();
+    document.querySelectorAll('#app input').forEach(i=>{i.setAttribute('autocomplete','off');i.setAttribute('autocorrect','off');i.setAttribute('spellcheck','false');});
     return;
   }
 

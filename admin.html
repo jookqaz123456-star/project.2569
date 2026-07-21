@@ -992,11 +992,22 @@ function contractDocHTML(f){
     </tr></table>
   </div>`;
 }
+function ensureHtml2pdf(cb){
+  if(window.html2pdf){cb();return;}
+  const s=document.createElement('script');s.src='app/html2pdf.bundle.min.js';
+  s.onload=()=>cb();s.onerror=()=>alert('โหลดตัวสร้าง PDF ไม่สำเร็จ');
+  document.head.appendChild(s);
+}
 function downloadResidentContract(id){
   const c=S.contracts.find(x=>x.id===id);if(!c)return;
-  const w=window.open('','_blank');if(!w){alert('กรุณาอนุญาต pop-up');return;}
-  w.document.write(`<html><head><meta charset="utf-8"><title>สัญญาเช่าห้องพัก</title><style>@page{size:A4;margin:2cm}html,body{margin:0}body{font-family:'Sarabun','TH Sarabun New',sans-serif;color:#000;background:#fff}#c{max-width:760px;margin:0 auto}u{text-decoration:underline}</style></head><body><div id="c">${contractDocHTML(c.cform)}</div></body></html>`);
-  w.document.close();w.focus();setTimeout(()=>{try{w.print();}catch(_){}} ,400);
+  ensureHtml2pdf(()=>{
+    const el=document.createElement('div');
+    el.style.cssText='width:720px;padding:36px;background:#fff;color:#111;position:fixed;left:-9999px;top:0';
+    el.innerHTML=contractDocHTML(c.cform);
+    document.body.appendChild(el);
+    window.html2pdf().set({margin:[8,8,8,8],filename:'สัญญาเช่า_'+(c.tenantName||'')+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}})
+      .from(el).save().then(()=>{el.remove();}).catch(e=>{el.remove();alert('สร้าง PDF ไม่สำเร็จ: '+e.message);});
+  });
 }
 function confirmResidentContract(id){const c=S.contracts.find(x=>x.id===id);if(c){c.status='ยืนยันแล้ว';persistColl('contracts',c);}render();}
 function renderContracts(){
@@ -1011,40 +1022,19 @@ function renderContracts(){
         ${ico.search}<input id="srch" class="input" placeholder="ค้นหาสัญญา..." value="${S.search}" oninput="S.search=this.value;render()">
       </div>
     </div>
-    ${resContracts.length?`<div class="card" style="margin-bottom:18px">
-      <div style="font-weight:700;margin-bottom:14px">สัญญาจากผู้เช่า (ส่งผ่านพอร์ทัล)</div>
-      <div class="table-wrap"><table>
-        <tr><th>ผู้เช่า</th><th>ห้อง</th><th>วันที่ส่ง</th><th>สถานะ</th><th></th></tr>
-        ${resContracts.map(c=>`<tr>
-          <td style="font-weight:600">${c.tenantName||'-'}</td>
-          <td>${c.roomNumber?`ห้อง ${c.roomNumber}`:'-'}</td>
-          <td>${fmtDate(c.submittedAt)||'-'}</td>
-          <td><span class="badge ${c.status==='ยืนยันแล้ว'?'badge-green':'badge-yellow'}">${c.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน'}</span></td>
-          <td><div style="display:flex;gap:4px">
-            <button class="btn btn-sm btn-ghost" onclick="openModal('viewResidentContract','${c.id}')">${ico.eye} ดู</button>
-            <button class="btn btn-sm btn-ghost" onclick="downloadResidentContract('${c.id}')">${ico.doc||''} โหลด</button>
-            ${c.status!=='ยืนยันแล้ว'?`<button class="btn btn-sm btn-primary" onclick="confirmResidentContract('${c.id}')">ยืนยัน</button>`:''}
-          </div></td>
-        </tr>`).join('')}
-      </table></div>
-    </div>`:''}
     <div class="card"><div class="table-wrap"><table>
-      <tr><th>ผู้เช่า</th><th>ห้อง</th><th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>ค่าเช่า</th><th>สถานะ</th><th>เซ็น</th><th></th></tr>
-      ${rows.map(c=>`<tr>
-        <td style="font-weight:600">${c.tenantName}</td>
-        <td>ห้อง ${c.roomNumber}</td>
-        <td>${fmtDate(c.start)}</td>
-        <td>${fmtDate(c.end)}</td>
-        <td>฿${fmtMoney(c.rent)}</td>
-        <td><span class="badge ${cstatus(c.status)}">${c.status==='active'?'มีผล':'หมดอายุ'}</span></td>
-        <td><span class="badge ${c.signed?'badge-green':'badge-yellow'}">${c.signed?'เซ็นแล้ว':'รอเซ็น'}</span></td>
-        <td>
-          <div style="display:flex;gap:4px">
-            <button class="btn btn-sm btn-ghost" onclick="openModal('viewContract','${c.id}')">${ico.eye} ดู</button>
-            ${!c.signed?`<button class="btn btn-sm btn-primary" onclick="openModal('signContract','${c.id}')">${ico.sign} เซ็น</button>`:''}
-          </div>
-        </td>
-      </tr>`).join('')}
+      <tr><th>ผู้เช่า</th><th>ห้อง</th><th>วันที่ส่ง</th><th>สถานะ</th><th></th></tr>
+      ${resContracts.length?resContracts.map(c=>`<tr>
+        <td style="font-weight:600">${c.tenantName||'-'}</td>
+        <td>${c.roomNumber?`ห้อง ${c.roomNumber}`:'-'}</td>
+        <td>${fmtDate(c.submittedAt)||'-'}</td>
+        <td><span class="badge ${c.status==='ยืนยันแล้ว'?'badge-green':'badge-yellow'}">${c.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน'}</span></td>
+        <td><div style="display:flex;gap:4px">
+          <button class="btn btn-sm btn-ghost" onclick="openModal('viewResidentContract','${c.id}')">${ico.eye} ดู</button>
+          <button class="btn btn-sm btn-ghost" onclick="downloadResidentContract('${c.id}')">${ico.doc||''} โหลด</button>
+          ${c.status!=='ยืนยันแล้ว'?`<button class="btn btn-sm btn-primary" onclick="confirmResidentContract('${c.id}')">ยืนยัน</button>`:''}
+        </div></td>
+      </tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:#5C6270;padding:30px">ยังไม่มีสัญญาจากผู้เช่า</td></tr>`}
     </table></div></div>
   </div>`;
 }
