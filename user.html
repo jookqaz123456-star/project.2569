@@ -790,22 +790,28 @@ function contractDocHTML(f){
     <p style="text-indent:2.5em"><b>ข้อ 11.</b> ในวันทำสัญญานี้ ผู้เช่าได้ตรวจตราทรัพย์สินที่เช่าแล้วเห็นว่ามีสภาพปกติดีทุกประการ และผู้ให้เช่าได้ส่งมอบทรัพย์สินที่ให้แก่ผู้เช่าแล้ว</p>
     <p style="text-indent:2.5em"><b>ข้อ 12.</b> ผู้เช่าได้มอบสำเนาบัตรประจำตัว สำเนาทะเบียนบ้านและเอกสารแสดงตัวตามกฎหมายที่ไม่หมดอายุ พร้อมรูปถ่าย ${ub(f.photoCount)} รูป ให้ไว้กับผู้ให้เช่า</p>
     <p style="text-indent:2.5em">คู่สัญญาทั้งสองฝ่ายได้อ่านและทำความเข้าใจดีแล้ว จึงลงลายมือชื่อไว้เป็นหลักฐาน</p>
-    <div style="display:flex;justify-content:space-between;margin-top:34px;gap:20px">
-      <div style="text-align:center;flex:1">ลงชื่อ…………………………ผู้เช่า<br>(…………………………)</div>
-      <div style="text-align:center;flex:1">ลงชื่อ…………………………ผู้ให้เช่า<br>(…………………………)</div>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-top:16px;gap:20px">
-      <div style="text-align:center;flex:1">ลงชื่อ…………………………พยาน<br>(…………………………)</div>
-      <div style="text-align:center;flex:1">ลงชื่อ…………………………พยาน<br>(…………………………)</div>
-    </div>
+    <table style="width:100%;margin-top:34px;border-collapse:collapse"><tr>
+      <td style="text-align:center;padding:14px 8px">ลงชื่อ…………………………ผู้เช่า<br>(…………………………)</td>
+      <td style="text-align:center;padding:14px 8px">ลงชื่อ…………………………ผู้ให้เช่า<br>(…………………………)</td>
+    </tr><tr>
+      <td style="text-align:center;padding:14px 8px">ลงชื่อ…………………………พยาน<br>(…………………………)</td>
+      <td style="text-align:center;padding:14px 8px">ลงชื่อ…………………………พยาน<br>(…………………………)</td>
+    </tr></table>
   </div>`;
 }
 function downloadContract(){
   const f=cf();
-  const w=window.open('','_blank');
-  if(!w){alert('กรุณาอนุญาต pop-up เพื่อดาวน์โหลด/พิมพ์เอกสาร');return;}
-  w.document.write(`<html><head><meta charset="utf-8"><title>สัญญาเช่าห้องพัก</title><style>body{font-family:'Sarabun','TH Sarabun New','Sarabun',serif;padding:48px;color:#000;max-width:820px;margin:auto;background:#fff}u{text-decoration:underline}@media print{body{padding:12px}}</style></head><body>${contractDocHTML(f)}<scr`+`ipt>window.onload=function(){setTimeout(function(){window.print();},300);}</scr`+`ipt></body></html>`);
-  w.document.close();
+  const body=contractDocHTML(f);
+  // ไฟล์ Word (.doc) — ดาวน์โหลดลงเครื่องทันที เปิดใน Word/Google Docs, พิมพ์/บันทึก PDF ได้ ภาษาไทยครบ
+  const doc=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>สัญญาเช่าห้องพัก</title>`+
+    `<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->`+
+    `<style>@page{size:A4;margin:2cm}body{font-family:'TH Sarabun New','Sarabun',sans-serif;font-size:16px;color:#000}u{text-decoration:underline}</style></head><body>${body}</body></html>`;
+  const blob=new Blob(['﻿',doc],{type:'application/msword'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='สัญญาเช่าห้องพัก.doc';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);
 }
 function onContractUpload(input){
   const file=input.files&&input.files[0];if(!file)return;
