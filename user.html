@@ -799,19 +799,33 @@ function contractDocHTML(f){
     </tr></table>
   </div>`;
 }
+// PDF ที่รูปแบบสวยเหมือนตัวอย่าง — เปิดหน้าพิมพ์ให้เลือก "บันทึกเป็น PDF"
+function contractPrintDoc(f){
+  return `<html><head><meta charset="utf-8"><title>สัญญาเช่าห้องพัก</title>`+
+    `<style>@page{size:A4;margin:2cm}html,body{margin:0}body{font-family:'Sarabun','TH Sarabun New',sans-serif;color:#000;background:#fff;padding:0}#c{max-width:760px;margin:0 auto}u{text-decoration:underline}</style></head>`+
+    `<body><div id="c">${contractDocHTML(f)}</div></body></html>`;
+}
 function downloadContract(){
   const f=cf();
-  const body=contractDocHTML(f);
-  // ไฟล์ Word (.doc) — ดาวน์โหลดลงเครื่องทันที เปิดใน Word/Google Docs, พิมพ์/บันทึก PDF ได้ ภาษาไทยครบ
-  const doc=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>สัญญาเช่าห้องพัก</title>`+
-    `<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->`+
-    `<style>@page{size:A4;margin:2cm}body{font-family:'TH Sarabun New','Sarabun',sans-serif;font-size:16px;color:#000}u{text-decoration:underline}</style></head><body>${body}</body></html>`;
-  const blob=new Blob(['﻿',doc],{type:'application/msword'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='สัญญาเช่าห้องพัก.doc';
-  document.body.appendChild(a);a.click();
-  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+  // บันทึกสัญญาส่งให้ผู้ดูแล (หลังบ้าน) ดู/โหลด/ยืนยันได้
+  saveContractToAdmin(f);
+  const w=window.open('','_blank');
+  if(!w){alert('กรุณาอนุญาต pop-up เพื่อบันทึกเป็น PDF');return;}
+  w.document.write(contractPrintDoc(f));
+  w.document.close();
+  w.focus();
+  setTimeout(()=>{try{w.print();}catch(_){}} ,400);
+}
+// ส่งข้อมูลสัญญาเข้าหลังบ้าน (1 ฉบับต่อผู้เช่า, อัปเดตทับได้)
+function saveContractToAdmin(f){
+  if(!S.auth)return;
+  const rec={id:'rc_'+S.auth.id,userId:S.auth.id,resident:true,status:'รอยืนยัน',
+    submittedAt:new Date().toISOString().slice(0,10),tenantName:f.lessee||S.auth.name,roomNumber:f.roomNo||'',
+    cform:f};
+  try{
+    if(Samrit.mode==='live'){Samrit.save('contracts',rec).catch(e=>console.warn(e.message));}
+    else{const arr=JSON.parse(localStorage.getItem('samrit_demo_contracts')||'[]');const i=arr.findIndex(x=>x.id===rec.id);if(i>=0)arr[i]=rec;else arr.push(rec);localStorage.setItem('samrit_demo_contracts',JSON.stringify(arr));}
+  }catch(e){console.warn('contract',e.message);}
 }
 function onContractUpload(input){
   const file=input.files&&input.files[0];if(!file)return;
@@ -853,8 +867,8 @@ function renderContract(){
     </div>
     <div>
       <div id="contractPreview" style="background:#fff;color:#111;border-radius:14px;padding:22px;max-height:62vh;overflow:auto">${contractDocHTML(f)}</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px;padding:12px" onclick="downloadContract()">${ico.doc} ดาวน์โหลดเอกสารเพื่อนำไปเซ็น</button>
-      <div style="font-size:12px;color:#5C6270;margin-top:8px;text-align:center">เมื่อดาวน์โหลดและเซ็นเสร็จ ไปที่แท็บที่ 2 เพื่ออัปโหลด</div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px;padding:12px" onclick="downloadContract()">${ico.doc} ดาวน์โหลด PDF / ส่งให้ผู้ดูแล</button>
+      <div style="font-size:12px;color:#5C6270;margin-top:8px;text-align:center">กดแล้วบันทึกเป็น PDF ได้ และสัญญาจะถูกส่งเข้าหลังบ้านให้ผู้ดูแลตรวจสอบ/ยืนยัน</div>
     </div>
   </div>`;
   const has=S.contractDoc||localStorage.getItem('samrit_contractdoc');
