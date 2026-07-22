@@ -53,9 +53,9 @@ app.get('/api/bootstrap', auth.requireAuth, auth.requireStaff, wrap(async (_req,
 // ─── Resident bootstrap (own data + public room info) ──────────
 app.get('/api/me/bootstrap', auth.requireAuth, wrap(async (req, res) => {
   const uid = req.user.id;
-  const [rooms, bookings, bills, stays, repairs, paySettings, photos] = await Promise.all([
+  const [rooms, bookings, bills, stays, repairs, contracts, paySettings, photos] = await Promise.all([
     db.listColl('rooms'), db.listColl('bookings'), db.listColl('bills'),
-    db.listColl('stays'), db.listColl('repairs'),
+    db.listColl('stays'), db.listColl('repairs'), db.listColl('contracts'),
     db.getSetting('paySettings', {}), db.getSetting('photos', {}),
   ]);
   res.json({
@@ -64,6 +64,7 @@ app.get('/api/me/bootstrap', auth.requireAuth, wrap(async (req, res) => {
     bills: bills.filter(b => b.userId === uid),
     stays: stays.filter(b => b.userId === uid),
     repairs: repairs.filter(b => b.userId === uid),
+    contracts: contracts.filter(c => c.userId === uid),
     paySettings, photos,
   });
 }));
