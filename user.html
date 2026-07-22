@@ -205,6 +205,7 @@ const S = {
   accounts: [
     {id:'demo',name:'นายตัวอย่าง ผู้ใช้',username:'demo',password:'demo1234',email:'demo@example.com',phone:'089-000-0000'}
   ],
+  contracts: [],
 };
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -241,6 +242,7 @@ function myBills(){return S.bills.filter(b=>b.userId===S.auth?.id).slice().sort(
 });}
 function myStays(){return S.stays.filter(b=>b.userId===S.auth?.id);}
 function myRepairs(){return S.repairs.filter(b=>b.userId===S.auth?.id);}
+function myContract(){return (S.contracts||[]).find(c=>c.userId===S.auth?.id||c.id==='rc_'+S.auth?.id);}
 
 // ─── Backend-backed data layer (Samrit client: live API / demo) ─
 const DEFAULT_PAY={
@@ -371,7 +373,7 @@ async function loadResidentData(){
   try{
     const d=await Samrit.bootstrapResident(SEED);
     S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);S.bookings=d.bookings||[];S.bills=d.bills||[];
-    S.stays=d.stays||[];S.repairs=d.repairs||[];
+    S.stays=d.stays||[];S.repairs=d.repairs||[];S.contracts=d.contracts||[];
     S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;S.photos=d.photos||{};
     autoCancelStaleBookings();
   }catch(e){console.warn('bootstrap',e.message);}
@@ -847,13 +849,18 @@ function downloadContract(){
   const f=cf();
   saveContractToAdmin(f); // ส่งสัญญาเข้าหลังบ้านให้ดู/โหลด/ยืนยัน
   makeContractPDF(f);
+  render(); // แสดงแถบสถานะ "รอยืนยัน" ทันที
 }
 // ส่งข้อมูลสัญญาเข้าหลังบ้าน (1 ฉบับต่อผู้เช่า, อัปเดตทับได้)
 function saveContractToAdmin(f){
   if(!S.auth)return;
-  const rec={id:'rc_'+S.auth.id,userId:S.auth.id,resident:true,status:'รอยืนยัน',
+  const existing=myContract();
+  const rec={id:'rc_'+S.auth.id,userId:S.auth.id,resident:true,
+    status:existing&&existing.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน',
     submittedAt:new Date().toISOString().slice(0,10),tenantName:f.lessee||S.auth.name,roomNumber:f.roomNo||'',
     cform:f};
+  // อัปเดตสถานะในหน้าให้เห็นทันที
+  S.contracts=(S.contracts||[]).filter(c=>c.id!==rec.id);S.contracts.push(rec);
   try{
     if(Samrit.mode==='live'){Samrit.save('contracts',rec).catch(e=>console.warn(e.message));}
     else{const arr=JSON.parse(localStorage.getItem('samrit_demo_contracts')||'[]');const i=arr.findIndex(x=>x.id===rec.id);if(i>=0)arr[i]=rec;else arr.push(rec);localStorage.setItem('samrit_demo_contracts',JSON.stringify(arr));}
@@ -874,6 +881,14 @@ function onContractUpload(input){
 function renderContract(){
   S.contractTab=S.contractTab||'create';
   const f=cf();
+  const mc=myContract();
+  const statusBanner=mc?`<div style="margin-bottom:16px;padding:13px 16px;border-radius:12px;display:flex;align-items:center;gap:11px;${mc.status==='ยืนยันแล้ว'?'background:#0E2418;color:#34D399;border:1px solid rgba(52,211,153,.3)':'background:#2A230E;color:#FBBF24;border:1px solid rgba(251,191,36,.3)'}">
+      <span style="font-size:20px">${mc.status==='ยืนยันแล้ว'?'✅':'⏳'}</span>
+      <div>
+        <div style="font-weight:700;font-size:14px">${mc.status==='ยืนยันแล้ว'?'ผู้ดูแลยืนยันสัญญาแล้ว':'ส่งสัญญาให้ผู้ดูแลแล้ว — รอยืนยัน'}</div>
+        <div style="font-size:12px;opacity:.85">ส่งเมื่อ ${mc.submittedAt||'-'}${mc.roomNumber?' · ห้อง '+mc.roomNumber:''}</div>
+      </div>
+    </div>`:'';
   const tab=(id,label)=>`<button onclick="S.contractTab='${id}';render()" style="flex:1;padding:9px;border-radius:9px;border:none;cursor:pointer;font-size:13.5px;font-weight:600;${S.contractTab===id?'background:#6C4FD8;color:#fff':'background:transparent;color:#7C828F'}">${label}</button>`;
   const inp=(k,label,ph)=>`<div class="form-group"><label class="form-label">${label}</label><input class="input" value="${String(f[k]??'').replace(/"/g,'&quot;')}" oninput="setCF('${k}',this.value)" placeholder="${ph||''}"></div>`;
   const create=`
@@ -928,6 +943,7 @@ function renderContract(){
     <div style="display:flex;gap:6px;background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:5px;max-width:420px;margin-bottom:18px">
       ${tab('create','1. สร้างเอกสาร')}${tab('upload','2. อัปโหลดเอกสาร')}
     </div>
+    ${statusBanner}
     ${S.contractTab==='create'?create:upload}
   </div>`;
 }
