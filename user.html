@@ -809,7 +809,7 @@ function contractDocDef(f){
   const IND='        ';
   const clause=(n,body)=>({text:[IND,{text:'ข้อ '+n+'. ',bold:true},seg(body)],margin:[0,0,0,7]});
   const addr='บ้านเลขที่'+bl(f.addrNo)+'หมู่บ้าน'+bl(f.village)+'ถนน'+bl(f.road)+'ตำบล/แขวง'+bl(f.subdistrict)+'อำเภอ/เขต'+bl(f.district)+'จังหวัด'+bl(f.province)+'โทร'+bl(f.phone);
-  const sig=t=>({text:'ลงชื่อ……………………'+t+'\n(……………………)',alignment:'center',margin:[0,6,0,14]});
+  const sig=t=>({text:'ลงชื่อ………………………………………'+t+'\n(………………………………)',alignment:'center',margin:[0,10,0,20]});
   return {
     pageSize:'A4',pageMargins:[48,44,48,44],
     defaultStyle:{font:'Sarabun',fontSize:12,lineHeight:1.3},
