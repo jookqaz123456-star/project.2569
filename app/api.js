@@ -111,6 +111,7 @@
         bills: ens('bills').filter(b => b.userId === u.id),
         stays: ens('stays').filter(b => b.userId === u.id),
         repairs: ens('repairs').filter(b => b.userId === u.id),
+        contracts: (ens('contracts') || []).filter(c => c.userId === u.id),
         paySettings: dGetSetting('paySettings', (seed && seed.paySettings) || {}),
         photos: dGetSetting('photos', {}),
       };
