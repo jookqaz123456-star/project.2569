@@ -663,7 +663,7 @@ function renderDashboard(){
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px;cursor:pointer" onclick="S.payTab='slips';nav('paysettings')">
             <div style="font-size:13.5px">สลิปโอนรอตรวจสอบ</div>
-            <span class="badge badge-purple"><span class="dot"></span>${(S.slips||[]).filter(s=>s.status==='รอตรวจสอบ').length} รายการ</span>
+            <span class="badge badge-purple"><span class="dot"></span>${(S.slips||[]).filter(s=>s.status==='รอตรวจสอบ'&&s.kind!=='สัญญาเช่าที่เซ็นแล้ว').length} รายการ</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px">
             <div style="font-size:13.5px">การจองรอยืนยัน</div>
@@ -1042,6 +1042,7 @@ function downloadResidentContract(id){
   ensurePdfMake(()=>{try{pdfMake.createPdf(contractDocDef(c.cform)).download('สัญญาเช่า_'+(c.tenantName||'')+'.pdf');}catch(e){alert('สร้าง PDF ไม่สำเร็จ: '+e.message);}});
 }
 function confirmResidentContract(id){const c=S.contracts.find(x=>x.id===id);if(c){c.status='ยืนยันแล้ว';persistColl('contracts',c);}render();}
+function deleteResidentContract(id){if(!confirm('ลบสัญญานี้? (ลบแล้วกู้คืนไม่ได้)'))return;S.contracts=S.contracts.filter(c=>c.id!==id);persistRemove('contracts',id);if(S.modal)closeModal();render();}
 function renderContracts(){
   const q=S.search.toLowerCase();
   const resContracts=S.contracts.filter(c=>c.resident&&(!q||(c.tenantName||'').toLowerCase().includes(q)));
@@ -1055,18 +1056,20 @@ function renderContracts(){
       </div>
     </div>
     <div class="card"><div class="table-wrap"><table>
-      <tr><th>ผู้เช่า</th><th>ห้อง</th><th>วันที่ส่ง</th><th>สถานะ</th><th></th></tr>
+      <tr><th>ผู้เช่า</th><th>ห้อง</th><th>วันที่ส่ง</th><th>เอกสารเซ็น</th><th>สถานะ</th><th></th></tr>
       ${resContracts.length?resContracts.map(c=>`<tr>
         <td style="font-weight:600">${c.tenantName||'-'}</td>
         <td>${c.roomNumber?`ห้อง ${c.roomNumber}`:'-'}</td>
         <td>${fmtDate(c.submittedAt)||'-'}</td>
+        <td>${c.signedDoc?`<button class="btn btn-sm btn-ghost" style="color:#34D399" onclick="openModal('viewSignedContract','${c.id}')">${ico.eye} เอกสารเซ็น</button>`:`<span style="color:#5C6270;font-size:12px">ยังไม่อัปโหลด</span>`}</td>
         <td><span class="badge ${c.status==='ยืนยันแล้ว'?'badge-green':'badge-yellow'}">${c.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน'}</span></td>
         <td><div style="display:flex;gap:4px">
           <button class="btn btn-sm btn-ghost" onclick="openModal('viewResidentContract','${c.id}')">${ico.eye} ดู</button>
           <button class="btn btn-sm btn-ghost" onclick="downloadResidentContract('${c.id}')">${ico.doc||''} โหลด</button>
           ${c.status!=='ยืนยันแล้ว'?`<button class="btn btn-sm btn-primary" onclick="confirmResidentContract('${c.id}')">ยืนยัน</button>`:''}
+          <button class="btn btn-icon btn-danger" onclick="deleteResidentContract('${c.id}')">${ico.trash}</button>
         </div></td>
-      </tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:#5C6270;padding:30px">ยังไม่มีสัญญาจากผู้เช่า</td></tr>`}
+      </tr>`).join(''):`<tr><td colspan="6" style="text-align:center;color:#5C6270;padding:30px">ยังไม่มีสัญญาจากผู้เช่า</td></tr>`}
     </table></div></div>
   </div>`;
 }
@@ -1156,7 +1159,8 @@ function renderUsers(){
 
 // ─── Pay Settings & Slips ────────────────────────────────────
 function renderPaySettings(){
-  const slips=S.slips||[];
+  // เฉพาะสลิปโอนเงินจริง — สัญญาเช่าที่เซ็นแล้วให้ไปแสดงหน้า "สัญญาเช่า"
+  const slips=(S.slips||[]).filter(s=>s.kind!=='สัญญาเช่าที่เซ็นแล้ว');
   const pending=slips.filter(s=>s.status==='รอตรวจสอบ').length;
   const ppDigits=(S.pay.promptpay||'').replace(/[^0-9]/g,'');
   const ppReady=ppDigits.length>=10&&window.PromptPay;
@@ -1434,7 +1438,16 @@ function renderModal(){
     return modal('สัญญาเช่า — '+(c.tenantName||''),`
       <div style="background:#fff;color:#111;border-radius:12px;padding:22px;max-height:60vh;overflow:auto">${contractDocHTML(c.cform)}</div>
       <div style="margin-top:12px;font-size:12.5px;color:#5C6270">ส่งเมื่อ ${fmtDate(c.submittedAt)||'-'} · สถานะ: ${c.status||'รอยืนยัน'}</div>
-    `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-ghost" onclick="downloadResidentContract('${c.id}')">${ico.doc||''} โหลด PDF</button>${c.status!=='ยืนยันแล้ว'?`<button class="btn btn-primary" onclick="confirmResidentContract('${c.id}');closeModal()">ยืนยันสัญญา</button>`:''}`,'modal-lg');
+      ${c.signedDoc?`<div style="margin-top:14px;font-weight:700;color:#A990FF">เอกสารที่เซ็นแล้ว (อัปโหลดโดยผู้เช่า)</div>${c.signedDoc.startsWith('data:image')?`<img src="${c.signedDoc}" style="max-width:100%;margin-top:8px;border-radius:10px">`:`<a href="${c.signedDoc}" download="สัญญาเซ็น_${c.tenantName||''}.pdf" class="btn btn-ghost" style="margin-top:8px">${ico.doc||''} เปิด/ดาวน์โหลดไฟล์ที่เซ็น</a>`}`:''}
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-ghost" onclick="downloadResidentContract('${c.id}')">${ico.doc||''} โหลด PDF</button>${c.status!=='ยืนยันแล้ว'?`<button class="btn btn-primary" onclick="confirmResidentContract('${c.id}');closeModal()">ยืนยันสัญญา</button>`:''}<button class="btn btn-danger" onclick="deleteResidentContract('${c.id}')">${ico.trash||''} ลบ</button>`,'modal-lg');
+  }
+  if(type==='viewSignedContract'){
+    const c=S.contracts.find(x=>x.id===data);
+    if(!c||!c.signedDoc)return'';
+    return modal('เอกสารที่เซ็นแล้ว — '+(c.tenantName||''),`
+      ${c.signedDoc.startsWith('data:image')?`<img src="${c.signedDoc}" style="max-width:100%;border-radius:10px">`:`<div style="padding:30px;text-align:center"><a href="${c.signedDoc}" download="สัญญาเซ็น_${c.tenantName||''}.pdf" class="btn btn-primary">${ico.doc||''} เปิด/ดาวน์โหลดไฟล์</a></div>`}
+      <div style="margin-top:10px;font-size:12.5px;color:#5C6270">อัปโหลดเมื่อ ${fmtDate(c.signedAt)||'-'}</div>
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${c.status!=='ยืนยันแล้ว'?`<button class="btn btn-primary" onclick="confirmResidentContract('${c.id}');closeModal()">ยืนยันสัญญา</button>`:''}`,'modal-lg');
   }
   if(type==='viewContract'||type==='signContract'){
     const c=S.contracts.find(x=>x.id===data);

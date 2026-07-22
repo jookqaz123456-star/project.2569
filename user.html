@@ -852,19 +852,28 @@ function downloadContract(){
   render(); // แสดงแถบสถานะ "รอยืนยัน" ทันที
 }
 // ส่งข้อมูลสัญญาเข้าหลังบ้าน (1 ฉบับต่อผู้เช่า, อัปเดตทับได้)
-function saveContractToAdmin(f){
-  if(!S.auth)return;
-  const existing=myContract();
-  const rec={id:'rc_'+S.auth.id,userId:S.auth.id,resident:true,
-    status:existing&&existing.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน',
-    submittedAt:new Date().toISOString().slice(0,10),tenantName:f.lessee||S.auth.name,roomNumber:f.roomNo||'',
-    cform:f};
-  // อัปเดตสถานะในหน้าให้เห็นทันที
+function persistMyContract(rec){
+  // อัปเดตในหน้าให้เห็นทันที + บันทึกเข้าหลังบ้าน
   S.contracts=(S.contracts||[]).filter(c=>c.id!==rec.id);S.contracts.push(rec);
   try{
     if(Samrit.mode==='live'){Samrit.save('contracts',rec).catch(e=>console.warn(e.message));}
     else{const arr=JSON.parse(localStorage.getItem('samrit_demo_contracts')||'[]');const i=arr.findIndex(x=>x.id===rec.id);if(i>=0)arr[i]=rec;else arr.push(rec);localStorage.setItem('samrit_demo_contracts',JSON.stringify(arr));}
   }catch(e){console.warn('contract',e.message);}
+}
+function saveContractToAdmin(f){
+  if(!S.auth)return;
+  const existing=myContract()||{};
+  const rec=Object.assign({},existing,{id:'rc_'+S.auth.id,userId:S.auth.id,resident:true,
+    status:existing.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน',
+    submittedAt:new Date().toISOString().slice(0,10),tenantName:f.lessee||S.auth.name,roomNumber:f.roomNo||'',cform:f});
+  persistMyContract(rec);
+}
+// แนบเอกสารที่เซ็นแล้วเข้ากับสัญญา (แสดงในหน้า "สัญญาเช่า" ของหลังบ้าน ไม่ปนกับสลิปโอนเงิน)
+function attachSignedContract(dataUrl){
+  if(!S.auth)return;
+  const f=cf();const existing=myContract()||{};
+  const rec=Object.assign({id:'rc_'+S.auth.id,userId:S.auth.id,resident:true,status:'รอยืนยัน',submittedAt:new Date().toISOString().slice(0,10),tenantName:f.lessee||S.auth.name,roomNumber:f.roomNo||'',cform:f},existing,{signedDoc:dataUrl,signedAt:new Date().toISOString().slice(0,10)});
+  persistMyContract(rec);
 }
 function onContractUpload(input){
   const file=input.files&&input.files[0];if(!file)return;
@@ -872,7 +881,7 @@ function onContractUpload(input){
   rd.onload=()=>{
     S.contractDoc=rd.result;
     try{localStorage.setItem('samrit_contractdoc',rd.result);}catch(_){}
-    pushSlip({roomNumber:cf().roomNo||0,name:S.auth?.name||'',amount:0,slip:rd.result,kind:'สัญญาเช่าที่เซ็นแล้ว',month:''});
+    attachSignedContract(rd.result);
     alert('อัปโหลดเอกสารสัญญาที่เซ็นแล้วเรียบร้อย — ส่งให้ผู้ดูแลตรวจสอบแล้ว');
     render();
   };
