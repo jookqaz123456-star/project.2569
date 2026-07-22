@@ -812,9 +812,9 @@ function contractDocDef(f){
   const sig=t=>({text:'ลงชื่อ……………………'+t+'\n(……………………)',alignment:'center',margin:[0,6,0,14]});
   return {
     pageSize:'A4',pageMargins:[48,44,48,44],
-    defaultStyle:{font:'Sarabun',fontSize:14,lineHeight:1.35},
+    defaultStyle:{font:'Sarabun',fontSize:12,lineHeight:1.3},
     content:[
-      {text:'สัญญาเช่าห้องพัก',bold:true,fontSize:18,alignment:'center',margin:[0,0,0,14]},
+      {text:'สัญญาเช่าห้องพัก',bold:true,fontSize:15,alignment:'center',margin:[0,0,0,12]},
       {text:seg('ทำที่'+bl(f.place)),alignment:'right',margin:[0,0,0,2]},
       {text:seg('วันที่'+bl(day)+'เดือน'+bl(mth)+'พ.ศ.'+bl(be)),alignment:'right',margin:[0,0,0,8]},
       {text:[IND,seg('สัญญาเช่าฉบับนี้ทำขึ้นระหว่าง'+bl(f.lessor)+'ซึ่งต่อไปในสัญญานี้จะเรียกว่า "ผู้ให้เช่า" ฝ่ายหนึ่ง กับ'+bl(f.lessee)+'อยู่ '+addr+' ซึ่งต่อไปในสัญญานี้จะเรียกว่า "ผู้เช่า" อีกฝ่ายหนึ่ง คู่สัญญาได้ตกลงกันดังนี้')],margin:[0,0,0,7]},
