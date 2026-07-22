@@ -794,25 +794,53 @@ function contractDocHTML(f){
     </tr></table>
   </div>`;
 }
-// สร้าง PDF ด้วยเครื่องพิมพ์ของเบราว์เซอร์ (รองรับภาษาไทยสมบูรณ์ ไม่ซ้อนกัน)
-// ใช้ iframe ซ่อนในหน้าเดิม — ไม่โดนบล็อกป๊อปอัป แล้วสั่งพิมพ์ให้เลือก "บันทึกเป็น PDF"
+// ─── สร้าง PDF สัญญา ดาวน์โหลดไฟล์ตรง (ฝังฟอนต์ไทย Sarabun ด้วย pdfmake) ───
+// ตัดคำไทยด้วย Intl.Segmenter เพื่อให้ขึ้นบรรทัดตรงคำ (ฟอนต์ถูกแพตช์ให้ ZWSP กว้าง 0)
+var _thseg=(typeof Intl!=='undefined'&&Intl.Segmenter)?new Intl.Segmenter('th',{granularity:'word'}):null;
+function seg(t){t=String(t);if(!_thseg)return t;var o='';for(const p of _thseg.segment(t))o+=p.segment+'​';return o;}
+function contractDocDef(f){
+  f=f||{};
+  const d=f.cdate?new Date(f.cdate):null;
+  const monthsTh=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const day=d?d.getDate():'',mth=d?monthsTh[d.getMonth()]:'',be=d?d.getFullYear()+543:'';
+  const bl=v=>(v===0||v)?' '+v+' ':' ……………… ';
+  const IND='        ';
+  const clause=(n,body)=>({text:[IND,{text:'ข้อ '+n+'. ',bold:true},seg(body)],margin:[0,0,0,7]});
+  const addr='บ้านเลขที่'+bl(f.addrNo)+'หมู่บ้าน'+bl(f.village)+'ถนน'+bl(f.road)+'ตำบล/แขวง'+bl(f.subdistrict)+'อำเภอ/เขต'+bl(f.district)+'จังหวัด'+bl(f.province)+'โทร'+bl(f.phone);
+  const sig=t=>({text:'ลงชื่อ……………………'+t+'\n(……………………)',alignment:'center',margin:[0,6,0,14]});
+  return {
+    pageSize:'A4',pageMargins:[48,44,48,44],
+    defaultStyle:{font:'Sarabun',fontSize:14,lineHeight:1.35},
+    content:[
+      {text:'สัญญาเช่าห้องพัก',bold:true,fontSize:18,alignment:'center',margin:[0,0,0,14]},
+      {text:seg('ทำที่'+bl(f.place)),alignment:'right',margin:[0,0,0,2]},
+      {text:seg('วันที่'+bl(day)+'เดือน'+bl(mth)+'พ.ศ.'+bl(be)),alignment:'right',margin:[0,0,0,8]},
+      {text:[IND,seg('สัญญาเช่าฉบับนี้ทำขึ้นระหว่าง'+bl(f.lessor)+'ซึ่งต่อไปในสัญญานี้จะเรียกว่า "ผู้ให้เช่า" ฝ่ายหนึ่ง กับ'+bl(f.lessee)+'อยู่ '+addr+' ซึ่งต่อไปในสัญญานี้จะเรียกว่า "ผู้เช่า" อีกฝ่ายหนึ่ง คู่สัญญาได้ตกลงกันดังนี้')],margin:[0,0,0,7]},
+      clause(1,'ผู้ให้เช่าตกลงให้เช่าและผู้เช่าตกลงเช่าห้องพักเลขที่'+bl(f.roomNo)+'ชั้นที่'+bl(f.floor)+'ในอาคารของผู้ให้เช่าเพื่อเป็นที่อยู่อาศัยภายใต้ระเบียบที่ผู้ให้เช่ากำหนด โดยเฉพาะไม่ก่อกวน ต้องสงบในยามวิกาล ไม่ทะเลาะวิวาท ไม่ทำผิดศีลธรรมและกฎหมาย'),
+      clause(2,'ผู้เช่าตกลงชำระค่าเช่าให้แก่ผู้ให้เช่าล่วงหน้า'+bl(f.advMonths)+'เดือนและเป็นรายเดือน โดยกำหนดชำระค่าเช่าภายในวันที่'+bl(f.payDay)+'ของทุกเดือน ในอัตราค่าเช่าเดือนละ'+bl(f.rent)+'บาท กรณีผู้เช่าชำระล่วงหน้า 1 ปี ผู้ให้เช่ายินยอมลดให้'+bl(f.advMonths)+'เดือน และกรณีผู้เช่าชำระล่วงหน้า'+bl(f.discHalf)+'เดือน ผู้ให้เช่ายินยอมลดให้ครึ่งเดือน'),
+      clause(3,'ผู้เช่าตกลงจะนำค่าเช่ามาชำระให้ ณ ที่ทำการของผู้ให้เช่าหรือตัวแทนภายในกำหนด'),
+      clause(4,'ห้ามเช่าช่วงเป็นอันขาด เว้นแต่ผู้ให้เช่าตกลงยินยอมด้วยเป็นลายลักษณ์อักษร'),
+      clause(5,'ค่าน้ำประปา ค่าไฟฟ้า และค่าใช้จ่ายอื่น ถ้ามีให้เรียกเก็บตามอัตราในมิเตอร์หรือโดยเฉลี่ยจากผู้เช่า'),
+      clause(6,'ผู้เช่าต้องบำรุงรักษาห้องเช่ารวมถึงอุปกรณ์ไฟฟ้า มุ้งลวด กระจกบานเกล็ด กุญแจห้อง กลอนประตู หลอดไฟ ฝาผนัง และอื่น ๆ ให้อยู่ในสภาพที่ดีอยู่เสมอ หากเกิดชำรุดเสียหายไม่ว่าด้วยเหตุใดก็ตาม ผู้เช่าต้องทำให้คืนสู่สภาพเดิมทันที ด้วยค่าใช้จ่ายของผู้เช่า'),
+      clause(7,'ผู้เช่ามีหน้าที่รักษาความสะอาดตามกฎหมาย ไม่เก็บวัตถุไวไฟหรือสิ่งอันตรายหรือสิ่งต้องห้ามตามกฎหมาย ผู้เช่ายินยอมให้ผู้ให้เช่าเข้าตรวจความถูกต้องเรียบร้อยในห้อง'),
+      clause(8,'ผู้เช่าจะดัดแปลงต่อเติมหรือรื้อถอนทรัพย์สินที่เช่าทั้งหมดหรือบางส่วนได้ ต่อเมื่อได้รับความยินยอมเป็นหนังสือจากผู้ให้เช่า'),
+      clause(9,'ถ้าผู้เช่าผิดสัญญาไม่ชำระค่าเช่าตามกำหนดไว้ในข้อ 2. ผู้ให้เช่ามีสิทธิกลับเข้าครอบครองทรัพย์สินที่เช่าตามสัญญานี้โดยฉับพลัน และผู้เช่ายอมให้ผู้ให้เช่าย้ายบุคคลหรือทรัพย์สินของผู้เช่าออกไปจากทรัพย์ที่เช่าตามสัญญานี้'),
+      clause(10,'ผู้เช่ามีหน้าที่แจ้งให้ผู้ให้เช่าทราบล่วงหน้าในการเลิกเช่าไม่น้อยกว่าสามสิบวันจึงจะได้รับเงินล่วงหน้าคืน หรืออยู่อาศัยโดยหักจากการชำระล่วงหน้าตามข้อ 2'),
+      clause(11,'ในวันทำสัญญานี้ ผู้เช่าได้ตรวจตราทรัพย์สินที่เช่าแล้วเห็นว่ามีสภาพปกติดีทุกประการ และผู้ให้เช่าได้ส่งมอบทรัพย์สินที่ให้แก่ผู้เช่าแล้ว'),
+      clause(12,'ผู้เช่าได้มอบสำเนาบัตรประจำตัว สำเนาทะเบียนบ้านและเอกสารแสดงตัวตามกฎหมายที่ไม่หมดอายุ พร้อมรูปถ่าย'+bl(f.photoCount)+'รูป ให้ไว้กับผู้ให้เช่า'),
+      {text:[IND,seg('คู่สัญญาทั้งสองฝ่ายได้อ่านและทำความเข้าใจดีแล้ว จึงลงลายมือชื่อไว้เป็นหลักฐาน')],margin:[0,2,0,4]},
+      {table:{widths:['*','*'],body:[[sig('ผู้เช่า'),sig('ผู้ให้เช่า')],[sig('พยาน'),sig('พยาน')]]},layout:'noBorders',margin:[0,24,0,0]}
+    ]
+  };
+}
+function ensurePdfMake(cb){
+  const setup=()=>{try{if(!window.__pdfFontsReady){pdfMake.addVirtualFileSystem(window.SARABUN_VFS);pdfMake.setFonts({Sarabun:{normal:'Sarabun-Regular.ttf',bold:'Sarabun-Bold.ttf'}});window.__pdfFontsReady=true;}cb();}catch(e){alert('ตั้งค่าฟอนต์ PDF ไม่สำเร็จ: '+e.message);}};
+  const loadVfs=()=>{if(window.SARABUN_VFS){setup();return;}const s=document.createElement('script');s.src='app/sarabun-vfs.js';s.onload=setup;s.onerror=()=>alert('โหลดฟอนต์ไทยไม่สำเร็จ');document.head.appendChild(s);};
+  if(window.pdfMake){loadVfs();return;}
+  const s=document.createElement('script');s.src='app/pdfmake.min.js';s.onload=loadVfs;s.onerror=()=>alert('โหลดตัวสร้าง PDF ไม่สำเร็จ');document.head.appendChild(s);
+}
 function makeContractPDF(f,filename){
-  const old=document.getElementById('contractPrintFrame');if(old)old.remove();
-  const title=(filename||'สัญญาเช่าห้องพัก').replace(/\.pdf$/i,'');
-  const iframe=document.createElement('iframe');
-  iframe.id='contractPrintFrame';
-  iframe.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
-  document.body.appendChild(iframe);
-  const win=iframe.contentWindow,doc=win.document;
-  doc.open();
-  doc.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${title}</title>
-    <style>@page{size:A4;margin:16mm}
-      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      html,body{margin:0;padding:0;background:#fff}
-      body{font-family:'Sarabun','TH Sarabun New',sans-serif}
-    </style></head><body>${contractDocHTML(f)}</body></html>`);
-  doc.close();
-  setTimeout(()=>{try{win.focus();win.print();}catch(e){alert('เปิดหน้าต่างพิมพ์ไม่สำเร็จ กรุณาลองใหม่');}},450);
+  ensurePdfMake(()=>{try{pdfMake.createPdf(contractDocDef(f)).download(filename||'สัญญาเช่าห้องพัก.pdf');}catch(e){alert('สร้าง PDF ไม่สำเร็จ: '+e.message);}});
 }
 function downloadContract(){
   const f=cf();
