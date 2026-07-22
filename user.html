@@ -761,13 +761,13 @@ function cf(){
 }
 function updateContractPreview(){const el=document.getElementById('contractPreview');if(el)el.innerHTML=contractDocHTML(cf());}
 function setCF(k,v){cf();S.cform[k]=v;updateContractPreview();}
-function ub(v){return `<u>&nbsp;${(v===0||v)?String(v):'……………'}&nbsp;</u>`;}
+function ub(v){return (v===0||v)?`<span style="display:inline-block;border-bottom:1px solid #000;min-width:34px;text-align:center;padding:0 5px;line-height:1.15">${v}</span>`:`<span style="display:inline-block;border-bottom:1px solid #000;width:80px;line-height:1.15">&nbsp;</span>`;}
 function contractDocHTML(f){
   const d=f.cdate?new Date(f.cdate):null;
   const monthsTh=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   const day=d?d.getDate():'',mth=d?monthsTh[d.getMonth()]:'',be=d?d.getFullYear()+543:'';
   const addr=`บ้านเลขที่ ${ub(f.addrNo)} หมู่บ้าน ${ub(f.village)} ถนน ${ub(f.road)} ตำบล/แขวง ${ub(f.subdistrict)} อำเภอ/เขต ${ub(f.district)} จังหวัด ${ub(f.province)} โทร ${ub(f.phone)}`;
-  return `<div style="font-family:'Sarabun','TH Sarabun New',serif;line-height:1.95;font-size:14px;color:#111">
+  return `<div lang="th" style="font-family:'Sarabun','TH Sarabun New',serif;line-height:2.0;font-size:14px;color:#111;word-break:normal;overflow-wrap:break-word">
     <div style="text-align:center;font-weight:700;font-size:18px;margin-bottom:14px">สัญญาเช่าห้องพัก</div>
     <div style="text-align:right">ทำที่ ${ub(f.place)}</div>
     <div style="text-align:right">วันที่ ${ub(day)} เดือน ${ub(mth)} พ.ศ. ${ub(be)}</div>
@@ -794,25 +794,23 @@ function contractDocHTML(f){
     </tr></table>
   </div>`;
 }
-// โหลดตัวสร้าง PDF เมื่อจำเป็น (ไฟล์ใหญ่ โหลดครั้งเดียวตอนกดดาวน์โหลด)
-function ensureHtml2pdf(cb){
-  if(window.html2pdf){cb();return;}
-  const s=document.createElement('script');s.src='app/html2pdf.bundle.min.js';
-  s.onload=()=>cb();s.onerror=()=>alert('โหลดตัวสร้าง PDF ไม่สำเร็จ');
-  document.head.appendChild(s);
-}
+// สร้าง PDF ด้วยเครื่องพิมพ์ของเบราว์เซอร์โดยตรง (รองรับภาษาไทยสมบูรณ์ ไม่ซ้อนกัน)
+// เปิดหน้าเอกสารแล้วสั่งพิมพ์ ผู้ใช้เลือก "บันทึกเป็น PDF" ได้ทันที
 function makeContractPDF(f,filename){
-  ensureHtml2pdf(()=>{
-    // เรนเดอร์บนจอชั่วคราว (บนสุด) เพื่อให้ html2canvas จับภาพได้ครบ แล้วค่อยลบ
-    const holder=document.createElement('div');
-    holder.style.cssText='position:fixed;left:0;top:0;z-index:2147483647;background:#fff';
-    const el=document.createElement('div');
-    el.style.cssText="width:720px;padding:36px;background:#fff;color:#111;font-family:'Sarabun','TH Sarabun New',sans-serif";
-    el.innerHTML=contractDocHTML(f);
-    holder.appendChild(el);document.body.appendChild(holder);
-    window.html2pdf().set({margin:8,filename:filename||'สัญญาเช่าห้องพัก.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}})
-      .from(el).save().then(()=>holder.remove()).catch(e=>{holder.remove();alert('สร้าง PDF ไม่สำเร็จ: '+e.message);});
-  });
+  const title=(filename||'สัญญาเช่าห้องพัก').replace(/\.pdf$/i,'');
+  const win=window.open('','_blank');
+  if(!win){alert('กรุณาอนุญาตให้เปิดหน้าต่าง (ป๊อปอัป) เพื่อบันทึกเป็น PDF');return;}
+  win.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${title}</title>
+    <style>@page{size:A4;margin:16mm}
+      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      html,body{margin:0;padding:0;background:#fff}
+      body{font-family:'Sarabun','TH Sarabun New',sans-serif}
+      @media screen{body{padding:24px;background:#eceef3}.doc{max-width:800px;margin:0 auto;background:#fff;padding:40px;box-shadow:0 2px 16px rgba(0,0,0,.12)}}
+    </style></head>
+    <body><div class="doc">${contractDocHTML(f)}</div>
+    <script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350);};window.onafterprint=function(){window.close();};</${''}script>
+    </body></html>`);
+  win.document.close();
 }
 function downloadContract(){
   const f=cf();
