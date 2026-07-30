@@ -267,7 +267,10 @@ const THAI_PROVINCES=['กระบี่','กรุงเทพมหานค
 const SEED=JSON.parse(JSON.stringify({rooms:S.rooms,bookings:S.bookings,bills:S.bills,stays:S.stays,repairs:S.repairs,accounts:S.accounts,paySettings:DEFAULT_PAY}));
 S.pay=DEFAULT_PAY; S.photos={};
 function roomPhotos(roomId){return (S.photos&&S.photos[roomId])||[];}
-function persistColl(coll,obj){ if(Samrit.mode==='live'){Samrit.save(coll,obj).catch(e=>console.warn('save',coll,e.message));} else {Samrit.saveDemo(coll,S[coll]);} }
+// นับการบันทึกที่ค้างอยู่ — กันไม่ให้รีเฟรชอัตโนมัติดึงข้อมูลเก่ามาทับ
+let _pendingSaves=0;
+function _track(pr){_pendingSaves++;Promise.resolve(pr).catch(e=>console.warn(e&&e.message)).finally(()=>{_pendingSaves=Math.max(0,_pendingSaves-1);});return pr;}
+function persistColl(coll,obj){ if(Samrit.mode==='live'){_track(Samrit.save(coll,obj));} else {Samrit.saveDemo(coll,S[coll]);} }
 async function pushSlip(o){
   const slip={roomNumber:o.roomNumber,name:o.name,amount:o.amount,slip:o.slip,kind:o.kind,month:o.month||'',date:new Date().toISOString().slice(0,10),status:'รอตรวจสอบ'};
   try{
@@ -395,13 +398,14 @@ async function boot(){
   else{await loadPublicData();}
   render();
 }
-// รีเฟรชอัตโนมัติทุก 15 วินาที (โหมด LIVE) — ให้ผู้เช่าเห็นบิล/การยืนยันจากหลังบ้านทันที
+// รีเฟรชอัตโนมัติทุก 20 วินาที (โหมด LIVE) — ให้ผู้เช่าเห็นบิล/การยืนยันจากหลังบ้าน
+// ข้ามถ้ากำลังพิมพ์ เปิดหน้าต่าง หรือมีการบันทึกค้างอยู่
 setInterval(()=>{
-  if(Samrit.mode!=='live'||!S.auth||S.modal)return;
+  if(Samrit.mode!=='live'||!S.auth||S.modal||_pendingSaves>0)return;
   const ae=document.activeElement;
-  if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))return;
+  if(ae&&/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(ae.tagName))return;
   loadResidentData().then(()=>render()).catch(()=>{});
-},15000);
+},20000);
 
 // ─── Bookings & Payment (QR) ─────────────────────────────────
 let payCtx=null; // {kind:'booking'|'bill', roomId/billId, date, slip}

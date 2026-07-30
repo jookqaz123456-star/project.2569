@@ -313,10 +313,13 @@ const DEFAULT_PAY={
     {bank:'ธนาคารไทยพาณิชย์',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'},
   ],
 };
+// นับจำนวนการบันทึกที่กำลังส่งไปเซิร์ฟเวอร์ — เพื่อไม่ให้รีเฟรชดึงข้อมูลเก่ามาทับก่อนบันทึกเสร็จ
+let _pendingSaves=0;
+function _track(pr){_pendingSaves++;Promise.resolve(pr).catch(e=>console.warn(e&&e.message)).finally(()=>{_pendingSaves=Math.max(0,_pendingSaves-1);});return pr;}
 function roomPhotos(roomId){return (S.photos&&S.photos[roomId])||[];}
-function setRoomPhotos(roomId,arr){S.photos=S.photos||{};S.photos[roomId]=arr;Samrit.setSetting('photos',S.photos).catch(e=>console.warn(e.message));}
-function persistColl(coll,obj){ if(Samrit.mode==='live'){Samrit.save(coll,obj).catch(e=>console.warn('save',coll,e.message));} else {Samrit.saveDemo(coll,S[coll]);} }
-function persistRemove(coll,id){ if(Samrit.mode==='live'){Samrit.remove(coll,id).catch(e=>console.warn('rm',coll,e.message));} else {Samrit.saveDemo(coll,S[coll]);} }
+function setRoomPhotos(roomId,arr){S.photos=S.photos||{};S.photos[roomId]=arr;_track(Samrit.setSetting('photos',S.photos));}
+function persistColl(coll,obj){ if(Samrit.mode==='live'){_track(Samrit.save(coll,obj));} else {Samrit.saveDemo(coll,S[coll]);} }
+function persistRemove(coll,id){ if(Samrit.mode==='live'){_track(Samrit.remove(coll,id));} else {Samrit.saveDemo(coll,S[coll]);} }
 function qrSVG(seed,px){
   const N=25,cell=px/N;let s=0;for(const c of (seed||'samrit'))s=(s*31+c.charCodeAt(0))>>>0;
   function rnd(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;}
@@ -359,17 +362,18 @@ async function loadAll(){
 }
 // ดึงข้อมูลล่าสุดจากเซิร์ฟเวอร์อีกครั้ง (ให้หลังบ้านเห็นสิ่งที่ผู้เช่าเพิ่งทำ)
 async function refreshData(manual){
+  // รอให้การบันทึกที่ค้างอยู่เสร็จก่อน ไม่งั้นจะดึงข้อมูลเก่ามาทับสิ่งที่เพิ่งแก้
+  let waited=0; while(_pendingSaves>0&&waited<4000){await new Promise(r=>setTimeout(r,100));waited+=100;}
   await loadAll();
   render();
-  if(manual){const t=document.getElementById('refreshToast');if(t){t.style.opacity='1';setTimeout(()=>{if(t)t.style.opacity='0';},1500);}}
 }
-// รีเฟรชอัตโนมัติทุก 15 วินาที (เฉพาะโหมด LIVE) — ข้ามถ้ากำลังเปิดหน้าต่างหรือพิมพ์อยู่
+// รีเฟรชอัตโนมัติทุก 20 วินาที (เฉพาะโหมด LIVE) — ข้ามถ้ากำลังเปิดหน้าต่าง พิมพ์อยู่ หรือมีการบันทึกค้าง
 setInterval(()=>{
-  if(Samrit.mode!=='live'||!S.auth||S.modal)return;
+  if(Samrit.mode!=='live'||!S.auth||S.modal||_pendingSaves>0)return;
   const ae=document.activeElement;
-  if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))return;
+  if(ae&&/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(ae.tagName))return;
   refreshData();
-},15000);
+},20000);
 async function boot(){
   await Samrit.init();
   if(Samrit.mode==='live'){
@@ -551,7 +555,7 @@ function saveQuickPrice(){
   closeModal();
 }
 // ─── Payment settings (QR/banks) + slips ─────────────────────
-function savePay(){Samrit.setSetting('paySettings',S.pay).catch(e=>console.warn(e.message));}
+function savePay(){_track(Samrit.setSetting('paySettings',S.pay));}
 function onQRUpload(input){
   const f=input.files&&input.files[0];if(!f)return;
   const rd=new FileReader();
