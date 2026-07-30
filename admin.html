@@ -313,9 +313,23 @@ const DEFAULT_PAY={
     {bank:'ธนาคารไทยพาณิชย์',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'},
   ],
 };
+// แจ้งเตือนบนหน้าจอ (ใช้บอกผลการบันทึก/ข้อผิดพลาด)
+function showToast(msg,isErr){
+  let t=document.getElementById('sysToast');
+  if(!t){t=document.createElement('div');t.id='sysToast';t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483647;padding:12px 18px;border-radius:10px;font-size:13.5px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.45);max-width:92vw;text-align:center;transition:opacity .25s';document.body.appendChild(t);}
+  t.style.background=isErr?'#7F1D1D':'#065F46';t.style.color='#fff';t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._h);t._h=setTimeout(()=>{t.style.opacity='0';},isErr?9000:2000);
+}
 // นับจำนวนการบันทึกที่กำลังส่งไปเซิร์ฟเวอร์ — เพื่อไม่ให้รีเฟรชดึงข้อมูลเก่ามาทับก่อนบันทึกเสร็จ
 let _pendingSaves=0;
-function _track(pr){_pendingSaves++;Promise.resolve(pr).catch(e=>console.warn(e&&e.message)).finally(()=>{_pendingSaves=Math.max(0,_pendingSaves-1);});return pr;}
+function _track(pr){
+  _pendingSaves++;
+  Promise.resolve(pr)
+    .then(()=>{showToast('✓ บันทึกแล้ว');})
+    .catch(e=>{console.warn(e&&e.message);showToast('❌ บันทึกไม่สำเร็จ: '+((e&&e.message)||'ไม่ทราบสาเหตุ')+' — ข้อมูลจะเด้งกลับเมื่อรีเฟรช',true);})
+    .finally(()=>{_pendingSaves=Math.max(0,_pendingSaves-1);});
+  return pr;
+}
 function roomPhotos(roomId){return (S.photos&&S.photos[roomId])||[];}
 function setRoomPhotos(roomId,arr){S.photos=S.photos||{};S.photos[roomId]=arr;_track(Samrit.setSetting('photos',S.photos));}
 function persistColl(coll,obj){ if(Samrit.mode==='live'){_track(Samrit.save(coll,obj));} else {Samrit.saveDemo(coll,S[coll]);} }
