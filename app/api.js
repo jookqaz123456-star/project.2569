@@ -16,7 +16,16 @@
     const headers = Object.assign({ 'content-type': 'application/json' }, opts.headers || {});
     const t = getToken(); if (t) headers.authorization = 'Bearer ' + t;
     const res = await fetch(BASE + path, { method: opts.method || 'GET', headers, cache: 'no-store', body: opts.body ? JSON.stringify(opts.body) : undefined });
-    if (!res.ok) { let e = {}; try { e = await res.json(); } catch (_) {} throw new Error(e.error || ('HTTP ' + res.status)); }
+    if (!res.ok) {
+      // Token หมดอายุ/ไม่ถูกต้อง — ล้าง token แล้วให้เข้าสู่ระบบใหม่ (กันบันทึกล้มเหลวเงียบ ๆ)
+      if (res.status === 401 && t && !window.__sessionExpiredHandled) {
+        window.__sessionExpiredHandled = true;
+        setToken(''); Samrit._setUser(null);
+        alert('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+        location.reload();
+      }
+      let e = {}; try { e = await res.json(); } catch (_) {} throw new Error(e.error || ('HTTP ' + res.status));
+    }
     return res.status === 204 ? null : res.json();
   }
 
