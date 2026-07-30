@@ -800,7 +800,10 @@ function renderRoomDetail(){
   const r=S.rooms.find(x=>x.id===S.selectedRoom)||S.rooms[0];
   const t=r.tenantId?tenantOf(r.tenantId):null;
   const pays=S.payments.filter(p=>p.roomId===r.id);
-  const cons=S.contracts.filter(c=>c.resident&&String(c.roomNumber)===String(r.number));
+  // เชื่อมสัญญากับห้อง: จับคู่ตามเลขห้อง หรือ บัญชีผู้เช่าที่จองห้องนี้
+  const _bk=t&&t.fromBooking?(S.bookings||[]).find(b=>b.id===t.fromBooking):null;
+  const _tuid=_bk?_bk.userId:null;
+  const cons=S.contracts.filter(c=>c.resident&&(String(c.roomNumber)===String(r.number)||(_tuid&&c.userId===_tuid)));
   const photos=roomPhotos(r.id);
   return`
   <div class="topbar">
@@ -865,13 +868,16 @@ function renderRoomDetail(){
       <div class="card">
         <div style="font-weight:700;margin-bottom:14px">สัญญาเช่า</div>
         ${cons.length?cons.map(c=>`
-        <div style="padding:12px;background:#0E1016;border-radius:10px;margin-bottom:8px;cursor:pointer" onclick="openModal('viewResidentContract','${c.id}')">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
+        <div style="padding:12px;background:#0E1016;border-radius:10px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div style="cursor:pointer" onclick="openModal('viewResidentContract','${c.id}')">
               <div style="font-weight:600;font-size:13.5px">${c.tenantName||'-'}</div>
               <div style="font-size:11.5px;color:#5C6270">ส่งเมื่อ ${fmtDate(c.submittedAt)||'-'}</div>
             </div>
-            <span class="badge ${c.status==='ยืนยันแล้ว'?'badge-green':'badge-yellow'}">${c.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน'}</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="badge ${c.status==='ยืนยันแล้ว'?'badge-green':'badge-yellow'}">${c.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน'}</span>
+              ${c.status!=='ยืนยันแล้ว'?`<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();confirmResidentContract('${c.id}')">ยืนยัน</button>`:''}
+            </div>
           </div>
         </div>`).join(''):`<div style="color:#5C6270;text-align:center;padding:20px">ยังไม่มีสัญญา</div>`}
       </div>
