@@ -235,7 +235,7 @@ function eRate(){return +(S.pay&&S.pay.electricRate!=null?S.pay.electricRate:7);
 // ค่าน้ำ/ค่าไฟ เป็นบาทโดยตรง (waterCost/electricCost) — ข้อมูลเก่าที่เก็บเป็นหน่วย fallback มาคูณอัตรา
 function waterCost(p){return p.waterCost!=null?+p.waterCost:(+p.waterUnit||0)*wRate();}
 function electricCost(p){return p.electricCost!=null?+p.electricCost:(+p.electricUnit||0)*eRate();}
-function payTotal(p){return p.rent + waterCost(p) + electricCost(p) + p.internet + (p.other||0);}
+function payTotal(p){return p.rent + waterCost(p) + electricCost(p) + p.internet + (+p.other||0) + (+p.deposit||0);}
 // เรียงบิลจากใหม่สุด → เก่าสุด (เดือนล่าสุดก่อน, แล้ววันที่, แล้วลำดับที่สร้าง)
 function sortBillsDesc(arr){return (arr||[]).slice().sort((a,b)=>{
   const m=(b.month||'').localeCompare(a.month||'');if(m)return m;
@@ -451,7 +451,7 @@ function saveBooking(){
 function deleteBooking(id){if(confirm('ลบการจองนี้?')){const b=S.bookings.find(x=>x.id===id);S.bookings=S.bookings.filter(x=>x.id!==id);persistRemove('bookings',id);if(b&&b.status!=='ยกเลิก')freeRoomIfBooked(b.roomId);render();}}
 function savePayment(){
   const f=getFormVals('paymentForm');
-  const p={...f,rent:+f.rent,waterCost:+f.waterCost,electricCost:+f.electricCost,internet:+f.internet,other:+(f.other||0),roomNumber:+f.roomNumber,userId:f.userId||''};
+  const p={...f,rent:+f.rent,waterCost:+f.waterCost,electricCost:+f.electricCost,internet:+f.internet,other:+(f.other||0),deposit:+(f.deposit||0),note:f.note||'',roomNumber:+f.roomNumber,userId:f.userId||''};
   let obj;
   if(f._id){const i=S.payments.findIndex(x=>x.id===f._id);if(i>=0){S.payments[i]={...S.payments[i],...p};obj=S.payments[i];}}
   else{obj={id:Samrit.newId(),...p,status:p.status||'unpaid'};S.payments.push(obj);}
@@ -469,6 +469,7 @@ function syncBillForPayment(p){
     const existing=idx>=0?S.bills[idx]:null;
     const bill={id:billId,userId:p.userId,roomNumber:p.roomNumber,month:p.month,
       rent:p.rent,waterCost:waterCost(p),electricCost:electricCost(p),internet:p.internet,
+      other:+(p.other||0),deposit:+(p.deposit||0),note:p.note||'',
       status:p.status||'unpaid',date:p.date||'',slip:existing?existing.slip:'',srcPayment:p.id};
     if(idx>=0)S.bills[idx]=bill; else S.bills.push(bill);
     persistColl('bills',bill);
@@ -512,8 +513,9 @@ function signContract(id){
 // ─── Live bill calculator (updates preview in payment form) ───
 function updateBillCalc(){
   const get=n=>+(document.querySelector(`[name=${n}]`)?.value||0);
-  const wc=get('waterCost'),ec=get('electricCost'),rent=get('rent'),internet=get('internet'),other=get('other');
-  const total=rent+wc+ec+internet+other;
+  const wc=get('waterCost'),ec=get('electricCost'),rent=get('rent'),internet=get('internet'),other=get('other'),deposit=get('deposit');
+  const billOnly=rent+wc+ec+internet+other;
+  const total=billOnly+deposit;
   const el=document.getElementById('billCalcPreview');
   if(!el)return;
   el.innerHTML=`
@@ -521,7 +523,9 @@ function updateBillCalc(){
     <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8892A4;margin-bottom:4px"><span>ค่าน้ำ</span><span>฿${fmtMoney(wc)}</span></div>
     <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8892A4;margin-bottom:4px"><span>ค่าไฟ</span><span>฿${fmtMoney(ec)}</span></div>
     <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8892A4;margin-bottom:4px"><span>ค่าเน็ต + อื่นๆ</span><span>฿${fmtMoney(internet+other)}</span></div>
-    <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#A990FF;border-top:1px solid rgba(255,255,255,0.08);padding-top:7px;margin-top:3px"><span>ยอดรวม</span><span>฿${fmtMoney(total)}</span></div>`;
+    <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8892A4;margin-bottom:4px;border-top:1px dashed rgba(255,255,255,0.08);padding-top:5px"><span>ยอดบิลรวม (ไม่รวมมัดจำ)</span><span>฿${fmtMoney(billOnly)}</span></div>
+    ${deposit?`<div style="display:flex;justify-content:space-between;font-size:12.5px;color:#FBBF24;margin-bottom:4px"><span>ค่ามัดจำ (แยกต่างหาก)</span><span>฿${fmtMoney(deposit)}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#A990FF;border-top:1px solid rgba(255,255,255,0.08);padding-top:7px;margin-top:3px"><span>ยอดรวมทั้งสิ้น</span><span>฿${fmtMoney(total)}</span></div>`;
 }
 // ─── Quick room price edit ─────────────────────────────────────
 function saveQuickPrice(){
@@ -981,7 +985,7 @@ function contractDocHTML(f){
     <p style="text-indent:2.5em"><b>ข้อ 7.</b> ผู้เช่ามีหน้าที่รักษาความสะอาดตามกฎหมาย ไม่เก็บวัตถุไวไฟหรือสิ่งอันตรายหรือสิ่งต้องห้ามตามกฎหมาย ผู้เช่ายินยอมให้ผู้ให้เช่าเข้าตรวจความถูกต้องเรียบร้อยในห้อง</p>
     <p style="text-indent:2.5em"><b>ข้อ 8.</b> ผู้เช่าจะดัดแปลงต่อเติมหรือรื้อถอนทรัพย์สินที่เช่าทั้งหมดหรือบางส่วนได้ ต่อเมื่อได้รับความยินยอมเป็นหนังสือจากผู้ให้เช่า</p>
     <p style="text-indent:2.5em"><b>ข้อ 9.</b> ถ้าผู้เช่าผิดสัญญาไม่ชำระค่าเช่าตามกำหนดไว้ในข้อ 2. ผู้ให้เช่ามีสิทธิกลับเข้าครอบครองทรัพย์สินที่เช่าตามสัญญานี้โดยฉับพลัน และผู้เช่ายอมให้ผู้ให้เช่าย้ายบุคคลหรือทรัพย์สินของผู้เช่าออกไปจากทรัพย์ที่เช่าตามสัญญานี้</p>
-    <p style="text-indent:2.5em"><b>ข้อ 10.</b> ผู้เช่ามีหน้าที่แจ้งให้ผู้ให้เช่าทราบล่วงหน้าในการเลิกเช่าไม่น้อยกว่าสามสิบวันจึงจะได้รับเงินล่วงหน้าคืน หรืออยู่อาศัยโดยหักจากการชำระล่วงหน้าตามข้อ 2</p>
+    <p style="text-indent:2.5em"><b>ข้อ 10.</b> ผู้เช่ามีหน้าที่แจ้งให้ผู้ให้เช่าทราบล่วงหน้าในการเลิกเช่าไม่น้อยกว่าสามสิบวันและต้องอยู่เทียบเท่าหรือมากกว่า 4 เดือนจึงจะได้รับเงินล่วงหน้าคืน หรืออยู่อาศัยโดยหักจากการชำระล่วงหน้าตามข้อ 2</p>
     <p style="text-indent:2.5em"><b>ข้อ 11.</b> ในวันทำสัญญานี้ ผู้เช่าได้ตรวจตราทรัพย์สินที่เช่าแล้วเห็นว่ามีสภาพปกติดีทุกประการ และผู้ให้เช่าได้ส่งมอบทรัพย์สินที่ให้แก่ผู้เช่าแล้ว</p>
     <p style="text-indent:2.5em"><b>ข้อ 12.</b> ผู้เช่าได้มอบสำเนาบัตรประจำตัว สำเนาทะเบียนบ้านและเอกสารแสดงตัวตามกฎหมายที่ไม่หมดอายุ พร้อมรูปถ่าย ${ub(f.photoCount)} รูป ให้ไว้กับผู้ให้เช่า</p>
     <p style="text-indent:2.5em">คู่สัญญาทั้งสองฝ่ายได้อ่านและทำความเข้าใจดีแล้ว จึงลงลายมือชื่อไว้เป็นหลักฐาน</p>
@@ -1024,7 +1028,7 @@ function contractDocDef(f){
       clause(7,'ผู้เช่ามีหน้าที่รักษาความสะอาดตามกฎหมาย ไม่เก็บวัตถุไวไฟหรือสิ่งอันตรายหรือสิ่งต้องห้ามตามกฎหมาย ผู้เช่ายินยอมให้ผู้ให้เช่าเข้าตรวจความถูกต้องเรียบร้อยในห้อง'),
       clause(8,'ผู้เช่าจะดัดแปลงต่อเติมหรือรื้อถอนทรัพย์สินที่เช่าทั้งหมดหรือบางส่วนได้ ต่อเมื่อได้รับความยินยอมเป็นหนังสือจากผู้ให้เช่า'),
       clause(9,'ถ้าผู้เช่าผิดสัญญาไม่ชำระค่าเช่าตามกำหนดไว้ในข้อ 2. ผู้ให้เช่ามีสิทธิกลับเข้าครอบครองทรัพย์สินที่เช่าตามสัญญานี้โดยฉับพลัน และผู้เช่ายอมให้ผู้ให้เช่าย้ายบุคคลหรือทรัพย์สินของผู้เช่าออกไปจากทรัพย์ที่เช่าตามสัญญานี้'),
-      clause(10,'ผู้เช่ามีหน้าที่แจ้งให้ผู้ให้เช่าทราบล่วงหน้าในการเลิกเช่าไม่น้อยกว่าสามสิบวันจึงจะได้รับเงินล่วงหน้าคืน หรืออยู่อาศัยโดยหักจากการชำระล่วงหน้าตามข้อ 2'),
+      clause(10,'ผู้เช่ามีหน้าที่แจ้งให้ผู้ให้เช่าทราบล่วงหน้าในการเลิกเช่าไม่น้อยกว่าสามสิบวันและต้องอยู่เทียบเท่าหรือมากกว่า 4 เดือนจึงจะได้รับเงินล่วงหน้าคืน หรืออยู่อาศัยโดยหักจากการชำระล่วงหน้าตามข้อ 2'),
       clause(11,'ในวันทำสัญญานี้ ผู้เช่าได้ตรวจตราทรัพย์สินที่เช่าแล้วเห็นว่ามีสภาพปกติดีทุกประการ และผู้ให้เช่าได้ส่งมอบทรัพย์สินที่ให้แก่ผู้เช่าแล้ว'),
       clause(12,'ผู้เช่าได้มอบสำเนาบัตรประจำตัว สำเนาทะเบียนบ้านและเอกสารแสดงตัวตามกฎหมายที่ไม่หมดอายุ พร้อมรูปถ่าย'+bl(f.photoCount)+'รูป ให้ไว้กับผู้ให้เช่า'),
       {text:[IND,seg('คู่สัญญาทั้งสองฝ่ายได้อ่านและทำความเข้าใจดีแล้ว จึงลงลายมือชื่อไว้เป็นหลักฐาน')],margin:[0,2,0,4]},
@@ -1379,17 +1383,22 @@ function renderModal(){
           <div class="form-group"><label class="form-label">ค่าเน็ต (฿)</label><input name="internet" class="input" type="number" value="${p?.internet||300}" oninput="updateBillCalc()"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">ค่าอื่นๆ (฿)</label><input name="other" class="input" type="number" value="${p?.other||0}" oninput="updateBillCalc()"></div>
+          <div class="form-group"><label class="form-label">ค่าอื่นๆ / ค่าปรับ (฿)</label><input name="other" class="input" type="number" value="${p?.other||0}" oninput="updateBillCalc()"></div>
+          <div class="form-group"><label class="form-label">ค่ามัดจำ (฿)</label><input name="deposit" class="input" type="number" value="${p?.deposit||0}" oninput="updateBillCalc()"></div>
+        </div>
+        <div class="form-row">
           <div class="form-group"><label class="form-label">สถานะ</label><select name="status" class="input">
             ${[['unpaid','รอชำระ'],['paid','ชำระแล้ว'],['overdue','เกินกำหนด']].map(([v,l])=>`<option value="${v}"${p?.status===v?' selected':''}>${l}</option>`).join('')}
           </select></div>
+          <div class="form-group"><label class="form-label">วันชำระ</label><input name="date" class="input" type="date" value="${p?.date||''}"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">วันชำระ</label><input name="date" class="input" type="date" value="${p?.date||''}"></div>
           <div class="form-group"><label class="form-label">วิธีชำระ</label><select name="method" class="input">
             ${['','เงินสด','โอนเงิน'].map(m=>`<option${p?.method===m?' selected':''}>${m}</option>`).join('')}
           </select></div>
+          <div class="form-group"></div>
         </div>
+        <div class="form-group"><label class="form-label">หมายเหตุ</label><textarea name="note" class="input" rows="2" style="resize:vertical" placeholder="เช่น ยังไม่รวมค่ามัดจำ / ผ่อนชำระ ฯลฯ">${p?.note?String(p.note).replace(/</g,'&lt;'):''}</textarea></div>
       </form>
       <div id="billCalcPreview" style="background:#0E1016;border-radius:10px;padding:12px 14px;margin-top:4px"></div>
     `,`<button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="savePayment()">บันทึก</button>`,'modal-lg');
@@ -1535,8 +1544,10 @@ function renderModal(){
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าน้ำ</span><span>฿${fmtMoney(waterCost(p))}</span></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าไฟ</span><span>฿${fmtMoney(electricCost(p))}</span></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าอินเทอร์เน็ต</span><span>฿${fmtMoney(p.internet)}</span></div>
-          ${p.other?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">อื่นๆ</span><span>฿${fmtMoney(p.other)}</span></div>`:''}
+          ${p.other?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าอื่นๆ / ค่าปรับ</span><span>฿${fmtMoney(p.other)}</span></div>`:''}
+          ${p.deposit?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#FBBF24">ค่ามัดจำ (แยกต่างหาก)</span><span style="color:#FBBF24">฿${fmtMoney(p.deposit)}</span></div>`:''}
         </div>
+        ${p.note?`<div style="border-top:1px dashed rgba(255,255,255,0.1);padding-top:12px;margin-top:8px;font-size:13px"><span style="color:#6B7180">หมายเหตุ:</span> ${String(p.note).replace(/</g,'&lt;')}</div>`:''}
         <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
           <span style="font-weight:700;font-size:15px">รวมทั้งสิ้น</span>
           <span style="font-weight:700;font-size:20px;color:#A990FF">฿${fmtMoney(payTotal(p))}</span>
