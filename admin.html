@@ -1235,8 +1235,32 @@ function renderRepairs(){
 // ─── Pay Settings & Slips ────────────────────────────────────
 function renderPaySettings(){
   // เฉพาะสลิปโอนเงินจริง — สัญญาเช่าที่เซ็นแล้วให้ไปแสดงหน้า "สัญญาเช่า"
-  const slips=(S.slips||[]).filter(s=>s.kind!=='สัญญาเช่าที่เซ็นแล้ว');
+  const allSlips=(S.slips||[]).filter(s=>s.kind!=='สัญญาเช่าที่เซ็นแล้ว');
+  const slips=allSlips.filter(s=>s.kind!=='จองห้อง');        // ค่าเช่า/อื่นๆ
+  const bookingSlips=allSlips.filter(s=>s.kind==='จองห้อง'); // เงินจอง
   const pending=slips.filter(s=>s.status==='รอตรวจสอบ').length;
+  const bookingPending=bookingSlips.filter(s=>s.status==='รอตรวจสอบ').length;
+  // ตารางสลิป (ใช้ซ้ำได้ทั้งแท็บโอนเงินและแท็บจอง)
+  const slipTable=(list,emptyMsg)=>list.length===0?`<div style="color:#5C6270;text-align:center;padding:40px">${emptyMsg}</div>`:`
+      <div class="table-wrap"><table>
+        <tr><th>สลิป</th><th>ผู้โอน</th><th>ห้อง</th><th>ประเภท</th><th>ยอด</th><th>วันที่</th><th>สถานะ</th><th></th></tr>
+        ${list.map(s=>`<tr>
+          <td>${s.slip?`<img src="${s.slip}" style="width:46px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openModal('viewSlip','${s.id}')">`:'<span style="color:#5C6270">ไม่มีรูป</span>'}</td>
+          <td>${s.name||'-'}</td>
+          <td>ห้อง ${s.roomNumber}${s.month?`<div style="font-size:11px;color:#5C6270">${s.month}</div>`:''}</td>
+          <td>${s.kind||'-'}</td>
+          <td style="font-weight:700">฿${fmtMoney(s.amount||0)}</td>
+          <td>${fmtDate(s.date)}</td>
+          <td><span class="badge ${s.status==='อนุมัติ'?'badge-green':s.status==='ปฏิเสธ'?'badge-red':'badge-yellow'}">${s.status}</span></td>
+          <td>
+            <div style="display:flex;gap:4px">
+              ${s.status!=='อนุมัติ'?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','อนุมัติ')" style="color:#34D399">อนุมัติ</button>`:''}
+              ${s.status!=='ปฏิเสธ'?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','ปฏิเสธ')" style="color:#F87171">ปฏิเสธ</button>`:''}
+              <button class="btn btn-icon btn-danger" onclick="deleteSlip('${s.id}')">${ico.trash}</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </table></div>`;
   const ppDigits=(S.pay.promptpay||'').replace(/[^0-9]/g,'');
   const ppReady=ppDigits.length>=10&&window.PromptPay;
   // Preview is a static PromptPay QR (no amount). Each resident bill renders its
@@ -1245,9 +1269,10 @@ function renderPaySettings(){
   return`
   <div class="topbar"><div class="topbar-title">QR & สลิปการโอนเงิน</div></div>
   <div class="page">
-    <div class="tabs" style="max-width:380px">
+    <div class="tabs" style="max-width:560px">
       <button class="tab${S.payTab==='settings'?' active':''}" onclick="S.payTab='settings';render()">ตั้งค่า QR / บัญชี</button>
       <button class="tab${S.payTab==='slips'?' active':''}" onclick="S.payTab='slips';render()">หลักฐานการโอน${pending?` (${pending})`:''}</button>
+      <button class="tab${S.payTab==='booking'?' active':''}" onclick="S.payTab='booking';render()">หลักฐานการจอง${bookingPending?` (${bookingPending})`:''}</button>
     </div>
     ${S.payTab==='settings'?`
     <div style="display:grid;grid-template-columns:240px 1fr;gap:20px">
@@ -1275,29 +1300,14 @@ function renderPaySettings(){
         </div>`).join('')}
         <div style="font-size:12px;color:#5C6270;margin-top:6px">บันทึกอัตโนมัติ — ข้อมูลจะแสดงในหน้าชำระเงินของผู้พักอาศัยทันที</div>
       </div>
+    </div>`:S.payTab==='booking'?`
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:14px">หลักฐานการโอนเงินจอง (มัดจำ) จากผู้พักอาศัย (${bookingSlips.length})</div>
+      ${slipTable(bookingSlips,'ยังไม่มีหลักฐานการจอง — เมื่อผู้เช่าโอนเงินจองห้องจะแสดงที่นี่')}
     </div>`:`
     <div class="card">
       <div style="font-weight:700;margin-bottom:14px">หลักฐานการโอนเงินจากผู้พักอาศัย (${slips.length})</div>
-      ${slips.length===0?`<div style="color:#5C6270;text-align:center;padding:40px">ยังไม่มีสลิปที่ส่งเข้ามา — ลองชำระเงินจากฝั่งผู้พักอาศัย</div>`:`
-      <div class="table-wrap"><table>
-        <tr><th>สลิป</th><th>ผู้โอน</th><th>ห้อง</th><th>ประเภท</th><th>ยอด</th><th>วันที่</th><th>สถานะ</th><th></th></tr>
-        ${slips.map(s=>`<tr>
-          <td>${s.slip?`<img src="${s.slip}" style="width:46px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openModal('viewSlip','${s.id}')">`:'<span style="color:#5C6270">ไม่มีรูป</span>'}</td>
-          <td>${s.name||'-'}</td>
-          <td>ห้อง ${s.roomNumber}${s.month?`<div style="font-size:11px;color:#5C6270">${s.month}</div>`:''}</td>
-          <td>${s.kind||'-'}</td>
-          <td style="font-weight:700">฿${fmtMoney(s.amount||0)}</td>
-          <td>${fmtDate(s.date)}</td>
-          <td><span class="badge ${s.status==='อนุมัติ'?'badge-green':s.status==='ปฏิเสธ'?'badge-red':'badge-yellow'}">${s.status}</span></td>
-          <td>
-            <div style="display:flex;gap:4px">
-              ${s.status!=='อนุมัติ'?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','อนุมัติ')" style="color:#34D399">อนุมัติ</button>`:''}
-              ${s.status!=='ปฏิเสธ'?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','ปฏิเสธ')" style="color:#F87171">ปฏิเสธ</button>`:''}
-              <button class="btn btn-icon btn-danger" onclick="deleteSlip('${s.id}')">${ico.trash}</button>
-            </div>
-          </td>
-        </tr>`).join('')}
-      </table></div>`}
+      ${slipTable(slips,'ยังไม่มีสลิปที่ส่งเข้ามา — ลองชำระเงินจากฝั่งผู้พักอาศัย')}
     </div>`}
   </div>`;
 }
