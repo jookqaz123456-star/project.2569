@@ -349,7 +349,7 @@ async function tryLogin(){
   const p=document.getElementById('loginPass')?.value||'';
   try{
     const user=await Samrit.login(u,p,SEED.accounts);
-    S.auth=user;await loadResidentData();render();
+    S.auth=user;S.cform=null;await loadResidentData();render();
   }catch(e){alert(e.message);}
 }
 async function tryRegister(){
@@ -363,10 +363,10 @@ async function tryRegister(){
   if(pass!==pass2){alert('รหัสผ่านไม่ตรงกัน');return;}
   try{
     const user=await Samrit.register({name,username,email,phone,password:pass},SEED.accounts);
-    S.auth=user;await loadResidentData();render();
+    S.auth=user;S.cform=null;await loadResidentData();render();
   }catch(e){alert(e.message);}
 }
-function logout(){Samrit.logout();S.auth=null;S.screen='browse';render();}
+function logout(){Samrit.logout();S.auth=null;S.cform=null;S.contractTab='create';S.contractDoc=null;S.screen='browse';render();}
 
 // ─── Boot & data load ────────────────────────────────────────
 async function loadResidentData(){
@@ -500,20 +500,20 @@ function renderAuth(){
           <button class="auth-tab${S.authTab==='register'?' active':''}" onclick="S.authTab='register';render()">สมัครสมาชิก</button>
         </div>
         ${S.authTab==='login'?`
-        <div class="form-group"><label class="form-label">ชื่อผู้ใช้</label><input id="loginUser" class="input" placeholder="username" value="demo"></div>
-        <div class="form-group"><label class="form-label">รหัสผ่าน</label><input id="loginPass" class="input" type="password" placeholder="••••••••" value="demo1234"></div>
+        <div class="form-group"><label class="form-label">ชื่อผู้ใช้</label><input id="loginUser" class="input" placeholder="username" value="demo" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+        <div class="form-group"><label class="form-label">รหัสผ่าน</label><input id="loginPass" class="input" type="password" placeholder="••••••••" value="demo1234" autocomplete="new-password"></div>
         <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="tryLogin()">เข้าสู่ระบบ</button>
         <div style="text-align:center;margin-top:12px;font-size:12px;color:#5C6270">บัญชีทดสอบ: <span style="color:#A990FF">demo / demo1234</span></div>
         `:`
-        <div class="form-group"><label class="form-label">ชื่อ-สกุล</label><input id="regName" class="input" placeholder="ชื่อ นามสกุล"></div>
+        <div class="form-group"><label class="form-label">ชื่อ-สกุล</label><input id="regName" class="input" placeholder="ชื่อ นามสกุล" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">ชื่อผู้ใช้</label><input id="regUser" class="input" placeholder="username"></div>
-          <div class="form-group"><label class="form-label">อีเมล</label><input id="regEmail" class="input" placeholder="email@example.com"></div>
+          <div class="form-group"><label class="form-label">ชื่อผู้ใช้</label><input id="regUser" class="input" placeholder="username" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+          <div class="form-group"><label class="form-label">อีเมล</label><input id="regEmail" class="input" placeholder="email@example.com" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
         </div>
-        <div class="form-group"><label class="form-label">โทรศัพท์</label><input id="regPhone" class="input" placeholder="08x-xxx-xxxx"></div>
+        <div class="form-group"><label class="form-label">โทรศัพท์</label><input id="regPhone" class="input" placeholder="08x-xxx-xxxx" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">รหัสผ่าน</label><input id="regPass" class="input" type="password"></div>
-          <div class="form-group"><label class="form-label">ยืนยันรหัสผ่าน</label><input id="regPass2" class="input" type="password"></div>
+          <div class="form-group"><label class="form-label">รหัสผ่าน</label><input id="regPass" class="input" type="password" autocomplete="new-password"></div>
+          <div class="form-group"><label class="form-label">ยืนยันรหัสผ่าน</label><input id="regPass2" class="input" type="password" autocomplete="new-password"></div>
         </div>
         <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="tryRegister()">สมัครสมาชิก</button>
         `}
@@ -766,6 +766,7 @@ function cf(){
 }
 function updateContractPreview(){const el=document.getElementById('contractPreview');if(el)el.innerHTML=contractDocHTML(cf());}
 function setCF(k,v){cf();S.cform[k]=v;updateContractPreview();}
+function clearContractForm(){if(!confirm('ล้างข้อมูลในฟอร์มทั้งหมด?'))return;S.cform=null;cf();render();}
 function ub(v){return (v===0||v)?`<span style="padding:0 3px">${v}</span>`:'<span style="letter-spacing:1px;white-space:nowrap">…………………</span>';}
 function contractDocHTML(f){
   const d=f.cdate?new Date(f.cdate):null;
@@ -924,7 +925,10 @@ function renderContract(){
     </div>
     <div>
       <div id="contractPreview" style="background:#fff;color:#111;border-radius:14px;padding:22px;max-height:62vh;overflow:auto">${contractDocHTML(f)}</div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px;padding:12px" onclick="downloadContract()">${ico.doc} ดาวน์โหลด PDF / ส่งให้ผู้ดูแล</button>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-primary" style="flex:1;justify-content:center;padding:12px" onclick="downloadContract()">${ico.doc} ดาวน์โหลด PDF / ส่งให้ผู้ดูแล</button>
+        <button class="btn btn-ghost" style="padding:12px" onclick="clearContractForm()">ล้างฟอร์ม</button>
+      </div>
       <div style="font-size:12px;color:#5C6270;margin-top:8px;text-align:center">กดแล้วบันทึกเป็น PDF ได้ และสัญญาจะถูกส่งเข้าหลังบ้านให้ผู้ดูแลตรวจสอบ/ยืนยัน</div>
     </div>
   </div>`;

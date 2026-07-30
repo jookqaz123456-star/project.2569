@@ -640,7 +640,7 @@ function renderDashboard(){
   const totalRevenue=S.payments.filter(p=>p.status==='paid').reduce((s,p)=>s+payTotal(p),0);
   const unpaid=S.payments.filter(p=>p.status!=='paid').reduce((s,p)=>s+payTotal(p),0);
   const pendingBook=S.bookings.filter(b=>b.status==='รอยืนยัน').length;
-  const unsignedContracts=S.contracts.filter(c=>!c.signed).length;
+  const unsignedContracts=S.contracts.filter(c=>c.resident&&c.status!=='ยืนยันแล้ว').length;
   return`
   <div class="topbar"><div class="topbar-title">แดชบอร์ด</div><div class="topbar-sub">${new Date().toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
   <div class="page">
@@ -673,8 +673,8 @@ function renderDashboard(){
             <div style="font-size:13.5px">การจองรอยืนยัน</div>
             <span class="badge badge-yellow"><span class="dot"></span>${pendingBook} รายการ</span>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px">
-            <div style="font-size:13.5px">สัญญารอเซ็น</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px;cursor:pointer" onclick="nav('contracts')">
+            <div style="font-size:13.5px">สัญญารอยืนยัน</div>
             <span class="badge badge-red"><span class="dot"></span>${unsignedContracts} ฉบับ</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:#0E1016;border-radius:10px">
