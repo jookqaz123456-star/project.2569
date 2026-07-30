@@ -540,7 +540,6 @@ function renderTopNav(){
     {id:'bookings',label:'การจอง',ico:'book'},
     {id:'contract',label:'สัญญาเช่า',ico:'doc'},
     {id:'payments',label:'ชำระเงิน',ico:'pay'},
-    {id:'repair',label:'แจ้งซ่อม',ico:'repair'},
     {id:'history',label:'ประวัติ',ico:'history'},
   ];
   return`<div class="topnav">
@@ -1203,7 +1202,6 @@ function render(){
     case'bookings':content=renderBookings();break;
     case'contract':content=renderContract();break;
     case'payments':content=renderPayments();break;
-    case'repair':content=renderRepair();break;
     case'history':content=renderHistory();break;
     default:content=renderBrowse();
   }

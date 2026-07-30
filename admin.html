@@ -640,7 +640,6 @@ function renderSidebar(){
     {id:'bookings',label:'การจอง',icon:'book'},
     {id:'contracts',label:'สัญญาเช่า',icon:'contract'},
     {id:'payments',label:'การชำระเงิน',icon:'pay'},
-    {id:'repairs',label:'แจ้งซ่อม',icon:'repair'},
     {id:'paysettings',label:'QR & สลิปโอน',icon:'qr'},
     {id:'users',label:'จัดการผู้ใช้',icon:'users'},
   ];
@@ -801,7 +800,7 @@ function renderRoomDetail(){
   const r=S.rooms.find(x=>x.id===S.selectedRoom)||S.rooms[0];
   const t=r.tenantId?tenantOf(r.tenantId):null;
   const pays=S.payments.filter(p=>p.roomId===r.id);
-  const cons=S.contracts.filter(c=>c.roomId===r.id);
+  const cons=S.contracts.filter(c=>c.resident&&String(c.roomNumber)===String(r.number));
   const photos=roomPhotos(r.id);
   return`
   <div class="topbar">
@@ -866,16 +865,13 @@ function renderRoomDetail(){
       <div class="card">
         <div style="font-weight:700;margin-bottom:14px">สัญญาเช่า</div>
         ${cons.length?cons.map(c=>`
-        <div style="padding:12px;background:#0E1016;border-radius:10px;margin-bottom:8px">
+        <div style="padding:12px;background:#0E1016;border-radius:10px;margin-bottom:8px;cursor:pointer" onclick="openModal('viewResidentContract','${c.id}')">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div style="font-weight:600;font-size:13.5px">${c.tenantName}</div>
-              <div style="font-size:11.5px;color:#5C6270">${fmtDate(c.start)} – ${fmtDate(c.end)}</div>
+              <div style="font-weight:600;font-size:13.5px">${c.tenantName||'-'}</div>
+              <div style="font-size:11.5px;color:#5C6270">ส่งเมื่อ ${fmtDate(c.submittedAt)||'-'}</div>
             </div>
-            <div style="display:flex;gap:6px;align-items:center">
-              <span class="badge ${c.signed?'badge-green':'badge-yellow'}">${c.signed?'เซ็นแล้ว':'รอเซ็น'}</span>
-              ${!c.signed?`<button class="btn btn-sm btn-primary" onclick="openModal('signContract','${c.id}')">${ico.sign}</button>`:''}
-            </div>
+            <span class="badge ${c.status==='ยืนยันแล้ว'?'badge-green':'badge-yellow'}">${c.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน'}</span>
           </div>
         </div>`).join(''):`<div style="color:#5C6270;text-align:center;padding:20px">ยังไม่มีสัญญา</div>`}
       </div>
@@ -1703,7 +1699,6 @@ function render(){
     case'bookings':content=renderBookings();break;
     case'contracts':content=renderContracts();break;
     case'payments':content=renderPayments();break;
-    case'repairs':content=renderRepairs();break;
     case'paysettings':content=renderPaySettings();break;
     case'users':content=renderUsers();break;
     default:content=renderDashboard();
