@@ -15,7 +15,7 @@
   async function api(path, opts = {}) {
     const headers = Object.assign({ 'content-type': 'application/json' }, opts.headers || {});
     const t = getToken(); if (t) headers.authorization = 'Bearer ' + t;
-    const res = await fetch(BASE + path, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+    const res = await fetch(BASE + path, { method: opts.method || 'GET', headers, cache: 'no-store', body: opts.body ? JSON.stringify(opts.body) : undefined });
     if (!res.ok) { let e = {}; try { e = await res.json(); } catch (_) {} throw new Error(e.error || ('HTTP ' + res.status)); }
     return res.status === 204 ? null : res.json();
   }
