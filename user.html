@@ -536,6 +536,7 @@ function renderTopNav(){
     {id:'bookings',label:'การจอง',ico:'book'},
     {id:'contract',label:'สัญญาเช่า',ico:'doc'},
     {id:'payments',label:'ชำระเงิน',ico:'pay'},
+    {id:'repair',label:'แจ้งซ่อม',ico:'repair'},
     {id:'history',label:'ประวัติ',ico:'history'},
   ];
   return`<div class="topnav">
@@ -689,6 +690,51 @@ function renderPayments(){
 }
 
 // ─── History Screen ───────────────────────────────────────────
+// ─── แจ้งซ่อม (ผู้เช่าส่งเรื่อง → หลังบ้านรับเรื่อง/ดำเนินการ) ──
+function rpStatusBadge(s){return s==='เสร็จสิ้น'?'badge-green':s==='กำลังดำเนินการ'?'badge-yellow':'badge-gray';}
+function submitRepair(){
+  if(!S.auth){alert('กรุณาเข้าสู่ระบบ');return;}
+  const room=(document.getElementById('rpRoom')?.value||'').trim();
+  const issue=(document.getElementById('rpIssue')?.value||'').trim();
+  const detail=(document.getElementById('rpDetail')?.value||'').trim();
+  if(!issue){alert('กรุณากรอกอาการ/สิ่งที่ต้องการแจ้งซ่อม');return;}
+  const rec={id:uid(),userId:S.auth.id,name:S.auth.name||'',roomNumber:room,issue,detail,date:new Date().toISOString().slice(0,10),status:'รอรับเรื่อง'};
+  S.repairs.push(rec);persistColl('repairs',rec);
+  alert('ส่งเรื่องแจ้งซ่อมเรียบร้อย ✓ ผู้ดูแลจะดำเนินการให้ครับ');
+  render();
+}
+function renderRepair(){
+  const mine=myRepairs().slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const defRoom=(myBills()[0]?.roomNumber)||(myBookings()[0]?.roomNumber)||'';
+  return`<div class="page-wrap">
+    <div style="margin-bottom:16px">
+      <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">แจ้งซ่อม</h1>
+      <p style="font-size:13.5px;color:#6B7180">แจ้งปัญหาห้องพัก/อุปกรณ์ เพื่อให้ผู้ดูแลเข้ามาตรวจสอบและซ่อมแซม</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start">
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:12px;color:#A990FF">🛠 แจ้งเรื่องใหม่</div>
+        <div class="form-group"><label class="form-label">ห้องเลขที่</label><input id="rpRoom" class="input" value="${defRoom}" placeholder="เช่น 5"></div>
+        <div class="form-group"><label class="form-label">อาการ / เรื่องที่แจ้ง *</label><input id="rpIssue" class="input" placeholder="เช่น ก๊อกน้ำรั่ว, แอร์ไม่เย็น"></div>
+        <div class="form-group"><label class="form-label">รายละเอียดเพิ่มเติม</label><textarea id="rpDetail" class="input" rows="3" style="resize:vertical" placeholder="อธิบายเพิ่มเติม (ถ้ามี)"></textarea></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="submitRepair()">${ico.repair} ส่งเรื่องแจ้งซ่อม</button>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:12px">ประวัติการแจ้งซ่อมของฉัน</div>
+        ${mine.length?mine.map(r=>`<div class="card" style="margin-bottom:10px;padding:14px">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:10px">
+            <div>
+              <div style="font-weight:600">${String(r.issue||'-').replace(/</g,'&lt;')}${r.roomNumber?` <span style="color:#5C6270;font-weight:400">· ห้อง ${r.roomNumber}</span>`:''}</div>
+              ${r.detail?`<div style="font-size:12.5px;color:#8892A4;margin-top:3px">${String(r.detail).replace(/</g,'&lt;')}</div>`:''}
+              <div style="font-size:11.5px;color:#5C6270;margin-top:4px">${fmtDate(r.date)}</div>
+            </div>
+            <span class="badge ${rpStatusBadge(r.status)}">${r.status||'รอรับเรื่อง'}</span>
+          </div>
+        </div>`).join(''):`<div class="card" style="text-align:center;color:#5C6270;padding:30px">ยังไม่มีการแจ้งซ่อม</div>`}
+      </div>
+    </div>
+  </div>`;
+}
 function renderHistory(){
   const stays=myStays();
   return`<div class="page-wrap">
@@ -1153,6 +1199,7 @@ function render(){
     case'bookings':content=renderBookings();break;
     case'contract':content=renderContract();break;
     case'payments':content=renderPayments();break;
+    case'repair':content=renderRepair();break;
     case'history':content=renderHistory();break;
     default:content=renderBrowse();
   }
