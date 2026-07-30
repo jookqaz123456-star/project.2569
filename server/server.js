@@ -12,6 +12,8 @@ const ROOT = path.join(__dirname, '..');
 
 app.use(cors());
 app.use(express.json({ limit: '12mb' })); // base64 slips/photos can be large
+// ห้ามแคชคำตอบของ API — กันข้อมูลเก่าค้างในเบราว์เซอร์เวลากดรีเฟรช
+app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store, no-cache, must-revalidate'); next(); });
 app.use(auth.authMiddleware(db));
 
 // Wrap async route handlers so rejected promises become 500s, not crashes.
@@ -114,7 +116,13 @@ app.delete('/api/users/:id', auth.requireAuth, auth.requireStaff, wrap(async (re
 }));
 
 // ─── Static frontend ───────────────────────────────────────────
-app.use(express.static(ROOT, { extensions: ['html'] }));
+// ให้ไฟล์หน้าเว็บ/สคริปต์ตรวจสอบเวอร์ชันใหม่กับเซิร์ฟเวอร์เสมอ (จะได้เห็นของที่เพิ่ง deploy)
+app.use(express.static(ROOT, {
+  extensions: ['html'],
+  setHeaders: (res, filePath) => {
+    if (/\.(html|js)$/.test(filePath)) res.set('Cache-Control', 'no-cache');
+  },
+}));
 app.get('/', (_req, res) => res.sendFile(path.join(ROOT, 'index.html')));
 
 // JSON error handler for wrapped async routes.
