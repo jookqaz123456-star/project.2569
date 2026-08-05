@@ -167,6 +167,9 @@ canvas{border-radius:10px;cursor:crosshair;touch-action:none;}
   /* บังคับให้เลย์เอาต์ 2 คอลัมน์เรียงลงเป็นแนวตั้งบนมือถือ */
   .form-row,.perm-grid,.detail-grid{grid-template-columns:1fr;}
   .page > div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}
+  .search-bar{flex-wrap:wrap;}
+  .search-bar .search-input{max-width:none;flex:1 1 100%;}
+  .room-grid{grid-template-columns:repeat(2,1fr) !important;}
 }
 @media(max-width:460px){
   .stat-grid{grid-template-columns:1fr;}
