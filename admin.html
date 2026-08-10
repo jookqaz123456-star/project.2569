@@ -406,13 +406,13 @@ async function refreshData(manual){
   await loadAll();
   render();
 }
-// รีเฟรชอัตโนมัติทุก 20 วินาที (เฉพาะโหมด LIVE) — ข้ามถ้ากำลังเปิดหน้าต่าง พิมพ์อยู่ หรือมีการบันทึกค้าง
+// รีเฟรชอัตโนมัติทุก 5 วินาที (เฉพาะโหมด LIVE) — ข้ามถ้ากำลังเปิดหน้าต่าง พิมพ์อยู่ หรือมีการบันทึกค้าง
 setInterval(()=>{
   if(Samrit.mode!=='live'||!S.auth||S.modal||_pendingSaves>0)return;
   const ae=document.activeElement;
   if(ae&&/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(ae.tagName))return;
   refreshData();
-},20000);
+},5000);
 async function boot(){
   await Samrit.init();
   if(Samrit.mode==='live'){

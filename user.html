@@ -398,14 +398,14 @@ async function boot(){
   else{await loadPublicData();}
   render();
 }
-// รีเฟรชอัตโนมัติทุก 20 วินาที (โหมด LIVE) — ให้ผู้เช่าเห็นบิล/การยืนยันจากหลังบ้าน
+// รีเฟรชอัตโนมัติทุก 5 วินาที (โหมด LIVE) — ให้ผู้เช่าเห็นบิล/การยืนยันจากหลังบ้าน
 // ข้ามถ้ากำลังพิมพ์ เปิดหน้าต่าง หรือมีการบันทึกค้างอยู่
 setInterval(()=>{
   if(Samrit.mode!=='live'||!S.auth||S.modal||_pendingSaves>0)return;
   const ae=document.activeElement;
   if(ae&&/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(ae.tagName))return;
   loadResidentData().then(()=>render()).catch(()=>{});
-},20000);
+},5000);
 
 // ─── Bookings & Payment (QR) ─────────────────────────────────
 let payCtx=null; // {kind:'booking'|'bill', roomId/billId, date, slip}
