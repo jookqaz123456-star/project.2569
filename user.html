@@ -232,7 +232,7 @@ function autoCancelStaleBookings(){
   });
 }
 function fmtMoney(n){return n.toLocaleString('th-TH');}
-function fmtDate(d){if(!d)return'ปัจจุบัน';const dt=new Date(d);return dt.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});}
+function fmtDate(d){if(!d)return'ปัจจุบัน';const dt=new Date(d);if(isNaN(dt))return'-';if(dt.getFullYear()>2200)dt.setFullYear(dt.getFullYear()-543);return dt.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});}
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
 function roomOf(id){return S.rooms.find(r=>r.id===id);}
 function myBookings(){return S.bookings.filter(b=>b.userId===S.auth?.id);}
@@ -831,7 +831,7 @@ function ub(v){return (v===0||v)?`<span style="padding:0 3px">${v}</span>`:'<spa
 function contractDocHTML(f){
   const d=f.cdate?new Date(f.cdate):null;
   const monthsTh=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  const day=d?d.getDate():'',mth=d?monthsTh[d.getMonth()]:'',be=d?d.getFullYear()+543:'';
+  const day=d?d.getDate():'',mth=d?monthsTh[d.getMonth()]:'',be=d?(d.getFullYear()>2200?d.getFullYear():d.getFullYear()+543):'';
   const addr=`บ้านเลขที่ ${ub(f.addrNo)} หมู่บ้าน ${ub(f.village)} ถนน ${ub(f.road)} ตำบล/แขวง ${ub(f.subdistrict)} อำเภอ/เขต ${ub(f.district)} จังหวัด ${ub(f.province)} โทร ${ub(f.phone)}`;
   return `<div lang="th" style="font-family:'Sarabun','TH Sarabun New',serif;line-height:2.0;font-size:14px;color:#111;word-break:normal;overflow-wrap:break-word">
     <div style="text-align:center;font-weight:700;font-size:18px;margin-bottom:14px">สัญญาเช่าห้องพัก</div>
@@ -868,7 +868,7 @@ function contractDocDef(f){
   f=f||{};
   const d=f.cdate?new Date(f.cdate):null;
   const monthsTh=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  const day=d?d.getDate():'',mth=d?monthsTh[d.getMonth()]:'',be=d?d.getFullYear()+543:'';
+  const day=d?d.getDate():'',mth=d?monthsTh[d.getMonth()]:'',be=d?(d.getFullYear()>2200?d.getFullYear():d.getFullYear()+543):'';
   const bl=v=>(v===0||v)?' '+v+' ':' ……………… ';
   const IND='        ';
   const clause=(n,body)=>({text:[IND,{text:'ข้อ '+n+'. ',bold:true},seg(body)],margin:[0,0,0,7]});
