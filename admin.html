@@ -1281,9 +1281,11 @@ function renderPaySettings(){
           <td>${fmtDate(s.date)}</td>
           <td><span class="badge ${s.status==='อนุมัติ'?'badge-green':s.status==='ปฏิเสธ'?'badge-red':'badge-yellow'}">${s.status}</span></td>
           <td>
-            <div style="display:flex;gap:4px">
-              ${s.status!=='อนุมัติ'?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','อนุมัติ')" style="color:#34D399">อนุมัติ</button>`:''}
-              ${s.status!=='ปฏิเสธ'?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','ปฏิเสธ')" style="color:#F87171">ปฏิเสธ</button>`:''}
+            <div style="display:flex;gap:4px;align-items:center">
+              ${(s.status==='อนุมัติ'||s.status==='ปฏิเสธ')
+                ?`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','รอตรวจสอบ')" style="color:#93A0B4">แก้ไข</button>`
+                :`<button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','อนุมัติ')" style="color:#34D399">อนุมัติ</button>
+                  <button class="btn btn-sm btn-ghost" onclick="setSlipStatus('${s.id}','ปฏิเสธ')" style="color:#F87171">ปฏิเสธ</button>`}
               <button class="btn btn-icon btn-danger" onclick="deleteSlip('${s.id}')">${ico.trash}</button>
             </div>
           </td>
@@ -1628,7 +1630,7 @@ function renderModal(){
         <div style="padding:10px;background:#0E1016;border-radius:10px"><div class="detail-key">ห้อง / ประเภท</div><div class="detail-val">ห้อง ${s.roomNumber} · ${s.kind||'-'}</div></div>
         <div style="padding:10px;background:#0E1016;border-radius:10px"><div class="detail-key">สถานะ</div><div class="detail-val"><span class="badge ${s.status==='อนุมัติ'?'badge-green':s.status==='ปฏิเสธ'?'badge-red':'badge-yellow'}">${s.status}</span></div></div>
       </div>
-    `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${s.status!=='อนุมัติ'?`<button class="btn btn-primary" onclick="setSlipStatus('${s.id}','อนุมัติ');closeModal()">อนุมัติการชำระ</button>`:''}`,'modal-lg');
+    `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${(s.status==='อนุมัติ'||s.status==='ปฏิเสธ')?`<button class="btn btn-ghost" onclick="setSlipStatus('${s.id}','รอตรวจสอบ');closeModal()" style="color:#93A0B4">แก้ไขสถานะ</button>`:`<button class="btn btn-primary" onclick="setSlipStatus('${s.id}','อนุมัติ');closeModal()">อนุมัติการชำระ</button>`}`,'modal-lg');
   }
 
   if(type==='receipt'){
