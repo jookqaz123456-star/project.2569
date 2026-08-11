@@ -5,7 +5,7 @@ const SECRET = process.env.JWT_SECRET || 'samrit-dev-secret-change-me';
 const b64url = (buf) => Buffer.from(buf).toString('base64url');
 const b64urlJSON = (obj) => b64url(JSON.stringify(obj));
 
-function sign(payload, expiresInSec = 60 * 60 * 24 * 30) {
+function sign(payload, expiresInSec = 60 * 60 * 24 * 365) {
   const header = { alg: 'HS256', typ: 'JWT' };
   const body = { ...payload, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + expiresInSec };
   const data = `${b64urlJSON(header)}.${b64urlJSON(body)}`;
