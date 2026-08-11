@@ -347,7 +347,9 @@ function showToast(msg,isErr){
 }
 // นับจำนวนการบันทึกที่กำลังส่งไปเซิร์ฟเวอร์ — เพื่อไม่ให้รีเฟรชดึงข้อมูลเก่ามาทับก่อนบันทึกเสร็จ
 let _pendingSaves=0;
+let _saveGen=0;            // นับจำนวนครั้งการบันทึก — ใช้กันไม่ให้โหลดข้อมูลเก่ามาทับ
 function _track(pr){
+  _saveGen++;
   _pendingSaves++;
   Promise.resolve(pr)
     .then(()=>{showToast('✓ บันทึกแล้ว');})
@@ -381,8 +383,11 @@ S.needLogin=false;
 
 // ─── Boot & data load ────────────────────────────────────────
 async function loadAll(){
+  const _gen=_saveGen;
   try{
     const d=await Samrit.bootstrapAdmin(SEED);
+    // ถ้ามีการบันทึกเกิดขึ้นระหว่างที่กำลังโหลด อย่าเอาข้อมูลเก่ามาทับสิ่งที่เพิ่งแก้ (กันค่าเด้งกลับ)
+    if(_gen!==_saveGen) return;
     S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);S.tenants=d.tenants||[];S.bookings=d.bookings||[];
     S.contracts=d.contracts||[];S.payments=d.payments||[];S.bills=d.bills||[];S.repairs=d.repairs||[];
     S.users=(d.users||[]).map(u=>({...u,urole:u.role||u.urole}));

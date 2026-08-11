@@ -269,7 +269,8 @@ S.pay=DEFAULT_PAY; S.photos={};
 function roomPhotos(roomId){return (S.photos&&S.photos[roomId])||[];}
 // นับการบันทึกที่ค้างอยู่ — กันไม่ให้รีเฟรชอัตโนมัติดึงข้อมูลเก่ามาทับ
 let _pendingSaves=0;
-function _track(pr){_pendingSaves++;Promise.resolve(pr).catch(e=>console.warn(e&&e.message)).finally(()=>{_pendingSaves=Math.max(0,_pendingSaves-1);});return pr;}
+let _saveGen=0;            // กันไม่ให้โหลดข้อมูลเก่ามาทับสิ่งที่เพิ่งบันทึก
+function _track(pr){_saveGen++;_pendingSaves++;Promise.resolve(pr).catch(e=>console.warn(e&&e.message)).finally(()=>{_pendingSaves=Math.max(0,_pendingSaves-1);});return pr;}
 function persistColl(coll,obj){ if(Samrit.mode==='live'){_track(Samrit.save(coll,obj));} else {Samrit.saveDemo(coll,S[coll]);} }
 async function pushSlip(o){
   const slip={roomNumber:o.roomNumber,name:o.name,amount:o.amount,slip:o.slip,kind:o.kind,month:o.month||'',date:new Date().toISOString().slice(0,10),status:'รอตรวจสอบ'};
@@ -373,8 +374,11 @@ function logout(){Samrit.logout();S.auth=null;S.cform=null;S.contractTab='create
 
 // ─── Boot & data load ────────────────────────────────────────
 async function loadResidentData(){
+  const _gen=_saveGen;
   try{
     const d=await Samrit.bootstrapResident(SEED);
+    // ถ้ามีการบันทึกระหว่างกำลังโหลด อย่าเอาข้อมูลเก่ามาทับ (กันค่าเด้งกลับ)
+    if(_gen!==_saveGen) return;
     S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);S.bookings=d.bookings||[];S.bills=d.bills||[];
     S.stays=d.stays||[];S.repairs=d.repairs||[];S.contracts=d.contracts||[];
     S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;S.photos=d.photos||{};
