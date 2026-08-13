@@ -1707,8 +1707,8 @@ function renderLogin(){
       </div>
       <div style="font-size:19px;font-weight:700">ระบบจัดการหอพักสัมฤทธิ์</div>
       <div style="font-size:13px;color:#5C6270;margin-bottom:22px">เข้าสู่ระบบสำหรับผู้ดูแล / เจ้าหน้าที่</div>
-      <div class="form-group"><label class="form-label">ชื่อผู้ใช้</label><input id="alUser" class="input" value="admin" onkeydown="if(event.key==='Enter')adminLogin()"></div>
-      <div class="form-group"><label class="form-label">รหัสผ่าน</label><input id="alPass" class="input" type="password" value="admin1234" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <div class="form-group"><label class="form-label">ชื่อผู้ใช้</label><input id="alUser" class="input" placeholder="username" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <div class="form-group"><label class="form-label">รหัสผ่าน</label><input id="alPass" class="input" type="password" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px" onclick="adminLogin()">เข้าสู่ระบบ</button>
       <div style="text-align:center;margin-top:12px;font-size:12px;color:#5C6270">ทดสอบ: <span style="color:#A990FF">admin / admin1234</span></div>
     </div>
