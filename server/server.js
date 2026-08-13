@@ -19,6 +19,22 @@ app.use(auth.authMiddleware(db));
 // Wrap async route handlers so rejected promises become 500s, not crashes.
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
+// ─── Lightweight bootstrap: strip heavy base64 blobs (slips / signatures /
+//     signed docs) so auto-refresh doesn't re-download images every few seconds.
+//     The client keeps images from the first full load, and fetches a single
+//     item's image on demand via GET /api/coll/:coll/:id when needed.
+const HEAVY = { slips: ['slip'], bookings: ['slip'], bills: ['slip'], contracts: ['signature', 'signedDoc'] };
+function stripHeavy(coll, list) {
+  const fields = HEAVY[coll];
+  if (!fields) return list;
+  return list.map((o) => {
+    const c = { ...o };
+    for (const k of fields) { if (c[k] != null && c[k] !== '') { c['has_' + k] = true; delete c[k]; } }
+    return c;
+  });
+}
+const maybeStrip = (coll, list, light) => (light ? stripHeavy(coll, list) : list);
+
 // ─── Health (used by frontend to detect live mode) ─────────────
 app.get('/api/health', (_req, res) => res.json({ ok: true, mode: 'live', db: db.kind(), time: Date.now() }));
 
@@ -43,32 +59,36 @@ app.post('/api/auth/login', wrap(async (req, res) => {
 app.get('/api/me', auth.requireAuth, (req, res) => res.json({ user: req.user }));
 
 // ─── Bootstrap (admin/staff: everything) ───────────────────────
-app.get('/api/bootstrap', auth.requireAuth, auth.requireStaff, wrap(async (_req, res) => {
+app.get('/api/bootstrap', auth.requireAuth, auth.requireStaff, wrap(async (req, res) => {
+  const light = req.query.light === '1';
   const out = {};
-  for (const c of db.COLLECTIONS) out[c] = await db.listColl(c);
+  for (const c of db.COLLECTIONS) out[c] = maybeStrip(c, await db.listColl(c), light);
   out.users = await db.listUsers();              // staff/admin accounts (no passwords)
   out.paySettings = await db.getSetting('paySettings', {});
-  out.photos = await db.getSetting('photos', {});
+  if (!light) out.photos = await db.getSetting('photos', {}); // photos are big → skip on light refresh (client keeps them)
   res.json(out);
 }));
 
 // ─── Resident bootstrap (own data + public room info) ──────────
 app.get('/api/me/bootstrap', auth.requireAuth, wrap(async (req, res) => {
   const uid = req.user.id;
+  const light = req.query.light === '1';
   const [rooms, bookings, bills, stays, repairs, contracts, paySettings, photos] = await Promise.all([
     db.listColl('rooms'), db.listColl('bookings'), db.listColl('bills'),
     db.listColl('stays'), db.listColl('repairs'), db.listColl('contracts'),
     db.getSetting('paySettings', {}), db.getSetting('photos', {}),
   ]);
-  res.json({
+  const out = {
     rooms,
-    bookings: bookings.filter(b => b.userId === uid),
-    bills: bills.filter(b => b.userId === uid),
+    bookings: maybeStrip('bookings', bookings.filter(b => b.userId === uid), light),
+    bills: maybeStrip('bills', bills.filter(b => b.userId === uid), light),
     stays: stays.filter(b => b.userId === uid),
     repairs: repairs.filter(b => b.userId === uid),
-    contracts: contracts.filter(c => c.userId === uid),
-    paySettings, photos,
-  });
+    contracts: maybeStrip('contracts', contracts.filter(c => c.userId === uid), light),
+    paySettings,
+  };
+  if (!light) out.photos = photos;
+  res.json(out);
 }));
 
 // ─── Settings (paySettings / photos) ───────────────────────────
@@ -86,6 +106,12 @@ function ensureColl(req, res, next) {
 app.get('/api/coll/:coll', ensureColl, wrap(async (req, res) => {
   if (req.params.coll !== 'rooms' && !req.user) return res.status(401).json({ error: 'unauthorized' });
   res.json(await db.listColl(req.params.coll));
+}));
+// Single item WITH heavy fields (image) — used to lazy-load a slip/signature on demand.
+app.get('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, res) => {
+  const item = await db.getColl(req.params.coll, req.params.id);
+  if (!item) return res.status(404).json({ error: 'not found' });
+  res.json(item);
 }));
 app.post('/api/coll/:coll', ensureColl, auth.requireAuth, wrap(async (req, res) => {
   res.json(await db.upsertColl(req.params.coll, req.body || {}));
