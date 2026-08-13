@@ -81,8 +81,8 @@
     logout() { setToken(''); this._setUser(null); },
 
     // ── bootstraps ──
-    async bootstrapAdmin(seed) {
-      if (mode === 'live') return api('/api/bootstrap');
+    async bootstrapAdmin(seed, light) {
+      if (mode === 'live') return api('/api/bootstrap' + (light ? '?light=1' : ''));
       const out = {};
       ['rooms', 'tenants', 'bookings', 'contracts', 'payments', 'bills', 'stays', 'repairs', 'slips'].forEach(c => {
         let a = dList(c); if (a === null) { a = (seed && seed[c]) || []; dSet(c, a); } out[c] = a;
@@ -110,8 +110,8 @@
         photos: dGetSetting('photos', {}),
       };
     },
-    async bootstrapResident(seed) {
-      if (mode === 'live') return api('/api/me/bootstrap');
+    async bootstrapResident(seed, light) {
+      if (mode === 'live') return api('/api/me/bootstrap' + (light ? '?light=1' : ''));
       const u = this.currentUser() || {};
       const ens = (c) => { let a = dList(c); if (a === null) { a = (seed && seed[c]) || []; dSet(c, a); } return a; };
       return {
@@ -130,6 +130,11 @@
     async save(coll, obj) {
       if (mode === 'live') return obj.id ? api('/api/coll/' + coll + '/' + obj.id, { method: 'PUT', body: obj }) : api('/api/coll/' + coll, { method: 'POST', body: obj });
       return obj; // demo: caller persists the array via saveDemo
+    },
+    // Fetch a single item WITH its heavy image field (lazy-load on view).
+    async getOne(coll, id) {
+      if (mode === 'live') return api('/api/coll/' + coll + '/' + id);
+      return (dList(coll) || []).find(x => x.id === id) || null;
     },
     async remove(coll, id) {
       if (mode === 'live') return api('/api/coll/' + coll + '/' + id, { method: 'DELETE' });
