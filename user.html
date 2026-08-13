@@ -373,15 +373,26 @@ async function tryRegister(){
 function logout(){Samrit.logout();S.auth=null;S.cform=null;S.contractTab='create';S.contractDoc=null;S.screen='browse';render();}
 
 // ─── Boot & data load ────────────────────────────────────────
-async function loadResidentData(){
+// รูป base64 (สลิป/ลายเซ็น/เอกสารเซ็น) หนักมาก — โหลดรอบแรกครั้งเดียว แล้ว
+// รีเฟรชอัตโนมัติจะไม่ดึงซ้ำ (ประหยัดแบนด์วิดท์) โดยเก็บของเดิมที่มีอยู่ไว้
+const _HEAVY={bookings:['slip'],bills:['slip'],contracts:['signature','signedDoc']};
+function _mergeHeavy(coll,list){
+  const old=new Map((S[coll]||[]).map(o=>[o.id,o]));const f=_HEAVY[coll]||[];
+  return (list||[]).map(n=>{const o=old.get(n.id);if(o)for(const k of f)if((n[k]==null||n[k]==='')&&o[k]!=null)n[k]=o[k];return n;});
+}
+async function loadResidentData(light){
   const _gen=_saveGen;
   try{
-    const d=await Samrit.bootstrapResident(SEED);
+    const d=await Samrit.bootstrapResident(SEED,light);
     // ถ้ามีการบันทึกระหว่างกำลังโหลด อย่าเอาข้อมูลเก่ามาทับ (กันค่าเด้งกลับ)
     if(_gen!==_saveGen) return;
-    S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);S.bookings=d.bookings||[];S.bills=d.bills||[];
-    S.stays=d.stays||[];S.repairs=d.repairs||[];S.contracts=d.contracts||[];
-    S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;S.photos=d.photos||{};
+    S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);
+    S.bookings=light?_mergeHeavy('bookings',d.bookings):(d.bookings||[]);
+    S.bills=light?_mergeHeavy('bills',d.bills):(d.bills||[]);
+    S.stays=d.stays||[];S.repairs=d.repairs||[];
+    S.contracts=light?_mergeHeavy('contracts',d.contracts):(d.contracts||[]);
+    S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;
+    if(!light) S.photos=d.photos||{};   // light: เก็บรูปห้องเดิมไว้ ไม่โหลดซ้ำ
     autoCancelStaleBookings();
   }catch(e){console.warn('bootstrap',e.message);}
 }
@@ -405,11 +416,12 @@ async function boot(){
 // รีเฟรชอัตโนมัติทุก 5 วินาที (โหมด LIVE) — ให้ผู้เช่าเห็นบิล/การยืนยันจากหลังบ้าน
 // ข้ามถ้ากำลังพิมพ์ เปิดหน้าต่าง หรือมีการบันทึกค้างอยู่
 setInterval(()=>{
+  if(document.hidden)return;   // แท็บอยู่เบื้องหลัง — ไม่ต้องรีเฟรช (ประหยัดแบนด์วิดท์)
   if(Samrit.mode!=='live'||!S.auth||S.modal||_pendingSaves>0)return;
   const ae=document.activeElement;
   if(ae&&/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(ae.tagName))return;
-  loadResidentData().then(()=>render()).catch(()=>{});
-},5000);
+  loadResidentData(true).then(()=>render()).catch(()=>{});   // light = ไม่โหลดรูปซ้ำ
+},15000);
 
 // ─── Bookings & Payment (QR) ─────────────────────────────────
 let payCtx=null; // {kind:'booking'|'bill', roomId/billId, date, slip}

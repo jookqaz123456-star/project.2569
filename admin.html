@@ -382,14 +382,24 @@ S.auth=null;
 S.needLogin=false;
 
 // ─── Boot & data load ────────────────────────────────────────
-async function loadAll(){
+// เก็บรูป base64 ที่โหลดไว้แล้วจากรอบก่อน (ตอน light refresh เซิร์ฟเวอร์ไม่ส่งรูปมา จะได้ไม่หาย)
+const _HEAVY={slips:['slip'],bookings:['slip'],bills:['slip'],contracts:['signature','signedDoc']};
+function _mergeHeavy(coll,list){
+  const old=new Map((S[coll]||[]).map(o=>[o.id,o]));const f=_HEAVY[coll]||[];
+  return (list||[]).map(n=>{const o=old.get(n.id);if(o)for(const k of f)if((n[k]==null||n[k]==='')&&o[k]!=null)n[k]=o[k];return n;});
+}
+async function loadAll(light){
   const _gen=_saveGen;
   try{
-    const d=await Samrit.bootstrapAdmin(SEED);
+    const d=await Samrit.bootstrapAdmin(SEED,light);
     // ถ้ามีการบันทึกเกิดขึ้นระหว่างที่กำลังโหลด อย่าเอาข้อมูลเก่ามาทับสิ่งที่เพิ่งแก้ (กันค่าเด้งกลับ)
     if(_gen!==_saveGen) return;
-    S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);S.tenants=d.tenants||[];S.bookings=d.bookings||[];
-    S.contracts=d.contracts||[];S.payments=d.payments||[];S.bills=d.bills||[];S.repairs=d.repairs||[];
+    S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);S.tenants=d.tenants||[];
+    S.bookings=light?_mergeHeavy('bookings',d.bookings):(d.bookings||[]);
+    S.contracts=light?_mergeHeavy('contracts',d.contracts):(d.contracts||[]);
+    S.payments=d.payments||[];
+    S.bills=light?_mergeHeavy('bills',d.bills):(d.bills||[]);
+    S.repairs=d.repairs||[];
     S.users=(d.users||[]).map(u=>({...u,urole:u.role||u.urole}));
     // DEMO mode: portal residents live in a separate localStorage store — merge
     // them in so bills can be addressed to them (LIVE mode already includes them).
@@ -398,26 +408,35 @@ async function loadAll(){
       Samrit.demoAccounts().filter(a=>(a.role||'resident')==='resident'&&!have.has(a.id))
         .forEach(a=>S.users.push({...a,urole:a.role||'resident',perms:a.perms||[]}));
     }
-    S.slips=d.slips||[];
+    S.slips=light?_mergeHeavy('slips',d.slips):(d.slips||[]);
     S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;
-    S.photos=d.photos||{};
+    if(!light) S.photos=d.photos||{};   // light refresh: เก็บรูปห้องเดิมไว้ ไม่โหลดซ้ำ
     autoCancelStaleBookings();
   }catch(e){console.warn('bootstrap',e.message);}
+}
+// โหลดรูป base64 ของรายการเดียวเฉพาะตอนต้องใช้ (กดดู) แล้ว cache ไว้ใน S
+async function ensureHeavy(coll,id){
+  const it=(S[coll]||[]).find(x=>x.id===id);if(!it||Samrit.mode!=='live')return false;
+  const f=_HEAVY[coll]||[];
+  if(!f.some(k=>(it[k]==null||it[k]==='')&&it['has_'+k]))return false;   // มีรูปครบแล้ว
+  try{const full=await Samrit.getOne(coll,id);if(full){let ch=false;for(const k of f)if(full[k]!=null&&(it[k]==null||it[k]===''))(it[k]=full[k],ch=true);return ch;}}catch(_){}
+  return false;
 }
 // ดึงข้อมูลล่าสุดจากเซิร์ฟเวอร์อีกครั้ง (ให้หลังบ้านเห็นสิ่งที่ผู้เช่าเพิ่งทำ)
 async function refreshData(manual){
   // รอให้การบันทึกที่ค้างอยู่เสร็จก่อน ไม่งั้นจะดึงข้อมูลเก่ามาทับสิ่งที่เพิ่งแก้
   let waited=0; while(_pendingSaves>0&&waited<4000){await new Promise(r=>setTimeout(r,100));waited+=100;}
-  await loadAll();
+  await loadAll(!manual);   // auto-refresh = light (ไม่โหลดรูปซ้ำ), กดรีเฟรชเอง = full
   render();
 }
 // รีเฟรชอัตโนมัติทุก 5 วินาที (เฉพาะโหมด LIVE) — ข้ามถ้ากำลังเปิดหน้าต่าง พิมพ์อยู่ หรือมีการบันทึกค้าง
 setInterval(()=>{
+  if(document.hidden)return;   // แท็บอยู่เบื้องหลัง — ไม่ต้องรีเฟรช (ประหยัดแบนด์วิดท์)
   if(Samrit.mode!=='live'||!S.auth||S.modal||_pendingSaves>0)return;
   const ae=document.activeElement;
   if(ae&&/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(ae.tagName))return;
   refreshData();
-},5000);
+},15000);
 async function boot(){
   await Samrit.init();
   if(Samrit.mode==='live'){
@@ -467,7 +486,11 @@ function getSig(){return sigPad?sigPad.canvas.toDataURL():'';}
 // ─── Navigation ──────────────────────────────────────────────
 function nav(screen){S.screen=screen;S.modal=null;S.sidebarOpen=false;render();}
 function toggleSidebar(){S.sidebarOpen=!S.sidebarOpen;render();}
-function openModal(type,data={}){S.modal=type;S.modalData=data;render();if(type==='signContract')setTimeout(initSigPad,50);if(type==='addPayment'||type==='editPayment')setTimeout(updateBillCalc,50);}
+async function openModal(type,data={}){S.modal=type;S.modalData=data;render();if(type==='signContract')setTimeout(initSigPad,50);if(type==='addPayment'||type==='editPayment')setTimeout(updateBillCalc,50);
+  // โหลดรูป base64 เฉพาะตอนกดดู (lazy-load) แล้ว render ใหม่ให้รูปโผล่
+  let coll=null; if(type==='viewSlip')coll='slips'; else if(type==='viewBooking')coll='bookings'; else if(type==='viewSignedContract'||type==='viewResidentContract')coll='contracts';
+  if(coll){const changed=await ensureHeavy(coll,data);if(changed&&S.modal===type)render();}
+}
 function closeModal(){S.modal=null;S.modalData={};render();}
 
 // ─── CRUD ─────────────────────────────────────────────────────
@@ -1133,7 +1156,7 @@ function renderContracts(){
         <td style="font-weight:600">${c.tenantName||'-'}</td>
         <td>${c.roomNumber?`ห้อง ${c.roomNumber}`:'-'}</td>
         <td>${fmtDate(c.submittedAt)||'-'}</td>
-        <td>${c.signedDoc?`<button class="btn btn-sm btn-ghost" style="color:#34D399" onclick="openModal('viewSignedContract','${c.id}')">${ico.eye} เอกสารเซ็น</button>`:`<span style="color:#5C6270;font-size:12px">ยังไม่อัปโหลด</span>`}</td>
+        <td>${(c.signedDoc||c.has_signedDoc)?`<button class="btn btn-sm btn-ghost" style="color:#34D399" onclick="openModal('viewSignedContract','${c.id}')">${ico.eye} เอกสารเซ็น</button>`:`<span style="color:#5C6270;font-size:12px">ยังไม่อัปโหลด</span>`}</td>
         <td><span class="badge ${c.status==='ยืนยันแล้ว'?'badge-green':'badge-yellow'}">${c.status==='ยืนยันแล้ว'?'ยืนยันแล้ว':'รอยืนยัน'}</span></td>
         <td><div style="display:flex;gap:4px">
           <button class="btn btn-sm btn-ghost" onclick="openModal('viewResidentContract','${c.id}')">${ico.eye} ดู</button>
@@ -1278,7 +1301,7 @@ function renderPaySettings(){
       <div class="table-wrap"><table>
         <tr><th>สลิป</th><th>ผู้โอน</th><th>ห้อง</th><th>ประเภท</th><th>ยอด</th><th>วันที่</th><th>สถานะ</th><th></th></tr>
         ${list.map(s=>`<tr>
-          <td>${s.slip?`<img src="${s.slip}" style="width:46px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openModal('viewSlip','${s.id}')">`:'<span style="color:#5C6270">ไม่มีรูป</span>'}</td>
+          <td>${s.slip?`<img src="${s.slip}" style="width:46px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer" onclick="openModal('viewSlip','${s.id}')">`:(s.has_slip?`<div onclick="openModal('viewSlip','${s.id}')" style="width:46px;height:60px;display:flex;align-items:center;justify-content:center;border:1px solid #2A2F3A;border-radius:6px;cursor:pointer;color:#8A90A0;font-size:11px">ดูรูป</div>`:'<span style="color:#5C6270">ไม่มีรูป</span>')}</td>
           <td>${s.name||'-'}</td>
           <td>ห้อง ${s.roomNumber}${s.month?`<div style="font-size:11px;color:#5C6270">${s.month}</div>`:''}</td>
           <td>${s.kind||'-'}</td>
@@ -1441,7 +1464,7 @@ function renderModal(){
       <div style="display:grid;gap:9px">
         <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#0E1016;border-radius:10px"><span style="color:#6B7180;font-size:13px">สถานะ</span><span class="badge ${bstatus(b.status)}">${b.status}</span></div>
         ${rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 12px;background:#0E1016;border-radius:10px"><span style="color:#6B7180;font-size:13px;white-space:nowrap">${k}</span><span style="font-weight:600;text-align:right">${v}</span></div>`).join('')}
-        ${b.slip?`<div style="padding:10px 12px;background:#0E1016;border-radius:10px"><div style="color:#6B7180;font-size:13px;margin-bottom:8px">สลิปค่าจอง</div><img src="${b.slip}" style="max-width:100%;max-height:44vh;border-radius:8px;display:block;margin:0 auto"></div>`:''}
+        ${b.slip?`<div style="padding:10px 12px;background:#0E1016;border-radius:10px"><div style="color:#6B7180;font-size:13px;margin-bottom:8px">สลิปค่าจอง</div><img src="${b.slip}" style="max-width:100%;max-height:44vh;border-radius:8px;display:block;margin:0 auto"></div>`:(b.has_slip?`<div style="padding:20px;background:#0E1016;border-radius:10px;text-align:center;color:#6B7180">กำลังโหลดสลิป…</div>`:'')}
       </div>
     `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${b.status==='รอยืนยัน'?`<button class="btn btn-primary" onclick="confirmBookingStay('${b.id}');closeModal()">${ico.check||''} ยืนยันเข้าพัก</button>`:''}`,'modal-lg');
   }
@@ -1568,9 +1591,9 @@ function renderModal(){
   }
   if(type==='viewSignedContract'){
     const c=S.contracts.find(x=>x.id===data);
-    if(!c||!c.signedDoc)return'';
+    if(!c||(!c.signedDoc&&!c.has_signedDoc))return'';
     return modal('เอกสารที่เซ็นแล้ว — '+(c.tenantName||''),`
-      ${c.signedDoc.startsWith('data:image')?`<img src="${c.signedDoc}" style="max-width:100%;border-radius:10px">`:`<div style="padding:30px;text-align:center"><a href="${c.signedDoc}" download="สัญญาเซ็น_${c.tenantName||''}.pdf" class="btn btn-primary">${ico.doc||''} เปิด/ดาวน์โหลดไฟล์</a></div>`}
+      ${c.signedDoc?(c.signedDoc.startsWith('data:image')?`<img src="${c.signedDoc}" style="max-width:100%;border-radius:10px">`:`<div style="padding:30px;text-align:center"><a href="${c.signedDoc}" download="สัญญาเซ็น_${c.tenantName||''}.pdf" class="btn btn-primary">${ico.doc||''} เปิด/ดาวน์โหลดไฟล์</a></div>`):'<div style="padding:30px;text-align:center;color:#6B7180">กำลังโหลดเอกสาร…</div>'}
       <div style="margin-top:10px;font-size:12.5px;color:#5C6270">อัปโหลดเมื่อ ${fmtDate(c.signedAt)||'-'}</div>
     `,`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button>${c.status!=='ยืนยันแล้ว'?`<button class="btn btn-primary" onclick="confirmResidentContract('${c.id}');closeModal()">ยืนยันสัญญา</button>`:''}`,'modal-lg');
   }
@@ -1628,7 +1651,7 @@ function renderModal(){
     const s=(S.slips||[]).find(x=>x.id===data);
     if(!s)return'';
     return modal('หลักฐานการโอนเงิน',`
-      <div style="text-align:center;margin-bottom:14px">${s.slip?`<img src="${s.slip}" style="max-width:100%;max-height:50vh;border-radius:12px;border:1px solid rgba(255,255,255,0.1)">`:'<div style="color:#5C6270;padding:40px">ไม่มีรูปสลิป</div>'}</div>
+      <div style="text-align:center;margin-bottom:14px">${s.slip?`<img src="${s.slip}" style="max-width:100%;max-height:50vh;border-radius:12px;border:1px solid rgba(255,255,255,0.1)">`:(s.has_slip?'<div style="color:#6B7180;padding:40px">กำลังโหลดสลิป…</div>':'<div style="color:#5C6270;padding:40px">ไม่มีรูปสลิป</div>')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div style="padding:10px;background:#0E1016;border-radius:10px"><div class="detail-key">ผู้โอน</div><div class="detail-val">${s.name||'-'}</div></div>
         <div style="padding:10px;background:#0E1016;border-radius:10px"><div class="detail-key">ยอด</div><div class="detail-val" style="color:#A990FF">฿${fmtMoney(s.amount||0)}</div></div>
