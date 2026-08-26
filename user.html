@@ -8,65 +8,69 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+/* ===== THEME TOKENS (auto) ===== */
+:root{--c-base:#0b0c10;--c-surface:#0e1016;--c-elevated:#15171e;--c-raised:#1e2130;--c-inset:#181b23;--c-scroll:#2a2d3a;--c-border-hex:#2a2f3a;--c-text:#e8eaf0;--c-text2:#c8ccda;--c-dim:#5c6270;--c-dim2:#6b7180;--c-muted:#8892a4;--c-label:#7c828f;--c-faint:#4a5060;--c-b1:#93a0b4;--c-gray:#9ca3af;--c-accent:#6c4fd8;--c-accent-hi:#7b5fe8;--c-accent-txt:#a990ff;--c-grad1:#7c5ce6;--c-grad2:#5234b8;--c-accent-deepbg:#1a1340;--c-green:#34d399;--c-green-deep:#065f46;--c-red:#f87171;--c-red-deep:#7f1d1d;--c-yellow:#fbbf24;--c-orange:#f0a952;--c-blue:#60a5fa;--c-tint-green:#0e2418;--c-tint-amber:#1a1610;--c-tint-red:#1a0e14;--bd1:rgba(255,255,255,0.06);--bd2:rgba(255,255,255,0.07);--bd3:rgba(255,255,255,0.08);--bd-strong:rgba(255,255,255,0.1);--bd-05:rgba(255,255,255,0.05);--bd-15:rgba(255,255,255,0.15);--bd-14:rgba(255,255,255,.14);--hover1:rgba(255,255,255,0.04);--hover2:rgba(255,255,255,0.02)}
+:root[data-theme="light"]{--c-base:#eceef4;--c-surface:#ffffff;--c-elevated:#ffffff;--c-raised:#eef0f6;--c-inset:#f1f2f7;--c-scroll:#cfd2dc;--c-border-hex:#dfe1ea;--c-text:#1b1e2a;--c-text2:#3a4150;--c-dim:#767c8a;--c-dim2:#667085;--c-muted:#7b8291;--c-label:#6f7583;--c-faint:#a6abb6;--c-b1:#6b7180;--c-gray:#6b7180;--c-accent:#6c4fd8;--c-accent-hi:#5e42c8;--c-accent-txt:#6c4fd8;--c-grad1:#7c5ce6;--c-grad2:#5234b8;--c-accent-deepbg:#efeafb;--c-green:#159a54;--c-green-deep:#0f7a43;--c-red:#dc3b3b;--c-red-deep:#c23434;--c-yellow:#c77a12;--c-orange:#d1841f;--c-blue:#2563eb;--c-tint-green:#e6f5ec;--c-tint-amber:#fbf1df;--c-tint-red:#fcecec;--bd1:rgba(0,0,0,0.07);--bd2:rgba(0,0,0,0.08);--bd3:rgba(0,0,0,0.09);--bd-strong:rgba(0,0,0,0.12);--bd-05:rgba(0,0,0,0.05);--bd-15:rgba(0,0,0,0.14);--bd-14:rgba(0,0,0,.13);--hover1:rgba(0,0,0,0.04);--hover2:rgba(0,0,0,0.028)}
+
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:#0B0C10;font-family:'IBM Plex Sans Thai',sans-serif;color:#E8EAF0;min-height:100vh;}
+body{background:var(--c-base);font-family:'IBM Plex Sans Thai',sans-serif;color:var(--c-text);min-height:100vh;}
 ::-webkit-scrollbar{width:6px;height:6px;}
-::-webkit-scrollbar-track{background:#0B0C10;}
-::-webkit-scrollbar-thumb{background:#2A2D3A;border-radius:3px;}
+::-webkit-scrollbar-track{background:var(--c-base);}
+::-webkit-scrollbar-thumb{background:var(--c-scroll);border-radius:3px;}
 button{cursor:pointer;font-family:inherit;}
 input,select,textarea{font-family:inherit;}
 
 /* Auth */
 .auth-wrap{min-height:100vh;display:flex;}
-.auth-left{width:380px;background:linear-gradient(160deg,#1a1340 0%,#0E1016 60%);border-right:1px solid rgba(108,79,216,0.2);padding:48px 40px;display:flex;flex-direction:column;justify-content:center;flex-shrink:0;}
+.auth-left{width:380px;background:linear-gradient(160deg,var(--c-accent-deepbg) 0%,var(--c-surface) 60%);border-right:1px solid rgba(108,79,216,0.2);padding:48px 40px;display:flex;flex-direction:column;justify-content:center;flex-shrink:0;}
 .auth-right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px;}
-.auth-logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;margin-bottom:24px;}
+.auth-logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(140deg,var(--c-grad1),var(--c-grad2));display:flex;align-items:center;justify-content:center;margin-bottom:24px;}
 .auth-tagline{font-size:24px;font-weight:700;line-height:1.3;margin-bottom:8px;}
-.auth-sub{font-size:13.5px;color:#5C6270;line-height:1.6;margin-bottom:36px;}
+.auth-sub{font-size:13.5px;color:var(--c-dim);line-height:1.6;margin-bottom:36px;}
 .auth-stat{display:flex;gap:24px;margin-top:32px;}
 .auth-stat-item{text-align:center;}
-.auth-stat-num{font-size:24px;font-weight:700;color:#A990FF;}
-.auth-stat-label{font-size:11px;color:#5C6270;margin-top:2px;}
-.auth-box{background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:36px;width:100%;max-width:420px;}
+.auth-stat-num{font-size:24px;font-weight:700;color:var(--c-accent-txt);}
+.auth-stat-label{font-size:11px;color:var(--c-dim);margin-top:2px;}
+.auth-box{background:var(--c-elevated);border:1px solid var(--bd2);border-radius:20px;padding:36px;width:100%;max-width:420px;}
 .auth-title{font-size:20px;font-weight:700;margin-bottom:4px;}
-.auth-desc{font-size:13px;color:#5C6270;margin-bottom:24px;}
-.auth-tabs{display:flex;gap:4px;background:#0E1016;border-radius:10px;padding:4px;margin-bottom:24px;}
-.auth-tab{flex:1;padding:7px;border-radius:7px;font-size:13.5px;border:none;background:transparent;color:#6B7180;cursor:pointer;transition:all .15s;}
-.auth-tab.active{background:#1E2130;color:#E8EAF0;font-weight:600;}
+.auth-desc{font-size:13px;color:var(--c-dim);margin-bottom:24px;}
+.auth-tabs{display:flex;gap:4px;background:var(--c-surface);border-radius:10px;padding:4px;margin-bottom:24px;}
+.auth-tab{flex:1;padding:7px;border-radius:7px;font-size:13.5px;border:none;background:transparent;color:var(--c-dim2);cursor:pointer;transition:all .15s;}
+.auth-tab.active{background:var(--c-raised);color:var(--c-text);font-weight:600;}
 
 /* App Layout */
 .app-wrap{display:flex;min-height:100vh;}
-.topnav{position:fixed;top:0;left:0;right:0;height:56px;background:#0E1016;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:100;}
+.topnav{position:fixed;top:0;left:0;right:0;height:56px;background:var(--c-surface);border-bottom:1px solid var(--bd1);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:100;}
 .topnav-logo{font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px;white-space:nowrap;flex-shrink:0;}
-.topnav-logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;}
+.topnav-logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(140deg,var(--c-grad1),var(--c-grad2));display:flex;align-items:center;justify-content:center;}
 .topnav-menu{display:flex;gap:4px;flex:1;margin-left:16px;}
-.nav-item{padding:6px 14px;border-radius:8px;font-size:13.5px;color:#6B7180;cursor:pointer;border:none;background:transparent;transition:all .15s;}
-.nav-item:hover{color:#C8CCDA;background:rgba(255,255,255,0.05);}
-.nav-item.active{color:#A990FF;background:rgba(108,79,216,0.12);}
+.nav-item{padding:6px 14px;border-radius:8px;font-size:13.5px;color:var(--c-dim2);cursor:pointer;border:none;background:transparent;transition:all .15s;}
+.nav-item:hover{color:var(--c-text2);background:var(--bd-05);}
+.nav-item.active{color:var(--c-accent-txt);background:rgba(108,79,216,0.12);}
 .topnav-user{display:flex;align-items:center;gap:10px;margin-left:auto;}
-.user-avatar{width:32px;height:32px;border-radius:9px;background:linear-gradient(140deg,#7C5CE6,#5234B8);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
+.user-avatar{width:32px;height:32px;border-radius:9px;background:linear-gradient(140deg,var(--c-grad1),var(--c-grad2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;}
 .page-wrap{margin-top:56px;padding:28px 24px;max-width:1200px;margin-left:auto;margin-right:auto;}
 .history-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
-.bill-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px;background:#0E1016;border-radius:10px;margin-bottom:12px;}
+.bill-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px;background:var(--c-surface);border-radius:10px;margin-bottom:12px;}
 
 /* Cards */
-.card{background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px;}
-.card-sm{background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;}
+.card{background:var(--c-elevated);border:1px solid var(--bd2);border-radius:16px;padding:20px;}
+.card-sm{background:var(--c-elevated);border:1px solid var(--bd2);border-radius:14px;padding:16px;}
 
 /* Room Cards */
 .rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
-.room-card{background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .2s;}
+.room-card{background:var(--c-elevated);border:1px solid var(--bd2);border-radius:16px;overflow:hidden;cursor:pointer;transition:all .2s;}
 .room-card:hover{border-color:rgba(108,79,216,0.4);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
 .room-card-header{height:100px;display:flex;align-items:center;justify-content:center;position:relative;}
-.room-card-floor{font-size:11px;color:#5C6270;position:absolute;top:12px;left:14px;font-family:'JetBrains Mono',monospace;}
+.room-card-floor{font-size:11px;color:var(--c-dim);position:absolute;top:12px;left:14px;font-family:'JetBrains Mono',monospace;}
 .room-card-status{position:absolute;top:10px;right:12px;}
-.room-card-num{font-size:40px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#E8EAF0;}
+.room-card-num{font-size:40px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--c-text);}
 .room-card-body{padding:14px 16px;}
-.room-card-type{font-size:12px;color:#6B7180;margin-bottom:4px;}
-.room-card-price{font-size:17px;font-weight:700;color:#A990FF;}
-.room-card-size{font-size:12px;color:#5C6270;}
+.room-card-type{font-size:12px;color:var(--c-dim2);margin-bottom:4px;}
+.room-card-price{font-size:17px;font-weight:700;color:var(--c-accent-txt);}
+.room-card-size{font-size:12px;color:var(--c-dim);}
 .room-card-facs{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;}
-.fac-tag{font-size:11px;background:rgba(255,255,255,0.05);border-radius:5px;padding:2px 7px;color:#6B7180;}
+.fac-tag{font-size:11px;background:var(--bd-05);border-radius:5px;padding:2px 7px;color:var(--c-dim2);}
 
 /* Filters */
 .filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
@@ -74,61 +78,61 @@ input,select,textarea{font-family:inherit;}
 .filter-input svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.4;}
 
 /* Inputs */
-.input{background:#0E1016;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px 13px;font-size:13.5px;color:#E8EAF0;width:100%;outline:none;transition:border-color .15s;}
-.input:focus{border-color:#6C4FD8;}
-.input::placeholder{color:#4A5060;}
+.input{background:var(--c-surface);border:1px solid var(--bd-strong);border-radius:10px;padding:9px 13px;font-size:13.5px;color:var(--c-text);width:100%;outline:none;transition:border-color .15s;}
+.input:focus{border-color:var(--c-accent);}
+.input::placeholder{color:var(--c-faint);}
 select.input{cursor:pointer;}
-.form-label{font-size:12px;color:#7C828F;margin-bottom:5px;display:block;}
+.form-label{font-size:12px;color:var(--c-label);margin-bottom:5px;display:block;}
 .form-group{margin-bottom:14px;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;font-size:13.5px;font-weight:600;border:none;transition:all .15s;cursor:pointer;}
-.btn-primary{background:#6C4FD8;color:#fff;}
-.btn-primary:hover{background:#7B5FE8;}
-.btn-ghost{background:rgba(255,255,255,0.06);color:#C8CCDA;}
-.btn-ghost:hover{background:rgba(255,255,255,0.1);}
-.btn-danger{background:rgba(248,113,113,0.1);color:#F87171;border:1px solid rgba(248,113,113,0.2);}
+.btn-primary{background:var(--c-accent);color:#fff;}
+.btn-primary:hover{background:var(--c-accent-hi);}
+.btn-ghost{background:var(--bd1);color:var(--c-text2);}
+.btn-ghost:hover{background:var(--bd-strong);}
+.btn-danger{background:rgba(248,113,113,0.1);color:var(--c-red);border:1px solid rgba(248,113,113,0.2);}
 .btn-sm{padding:5px 12px;font-size:12.5px;}
 .btn-icon{width:32px;height:32px;padding:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;}
-.btn-outline{background:transparent;border:1px solid rgba(108,79,216,0.4);color:#A990FF;}
+.btn-outline{background:transparent;border:1px solid rgba(108,79,216,0.4);color:var(--c-accent-txt);}
 .btn-outline:hover{background:rgba(108,79,216,0.1);}
 
 /* Badges */
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:20px;}
-.badge-green{background:rgba(52,211,153,0.12);color:#34D399;}
-.badge-red{background:rgba(248,113,113,0.12);color:#F87171;}
-.badge-yellow{background:rgba(251,191,36,0.12);color:#FBBF24;}
-.badge-blue{background:rgba(96,165,250,0.12);color:#60A5FA;}
-.badge-gray{background:rgba(156,163,175,0.12);color:#9CA3AF;}
-.badge-purple{background:rgba(108,79,216,0.15);color:#A990FF;}
+.badge-green{background:rgba(52,211,153,0.12);color:var(--c-green);}
+.badge-red{background:rgba(248,113,113,0.12);color:var(--c-red);}
+.badge-yellow{background:rgba(251,191,36,0.12);color:var(--c-yellow);}
+.badge-blue{background:rgba(96,165,250,0.12);color:var(--c-blue);}
+.badge-gray{background:rgba(156,163,175,0.12);color:var(--c-gray);}
+.badge-purple{background:rgba(108,79,216,0.15);color:var(--c-accent-txt);}
 .dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;}
 
 /* Table */
 .table-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;}
-th{text-align:left;font-size:11px;font-family:'JetBrains Mono',monospace;color:#5C6270;letter-spacing:.8px;text-transform:uppercase;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.06);}
-td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+th{text-align:left;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--c-dim);letter-spacing:.8px;text-transform:uppercase;padding:10px 14px;border-bottom:1px solid var(--bd1);}
+td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid var(--hover1);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(255,255,255,0.02);}
+tr:hover td{background:var(--hover2);}
 
 /* Modal */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
-.modal{background:#15171E;border:1px solid rgba(255,255,255,0.08);border-radius:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:28px;}
+.modal{background:var(--c-elevated);border:1px solid var(--bd3);border-radius:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:28px;}
 .modal-lg{max-width:680px;}
 .modal-title{font-size:17px;font-weight:700;margin-bottom:20px;}
-.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--bd1);}
 
 /* Timeline */
 .timeline{display:flex;flex-direction:column;gap:0;}
 .tl-item{display:flex;gap:14px;padding-bottom:20px;position:relative;}
 .tl-item:last-child{padding-bottom:0;}
-.tl-dot{width:10px;height:10px;border-radius:50%;background:#6C4FD8;flex-shrink:0;margin-top:4px;}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--c-accent);flex-shrink:0;margin-top:4px;}
 .tl-line{position:absolute;left:4px;top:14px;bottom:0;width:2px;background:rgba(108,79,216,0.2);}
 .tl-item:last-child .tl-line{display:none;}
 .tl-content{flex:1;}
 .tl-title{font-size:13.5px;font-weight:600;}
-.tl-sub{font-size:12px;color:#5C6270;margin-top:2px;}
+.tl-sub{font-size:12px;color:var(--c-dim);margin-top:2px;}
 
 @media(max-width:640px){
 .auth-left{display:none;}
@@ -148,6 +152,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 </style>
 </head>
 <body>
+<script>(function(){try{var t=localStorage.getItem('samrit_theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
 <div id="app"></div>
 
 <script>/* ฟอนต์ไทย Sarabun (ฝังในไฟล์ ใช้สร้าง PDF สัญญา) */
@@ -289,7 +294,7 @@ function qrSVG(seed,px){
   finder(0,0);finder(N-7,0);finder(0,N-7);
   let rects='';
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){let v=g[y*N+x];if(v===-1)v=rnd()>0.55?1:0;if(v===1)rects+=`<rect x="${(x*cell).toFixed(2)}" y="${(y*cell).toFixed(2)}" width="${cell.toFixed(2)}" height="${cell.toFixed(2)}"/>`;}
-  return`<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" xmlns="http://www.w3.org/2000/svg"><rect width="${px}" height="${px}" fill="#fff"/><g fill="#0B0C10">${rects}</g></svg>`;
+  return`<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" xmlns="http://www.w3.org/2000/svg"><rect width="${px}" height="${px}" fill="#fff"/><g fill="var(--c-base)">${rects}</g></svg>`;
 }
 function qrBox(amount){
   const pay=S.pay||DEFAULT_PAY;
@@ -307,20 +312,20 @@ function qrBox(amount){
     qr=qrSVG('samrit'+(pay.promptpay||''),160);
     note='สแกนเพื่อชำระเงิน หรือโอนผ่านบัญชี:';
   }
-  const amtLine=amount!=null?`<div style="text-align:center;margin-top:8px;font-size:14px;color:#0B0C10;font-weight:700;font-family:'JetBrains Mono',monospace">฿${(+amount).toLocaleString('th-TH',{minimumFractionDigits:2})}</div>`:'';
-  const ppLine=ppDigits.length>=10?`<div style="font-size:13px;margin-bottom:10px"><span style="color:#6B7180">พร้อมเพย์:</span> <span style="color:#A990FF;font-family:'JetBrains Mono',monospace">${pay.promptpay}</span></div>`:'';
-  const banks=pay.banks.map(b=>`<div style="margin-bottom:10px"><div style="font-weight:600;font-size:13.5px">${b.bank}</div><div style="font-size:13px;color:#A990FF;font-family:'JetBrains Mono',monospace">${b.acc} <span style="color:#6B7180">${b.holder}</span></div></div>`).join('');
+  const amtLine=amount!=null?`<div style="text-align:center;margin-top:8px;font-size:14px;color:var(--c-base);font-weight:700;font-family:'JetBrains Mono',monospace">฿${(+amount).toLocaleString('th-TH',{minimumFractionDigits:2})}</div>`:'';
+  const ppLine=ppDigits.length>=10?`<div style="font-size:13px;margin-bottom:10px"><span style="color:var(--c-dim2)">พร้อมเพย์:</span> <span style="color:var(--c-accent-txt);font-family:'JetBrains Mono',monospace">${pay.promptpay}</span></div>`:'';
+  const banks=pay.banks.map(b=>`<div style="margin-bottom:10px"><div style="font-weight:600;font-size:13.5px">${b.bank}</div><div style="font-size:13px;color:var(--c-accent-txt);font-family:'JetBrains Mono',monospace">${b.acc} <span style="color:var(--c-dim2)">${b.holder}</span></div></div>`).join('');
   return`<div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
     <div style="background:#fff;border-radius:12px;padding:10px;flex-shrink:0">${qr}${amtLine}</div>
-    <div style="flex:1;min-width:180px"><div style="font-size:13px;color:#6B7180;margin-bottom:10px">${note}</div>${ppLine}${banks}</div>
+    <div style="flex:1;min-width:180px"><div style="font-size:13px;color:var(--c-dim2);margin-bottom:10px">${note}</div>${ppLine}${banks}</div>
   </div>`;
 }
 function slipUploadField(){
   const slip=payCtx?.slip;
   return`<div style="margin-top:16px">
     <div class="form-label" style="margin-bottom:6px">อัปโหลดหลักฐานการโอนเงิน (สลิป)</div>
-    ${slip?`<div style="position:relative;display:inline-block"><img src="${slip}" style="max-width:160px;max-height:200px;border-radius:10px;border:1px solid rgba(255,255,255,0.1)"><button onclick="payCtx.slip=null;render()" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:none;background:#F87171;color:#fff;font-weight:700">×</button></div>`:
-    `<label class="btn btn-ghost btn-sm" style="cursor:pointer">เลือกไฟล์<input type="file" accept="image/*" onchange="onPaySlip(this)" style="display:none"></label> <span style="font-size:12.5px;color:#5C6270">ไม่ได้เลือกไฟล์ใด</span>`}
+    ${slip?`<div style="position:relative;display:inline-block"><img src="${slip}" style="max-width:160px;max-height:200px;border-radius:10px;border:1px solid var(--bd-strong)"><button onclick="payCtx.slip=null;render()" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:none;background:var(--c-red);color:#fff;font-weight:700">×</button></div>`:
+    `<label class="btn btn-ghost btn-sm" style="cursor:pointer">เลือกไฟล์<input type="file" accept="image/*" onchange="onPaySlip(this)" style="display:none"></label> <span style="font-size:12.5px;color:var(--c-dim)">ไม่ได้เลือกไฟล์ใด</span>`}
   </div>`;
 }
 
@@ -513,8 +518,8 @@ function renderAuth(){
       <div style="display:flex;flex-direction:column;gap:12px">
         ${[['12 ห้อง','3 ชั้น'],['บริการ 24/7','ตลอดเวลา'],['ออนไลน์','100%']].map(([a,b])=>`
         <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(108,79,216,0.08);border-radius:10px;border:1px solid rgba(108,79,216,0.15)">
-          <span style="font-size:16px;font-weight:700;color:#A990FF;width:60px">${a}</span>
-          <span style="font-size:12.5px;color:#6B7180">${b}</span>
+          <span style="font-size:16px;font-weight:700;color:var(--c-accent-txt);width:60px">${a}</span>
+          <span style="font-size:12.5px;color:var(--c-dim2)">${b}</span>
         </div>`).join('')}
       </div>
     </div>
@@ -582,12 +587,12 @@ function renderBrowse(){
   if(S.filterMaxPrice)rooms=rooms.filter(r=>r.price<=+S.filterMaxPrice);
   if(S.filterVacant)rooms=rooms.filter(r=>r.status==='vacant');
 
-  const bg=(s)=>s==='vacant'?'linear-gradient(135deg,#0E2418,#0B1A10)':s==='occupied'?'linear-gradient(135deg,#1A0E14,#120B0E)':'linear-gradient(135deg,#1A1610,#120E08)';
+  const bg=(s)=>s==='vacant'?'linear-gradient(135deg,var(--c-tint-green),var(--c-tint-green))':s==='occupied'?'linear-gradient(135deg,var(--c-tint-red),var(--c-tint-red))':'linear-gradient(135deg,var(--c-tint-amber),var(--c-tint-amber))';
 
   return`<div class="page-wrap">
     <div style="margin-bottom:20px">
       <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">ค้นหาห้องพัก</h1>
-      <p style="font-size:13.5px;color:#6B7180">หอพักสัมฤทธิ์ มี ${S.rooms.filter(r=>r.status==='vacant').length} ห้องว่างพร้อมเข้าพัก</p>
+      <p style="font-size:13.5px;color:var(--c-dim2)">หอพักสัมฤทธิ์ มี ${S.rooms.filter(r=>r.status==='vacant').length} ห้องว่างพร้อมเข้าพัก</p>
     </div>
     <div class="filter-bar">
       <div class="filter-input" style="flex:1;min-width:180px">
@@ -595,11 +600,11 @@ function renderBrowse(){
         <input class="input" style="padding-left:36px" placeholder="ค้นหาห้อง..." value="${S.filterSearch}" oninput="S.filterSearch=this.value;render()">
       </div>
       <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;cursor:pointer;white-space:nowrap">
-        <input type="checkbox" ${S.filterVacant?'checked':''} onchange="S.filterVacant=this.checked;render()" style="accent-color:#6C4FD8">
+        <input type="checkbox" ${S.filterVacant?'checked':''} onchange="S.filterVacant=this.checked;render()" style="accent-color:var(--c-accent)">
         เฉพาะห้องว่าง
       </label>
     </div>
-    ${rooms.length===0?`<div style="text-align:center;padding:60px;color:#5C6270">ไม่พบห้องที่ตรงเงื่อนไข</div>`:`
+    ${rooms.length===0?`<div style="text-align:center;padding:60px;color:var(--c-dim)">ไม่พบห้องที่ตรงเงื่อนไข</div>`:`
     <div class="rooms-grid">
       ${rooms.map(r=>`
       <div class="room-card" onclick="openModal('roomDetail','${r.id}')">
@@ -610,7 +615,7 @@ function renderBrowse(){
         </div>
         <div class="room-card-body">
           <div class="room-card-type">${r.type} · ${r.size}</div>
-          <div class="room-card-price">฿${fmtMoney(r.price)}<span style="font-size:12px;color:#5C6270;font-weight:400">/เดือน</span></div>
+          <div class="room-card-price">฿${fmtMoney(r.price)}<span style="font-size:12px;color:var(--c-dim);font-weight:400">/เดือน</span></div>
           <div class="room-card-facs">${r.facilities.slice(0,4).map(f=>`<span class="fac-tag">${f}</span>`).join('')}${r.facilities.length>4?`<span class="fac-tag">+${r.facilities.length-4}</span>`:''}</div>
         </div>
       </div>`).join('')}
@@ -625,10 +630,10 @@ function renderBookings(){
     <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
       <div>
         <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">การจองของฉัน</h1>
-        <p style="font-size:13.5px;color:#6B7180">ติดตามสถานะการจองห้องพัก</p>
+        <p style="font-size:13.5px;color:var(--c-dim2)">ติดตามสถานะการจองห้องพัก</p>
       </div>
     </div>
-    ${bks.length===0?`<div class="card" style="text-align:center;padding:60px;color:#5C6270">
+    ${bks.length===0?`<div class="card" style="text-align:center;padding:60px;color:var(--c-dim)">
       <div style="margin-bottom:12px">${ico.book}</div>
       ยังไม่มีการจอง — <button class="btn btn-primary btn-sm" onclick="nav('browse')">เลือกห้อง</button>
     </div>`:`
@@ -642,13 +647,13 @@ function renderBookings(){
                 <span style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace">${String(b.roomNumber).padStart(2,'0')}</span>
                 <div>
                   <div style="font-weight:600;font-size:14px">${r?.type||''}</div>
-                  <div style="font-size:12px;color:#5C6270">ชั้น ${r?.floor||''} · ${r?.size||''}</div>
+                  <div style="font-size:12px;color:var(--c-dim)">ชั้น ${r?.floor||''} · ${r?.size||''}</div>
                 </div>
               </div>
-              <div style="font-size:13px;color:#6B7180">วันที่ต้องการเข้าพัก: <span style="color:#E8EAF0">${fmtDate(b.date)}</span></div>
-              <div style="font-size:12px;color:#5C6270;margin-top:2px">จองเมื่อ ${fmtDate(b.createdAt)}</div>
-              ${b.status==='รอยืนยัน'&&b.createdAt?`<div style="font-size:11.5px;color:#F0A952;margin-top:3px">⏳ กรุณาให้เจ้าของหอยืนยันภายใน ${fmtDate(new Date(new Date(b.createdAt).getTime()+bookingHoldDays()*86400000).toISOString().slice(0,10))} มิฉะนั้นการจองจะถูกยกเลิกอัตโนมัติ</div>`:''}
-              ${b.autoCancelled?`<div style="font-size:11.5px;color:#F87171;margin-top:3px">การจองถูกยกเลิกอัตโนมัติ (เกินกำหนดยืนยัน)</div>`:''}
+              <div style="font-size:13px;color:var(--c-dim2)">วันที่ต้องการเข้าพัก: <span style="color:var(--c-text)">${fmtDate(b.date)}</span></div>
+              <div style="font-size:12px;color:var(--c-dim);margin-top:2px">จองเมื่อ ${fmtDate(b.createdAt)}</div>
+              ${b.status==='รอยืนยัน'&&b.createdAt?`<div style="font-size:11.5px;color:var(--c-orange);margin-top:3px">⏳ กรุณาให้เจ้าของหอยืนยันภายใน ${fmtDate(new Date(new Date(b.createdAt).getTime()+bookingHoldDays()*86400000).toISOString().slice(0,10))} มิฉะนั้นการจองจะถูกยกเลิกอัตโนมัติ</div>`:''}
+              ${b.autoCancelled?`<div style="font-size:11.5px;color:var(--c-red);margin-top:3px">การจองถูกยกเลิกอัตโนมัติ (เกินกำหนดยืนยัน)</div>`:''}
             </div>
             <div style="text-align:right">
               <span class="badge ${bstatus(b.status)}" style="margin-bottom:8px;display:inline-flex">${b.status}</span>
@@ -658,7 +663,7 @@ function renderBookings(){
               </div>`:''}
             </div>
           </div>
-          ${r?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)">
+          ${r?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bd1)">
             <div style="display:flex;flex-wrap:wrap;gap:4px">${r.facilities.map(f=>`<span class="fac-tag">${f}</span>`).join('')}</div>
           </div>`:''}
         </div>`;
@@ -674,29 +679,29 @@ function renderPayments(){
   return`<div class="page-wrap">
     <div style="margin-bottom:20px">
       <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">การชำระเงิน</h1>
-      <p style="font-size:13.5px;color:#6B7180">ตรวจสอบและชำระค่าเช่า ค่าน้ำ ค่าไฟ</p>
+      <p style="font-size:13.5px;color:var(--c-dim2)">ตรวจสอบและชำระค่าเช่า ค่าน้ำ ค่าไฟ</p>
     </div>
     ${totalUnpaid>0?`<div style="background:linear-gradient(135deg,rgba(248,113,113,0.08),rgba(108,79,216,0.08));border:1px solid rgba(248,113,113,0.2);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-weight:700;font-size:15px">มียอดค้างชำระ</div><div style="font-size:13px;color:#6B7180">กรุณาชำระภายในกำหนด</div></div>
-      <div style="font-size:24px;font-weight:700;color:#F87171">฿${fmtMoney(totalUnpaid)}</div>
+      <div><div style="font-weight:700;font-size:15px">มียอดค้างชำระ</div><div style="font-size:13px;color:var(--c-dim2)">กรุณาชำระภายในกำหนด</div></div>
+      <div style="font-size:24px;font-weight:700;color:var(--c-red)">฿${fmtMoney(totalUnpaid)}</div>
     </div>`:''}
-    ${bills.length===0?`<div class="card" style="text-align:center;padding:60px;color:#5C6270">ยังไม่มีบิล</div>`:`
+    ${bills.length===0?`<div class="card" style="text-align:center;padding:60px;color:var(--c-dim)">ยังไม่มีบิล</div>`:`
     <div style="display:flex;flex-direction:column;gap:12px">
       ${bills.map(b=>`<div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div>
             <div style="font-weight:700;font-size:15px">เดือน ${b.month} — ห้อง ${b.roomNumber}</div>
-            ${b.date?`<div style="font-size:12px;color:#5C6270">ชำระเมื่อ ${fmtDate(b.date)}</div>`:''}
+            ${b.date?`<div style="font-size:12px;color:var(--c-dim)">ชำระเมื่อ ${fmtDate(b.date)}</div>`:''}
           </div>
           <span class="badge ${pstatus(b.status)}">${pstatusLabel(b.status)}</span>
         </div>
         <div class="bill-breakdown">
           ${[['ค่าเช่า',b.rent],['ค่าน้ำ',waterCost(b)],['ค่าไฟ',electricCost(b)],['อินเทอร์เน็ต',b.internet]].concat((+b.other?[['อื่นๆ/ค่าปรับ',+b.other]]:[])).concat((+b.deposit?[['ค่ามัดจำ',+b.deposit]]:[])).map(([l,v])=>`
-          <div style="text-align:center"><div style="font-size:11.5px;color:#5C6270;margin-bottom:3px">${l}</div><div style="font-weight:600">฿${fmtMoney(v)}</div></div>`).join('')}
+          <div style="text-align:center"><div style="font-size:11.5px;color:var(--c-dim);margin-bottom:3px">${l}</div><div style="font-weight:600">฿${fmtMoney(v)}</div></div>`).join('')}
         </div>
-        ${b.note?`<div style="font-size:12px;color:#8892A4;margin-bottom:10px;padding:8px 10px;background:#15171E;border-radius:8px">📝 ${String(b.note).replace(/</g,'&lt;')}</div>`:''}
+        ${b.note?`<div style="font-size:12px;color:var(--c-muted);margin-bottom:10px;padding:8px 10px;background:var(--c-elevated);border-radius:8px">📝 ${String(b.note).replace(/</g,'&lt;')}</div>`:''}
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:15px;font-weight:700">รวม <span style="color:#A990FF">฿${fmtMoney(billTotal(b))}</span></div>
+          <div style="font-size:15px;font-weight:700">รวม <span style="color:var(--c-accent-txt)">฿${fmtMoney(billTotal(b))}</span></div>
           <div style="display:flex;gap:8px">
             <button class="btn btn-ghost btn-sm" onclick="openModal('receipt','${b.id}')">${ico.receipt} ใบเสร็จ</button>
             ${b.status!=='paid'?`<button class="btn btn-primary btn-sm" onclick="startBillPay('${b.id}')">${ico.pay} ชำระเงิน</button>`:''}
@@ -727,11 +732,11 @@ function renderRepair(){
   return`<div class="page-wrap">
     <div style="margin-bottom:16px">
       <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">แจ้งซ่อม</h1>
-      <p style="font-size:13.5px;color:#6B7180">แจ้งปัญหาห้องพัก/อุปกรณ์ เพื่อให้ผู้ดูแลเข้ามาตรวจสอบและซ่อมแซม</p>
+      <p style="font-size:13.5px;color:var(--c-dim2)">แจ้งปัญหาห้องพัก/อุปกรณ์ เพื่อให้ผู้ดูแลเข้ามาตรวจสอบและซ่อมแซม</p>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start">
       <div class="card">
-        <div style="font-weight:700;margin-bottom:12px;color:#A990FF">🛠 แจ้งเรื่องใหม่</div>
+        <div style="font-weight:700;margin-bottom:12px;color:var(--c-accent-txt)">🛠 แจ้งเรื่องใหม่</div>
         <div class="form-group"><label class="form-label">ห้องเลขที่</label><input id="rpRoom" class="input" value="${defRoom}" placeholder="เช่น 5"></div>
         <div class="form-group"><label class="form-label">อาการ / เรื่องที่แจ้ง *</label><input id="rpIssue" class="input" placeholder="เช่น ก๊อกน้ำรั่ว, แอร์ไม่เย็น"></div>
         <div class="form-group"><label class="form-label">รายละเอียดเพิ่มเติม</label><textarea id="rpDetail" class="input" rows="3" style="resize:vertical" placeholder="อธิบายเพิ่มเติม (ถ้ามี)"></textarea></div>
@@ -742,13 +747,13 @@ function renderRepair(){
         ${mine.length?mine.map(r=>`<div class="card" style="margin-bottom:10px;padding:14px">
           <div style="display:flex;justify-content:space-between;align-items:start;gap:10px">
             <div>
-              <div style="font-weight:600">${String(r.issue||'-').replace(/</g,'&lt;')}${r.roomNumber?` <span style="color:#5C6270;font-weight:400">· ห้อง ${r.roomNumber}</span>`:''}</div>
-              ${r.detail?`<div style="font-size:12.5px;color:#8892A4;margin-top:3px">${String(r.detail).replace(/</g,'&lt;')}</div>`:''}
-              <div style="font-size:11.5px;color:#5C6270;margin-top:4px">${fmtDate(r.date)}</div>
+              <div style="font-weight:600">${String(r.issue||'-').replace(/</g,'&lt;')}${r.roomNumber?` <span style="color:var(--c-dim);font-weight:400">· ห้อง ${r.roomNumber}</span>`:''}</div>
+              ${r.detail?`<div style="font-size:12.5px;color:var(--c-muted);margin-top:3px">${String(r.detail).replace(/</g,'&lt;')}</div>`:''}
+              <div style="font-size:11.5px;color:var(--c-dim);margin-top:4px">${fmtDate(r.date)}</div>
             </div>
             <span class="badge ${rpStatusBadge(r.status)}">${r.status||'รอรับเรื่อง'}</span>
           </div>
-        </div>`).join(''):`<div class="card" style="text-align:center;color:#5C6270;padding:30px">ยังไม่มีการแจ้งซ่อม</div>`}
+        </div>`).join(''):`<div class="card" style="text-align:center;color:var(--c-dim);padding:30px">ยังไม่มีการแจ้งซ่อม</div>`}
       </div>
     </div>
   </div>`;
@@ -758,7 +763,7 @@ function renderHistory(){
   return`<div class="page-wrap">
     <div style="margin-bottom:20px">
       <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">ประวัติ</h1>
-      <p style="font-size:13.5px;color:#6B7180">ประวัติการเข้าพักและการชำระเงิน</p>
+      <p style="font-size:13.5px;color:var(--c-dim2)">ประวัติการเข้าพักและการชำระเงิน</p>
     </div>
     <div class="history-grid">
       <div>
@@ -771,7 +776,7 @@ function renderHistory(){
               <div class="tl-sub">${fmtDate(s.checkin)} – ${fmtDate(s.checkout)}</div>
               ${s.checkout?'':`<span class="badge badge-green" style="margin-top:4px">เข้าพักอยู่</span>`}
             </div>
-          </div>`).join(''):`<div style="color:#5C6270;font-size:13px">ยังไม่มีประวัติ</div>`}
+          </div>`).join(''):`<div style="color:var(--c-dim);font-size:13px">ยังไม่มีประวัติ</div>`}
         </div>
         <div style="margin-top:24px">
           <div style="font-weight:700;margin-bottom:14px">ประวัติการชำระเงิน</div>
@@ -782,7 +787,7 @@ function renderHistory(){
               <td>${b.roomNumber}</td>
               <td>฿${fmtMoney(billTotal(b))}</td>
               <td><span class="badge ${pstatus(b.status)}">${pstatusLabel(b.status)}</span></td>
-            </tr>`).join('')||`<tr><td colspan="4" style="text-align:center;color:#5C6270;padding:20px">ยังไม่มีประวัติ</td></tr>`}
+            </tr>`).join('')||`<tr><td colspan="4" style="text-align:center;color:var(--c-dim);padding:20px">ยังไม่มีประวัติ</td></tr>`}
           </table></div></div>
         </div>
       </div>
@@ -812,14 +817,14 @@ function openRoomPhotoFull(roomId,start){
   img.onclick=(e)=>{e.stopPropagation();if(photos.length>1)nav(1);};
   const xbtn=document.createElement('button');
   xbtn.textContent='✕';
-  xbtn.style.cssText='position:absolute;top:16px;right:20px;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.14);color:#fff;font-size:20px;cursor:pointer';
+  xbtn.style.cssText='position:absolute;top:16px;right:20px;width:42px;height:42px;border-radius:50%;border:none;background:var(--bd-14);color:#fff;font-size:20px;cursor:pointer';
   xbtn.onclick=(e)=>{e.stopPropagation();close();};
   o.appendChild(img); o.appendChild(xbtn);
   if(photos.length>1){
     [['‹',-1,'left:14px'],['›',1,'right:14px']].forEach(([t,d,pos])=>{
       const b=document.createElement('button');
       b.textContent=t;
-      b.style.cssText='position:absolute;'+pos+';top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:none;background:rgba(255,255,255,.14);color:#fff;font-size:28px;line-height:1;cursor:pointer';
+      b.style.cssText='position:absolute;'+pos+';top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;border:none;background:var(--bd-14);color:#fff;font-size:28px;line-height:1;cursor:pointer';
       b.onclick=(e)=>{e.stopPropagation();nav(d);};
       o.appendChild(b);
     });
@@ -964,24 +969,24 @@ function renderContract(){
   S.contractTab=S.contractTab||'create';
   const f=cf();
   const mc=myContract();
-  const statusBanner=mc?`<div style="margin-bottom:16px;padding:13px 16px;border-radius:12px;display:flex;align-items:center;gap:11px;${mc.status==='ยืนยันแล้ว'?'background:#0E2418;color:#34D399;border:1px solid rgba(52,211,153,.3)':'background:#2A230E;color:#FBBF24;border:1px solid rgba(251,191,36,.3)'}">
+  const statusBanner=mc?`<div style="margin-bottom:16px;padding:13px 16px;border-radius:12px;display:flex;align-items:center;gap:11px;${mc.status==='ยืนยันแล้ว'?'background:var(--c-tint-green);color:var(--c-green);border:1px solid rgba(52,211,153,.3)':'background:var(--c-tint-amber);color:var(--c-yellow);border:1px solid rgba(251,191,36,.3)'}">
       <span style="font-size:20px">${mc.status==='ยืนยันแล้ว'?'✅':'⏳'}</span>
       <div>
         <div style="font-weight:700;font-size:14px">${mc.status==='ยืนยันแล้ว'?'ผู้ดูแลยืนยันสัญญาแล้ว':'ส่งสัญญาให้ผู้ดูแลแล้ว — รอยืนยัน'}</div>
         <div style="font-size:12px;opacity:.85">ส่งเมื่อ ${mc.submittedAt||'-'}${mc.roomNumber?' · ห้อง '+mc.roomNumber:''}</div>
       </div>
     </div>`:'';
-  const tab=(id,label)=>`<button onclick="S.contractTab='${id}';render()" style="flex:1;padding:9px;border-radius:9px;border:none;cursor:pointer;font-size:13.5px;font-weight:600;${S.contractTab===id?'background:#6C4FD8;color:#fff':'background:transparent;color:#7C828F'}">${label}</button>`;
+  const tab=(id,label)=>`<button onclick="S.contractTab='${id}';render()" style="flex:1;padding:9px;border-radius:9px;border:none;cursor:pointer;font-size:13.5px;font-weight:600;${S.contractTab===id?'background:var(--c-accent);color:#fff':'background:transparent;color:var(--c-label)'}">${label}</button>`;
   const inp=(k,label,ph)=>`<div class="form-group"><label class="form-label">${label}</label><input class="input" value="${String(f[k]??'').replace(/"/g,'&quot;')}" oninput="setCF('${k}',this.value)" placeholder="${ph||''}"></div>`;
   const create=`
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:20px;align-items:start">
     <div class="card">
-      <div style="font-weight:700;margin-bottom:12px;color:#A990FF">📄 ข้อมูลการทำสัญญา</div>
+      <div style="font-weight:700;margin-bottom:12px;color:var(--c-accent-txt)">📄 ข้อมูลการทำสัญญา</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         ${inp('place','สถานที่ทำสัญญา (ทำที่)','เช่น หอพักสัมฤทธิ์')}
         <div class="form-group"><label class="form-label">วันที่ทำสัญญา</label><input class="input" type="date" value="${f.cdate||''}" oninput="setCF('cdate',this.value)"></div>
       </div>
-      <div style="font-weight:700;margin:8px 0 12px;color:#A990FF">👥 ข้อมูลบุคคล</div>
+      <div style="font-weight:700;margin:8px 0 12px;color:var(--c-accent-txt)">👥 ข้อมูลบุคคล</div>
       ${inp('lessor','ชื่อ-นามสกุล ผู้ให้เช่า')}
       ${inp('lessee','ชื่อ-นามสกุล ผู้เช่า')}
       <div class="form-label" style="margin:6px 0 6px">ที่อยู่ผู้เช่า</div>
@@ -989,7 +994,7 @@ function renderContract(){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${inp('road','ถนน')}${inp('subdistrict','ตำบล/แขวง')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${inp('district','อำเภอ/เขต')}${inp('province','จังหวัด')}</div>
       ${inp('phone','โทรศัพท์')}
-      <div style="font-weight:700;margin:8px 0 12px;color:#A990FF">🏠 รายละเอียดห้อง/ค่าเช่า</div>
+      <div style="font-weight:700;margin:8px 0 12px;color:var(--c-accent-txt)">🏠 รายละเอียดห้อง/ค่าเช่า</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${inp('roomNo','ห้องเลขที่')}${inp('floor','ชั้น')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${inp('rent','ค่าเช่าเดือนละ (บาท)')}${inp('advMonths','ชำระล่วงหน้า (เดือน)')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${inp('payDay','ชำระภายในวันที่')}${inp('photoCount','จำนวนรูปถ่ายแนบ')}</div>
@@ -1000,32 +1005,32 @@ function renderContract(){
         <button class="btn btn-primary" style="flex:1;justify-content:center;padding:12px" onclick="downloadContract()">${ico.doc} ดาวน์โหลด PDF / ส่งให้ผู้ดูแล</button>
         <button class="btn btn-ghost" style="padding:12px" onclick="clearContractForm()">ล้างฟอร์ม</button>
       </div>
-      <div style="font-size:12px;color:#5C6270;margin-top:8px;text-align:center">กดแล้วบันทึกเป็น PDF ได้ และสัญญาจะถูกส่งเข้าหลังบ้านให้ผู้ดูแลตรวจสอบ/ยืนยัน</div>
+      <div style="font-size:12px;color:var(--c-dim);margin-top:8px;text-align:center">กดแล้วบันทึกเป็น PDF ได้ และสัญญาจะถูกส่งเข้าหลังบ้านให้ผู้ดูแลตรวจสอบ/ยืนยัน</div>
     </div>
   </div>`;
   const has=S.contractDoc||localStorage.getItem('samrit_contractdoc');
   const upload=`<div class="card" style="max-width:660px">
-    <div style="font-weight:700;margin-bottom:12px;color:#A990FF">✓ ขั้นตอนการส่งเอกสาร</div>
-    <ol style="font-size:13.5px;color:#C8CCDA;line-height:2;padding-left:20px;margin:0">
+    <div style="font-weight:700;margin-bottom:12px;color:var(--c-accent-txt)">✓ ขั้นตอนการส่งเอกสาร</div>
+    <ol style="font-size:13.5px;color:var(--c-text2);line-height:2;padding-left:20px;margin:0">
       <li><b>ดาวน์โหลดและปริ้น:</b> ปริ้นเอกสารที่สร้างจากแท็บที่ 1</li>
       <li><b>เซ็นชื่อ:</b> เซ็นชื่อในช่องผู้เช่า</li>
       <li><b>แนบรูป:</b> ติดรูปถ่ายของคุณลงบนเอกสาร (ถ้ามี)</li>
       <li><b>ถ่ายรูป/สแกน:</b> ถ่ายรูปหน้าเอกสารให้ชัดเจน แล้วอัปโหลดด้านล่างนี้</li>
     </ol>
-    <div style="font-weight:700;margin:18px 0 10px;color:#A990FF">🖼 อัปโหลดเอกสารที่เซ็นแล้ว</div>
-    <label style="display:block;border:2px dashed rgba(255,255,255,0.15);border-radius:14px;padding:36px;text-align:center;cursor:pointer">
+    <div style="font-weight:700;margin:18px 0 10px;color:var(--c-accent-txt)">🖼 อัปโหลดเอกสารที่เซ็นแล้ว</div>
+    <label style="display:block;border:2px dashed var(--bd-15);border-radius:14px;padding:36px;text-align:center;cursor:pointer">
       <div style="opacity:.7">${ico.doc}</div>
-      <div style="margin-top:8px;color:#8892A4">คลิกเพื่อเลือกไฟล์ หรือ ลากไฟล์มาวางที่นี่</div>
+      <div style="margin-top:8px;color:var(--c-muted)">คลิกเพื่อเลือกไฟล์ หรือ ลากไฟล์มาวางที่นี่</div>
       <input type="file" accept="image/*,.pdf" onchange="onContractUpload(this)" style="display:none">
     </label>
-    ${has?`<div style="margin-top:14px;padding:12px;background:#0E2418;border-radius:10px;color:#34D399;font-size:13px">✓ อัปโหลดเอกสารสัญญาที่เซ็นแล้ว — ส่งให้ผู้ดูแลเรียบร้อย</div>${typeof has==='string'&&has.startsWith('data:image')?`<img src="${has}" style="max-width:100%;margin-top:10px;border-radius:10px">`:''}`:''}
+    ${has?`<div style="margin-top:14px;padding:12px;background:var(--c-tint-green);border-radius:10px;color:var(--c-green);font-size:13px">✓ อัปโหลดเอกสารสัญญาที่เซ็นแล้ว — ส่งให้ผู้ดูแลเรียบร้อย</div>${typeof has==='string'&&has.startsWith('data:image')?`<img src="${has}" style="max-width:100%;margin-top:10px;border-radius:10px">`:''}`:''}
   </div>`;
   return `<div class="page-wrap">
     <div style="margin-bottom:16px">
       <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">สัญญาเช่าห้องพัก</h1>
-      <p style="font-size:13.5px;color:#6B7180">กรอกข้อมูล → ดาวน์โหลดไปปริ้นเซ็น → อัปโหลดกลับ</p>
+      <p style="font-size:13.5px;color:var(--c-dim2)">กรอกข้อมูล → ดาวน์โหลดไปปริ้นเซ็น → อัปโหลดกลับ</p>
     </div>
-    <div style="display:flex;gap:6px;background:#15171E;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:5px;max-width:420px;margin-bottom:18px">
+    <div style="display:flex;gap:6px;background:var(--c-elevated);border:1px solid var(--bd2);border-radius:12px;padding:5px;max-width:420px;margin-bottom:18px">
       ${tab('create','1. สร้างเอกสาร')}${tab('upload','2. อัปโหลดเอกสาร')}
     </div>
     ${statusBanner}
@@ -1059,23 +1064,23 @@ function renderModal(){
         <div style="position:absolute;bottom:10px;right:12px;z-index:3;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:2px 9px;border-radius:10px;font-family:'JetBrains Mono',monospace">${photos.length} รูป · เลื่อน/แตะเพื่อดูเต็มจอ</div>`:`
         <div style="position:absolute;bottom:10px;right:12px;z-index:3;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:2px 9px;border-radius:10px">แตะเพื่อดูเต็มจอ</div>`}
       </div>`:`
-      <div style="background:linear-gradient(135deg,${r.status==='vacant'?'#0E2418,#0B1A10':r.status==='occupied'?'#1A0E14,#120B0E':'#1A1610,#120E08'});border-radius:12px;height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative">
+      <div style="background:linear-gradient(135deg,${r.status==='vacant'?'var(--c-tint-green),var(--c-tint-green)':r.status==='occupied'?'var(--c-tint-red),var(--c-tint-red)':'var(--c-tint-amber),var(--c-tint-amber)'});border-radius:12px;height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;position:relative">
         ${statusTop}
         <div style="font-size:60px;font-weight:700;font-family:'JetBrains Mono',monospace">${String(r.number).padStart(2,'0')}</div>
       </div>`;
     return modal(`ห้อง ${String(r.number).padStart(2,'0')} — ชั้น ${r.floor}`,`
       ${header}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div style="padding:12px;background:#0E1016;border-radius:10px"><div style="font-size:11.5px;color:#5C6270;margin-bottom:3px">ประเภท</div><div style="font-weight:600">${r.type}</div></div>
-        <div style="padding:12px;background:#0E1016;border-radius:10px"><div style="font-size:11.5px;color:#5C6270;margin-bottom:3px">ขนาด</div><div style="font-weight:600">${r.size}</div></div>
-        <div style="padding:12px;background:#0E1016;border-radius:10px"><div style="font-size:11.5px;color:#5C6270;margin-bottom:3px">ชั้น</div><div style="font-weight:600">${r.floor}</div></div>
-        <div style="padding:12px;background:#0E1016;border-radius:10px"><div style="font-size:11.5px;color:#5C6270;margin-bottom:3px">ราคา/เดือน</div><div style="font-weight:700;color:#A990FF;font-size:16px">฿${fmtMoney(r.price)}</div></div>
+        <div style="padding:12px;background:var(--c-surface);border-radius:10px"><div style="font-size:11.5px;color:var(--c-dim);margin-bottom:3px">ประเภท</div><div style="font-weight:600">${r.type}</div></div>
+        <div style="padding:12px;background:var(--c-surface);border-radius:10px"><div style="font-size:11.5px;color:var(--c-dim);margin-bottom:3px">ขนาด</div><div style="font-weight:600">${r.size}</div></div>
+        <div style="padding:12px;background:var(--c-surface);border-radius:10px"><div style="font-size:11.5px;color:var(--c-dim);margin-bottom:3px">ชั้น</div><div style="font-weight:600">${r.floor}</div></div>
+        <div style="padding:12px;background:var(--c-surface);border-radius:10px"><div style="font-size:11.5px;color:var(--c-dim);margin-bottom:3px">ราคา/เดือน</div><div style="font-weight:700;color:var(--c-accent-txt);font-size:16px">฿${fmtMoney(r.price)}</div></div>
       </div>
       <div style="margin-bottom:16px">
-        <div style="font-size:12px;color:#5C6270;margin-bottom:8px">สิ่งอำนวยความสะดวก</div>
+        <div style="font-size:12px;color:var(--c-dim);margin-bottom:8px">สิ่งอำนวยความสะดวก</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">${r.facilities.map(f=>`<span class="fac-tag" style="font-size:12px;padding:4px 10px">${f}</span>`).join('')}</div>
       </div>
-      ${r.status==='vacant'?`<div style="font-size:12px;color:#5C6270;border-top:1px solid rgba(255,255,255,0.07);padding-top:14px">💜 ห้องนี้ว่าง — กด "จองห้องนี้" เพื่อกรอกข้อมูลและชำระค่าจอง ฿${fmtMoney(BOOK_DEPOSIT)}</div>`:''}
+      ${r.status==='vacant'?`<div style="font-size:12px;color:var(--c-dim);border-top:1px solid var(--bd2);padding-top:14px">💜 ห้องนี้ว่าง — กด "จองห้องนี้" เพื่อกรอกข้อมูลและชำระค่าจอง ฿${fmtMoney(BOOK_DEPOSIT)}</div>`:''}
     `,r.status==='vacant'?`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" onclick="openModal('bookingForm','${r.id}')">จองห้องนี้</button>`:`<button class="btn btn-ghost" onclick="closeModal()">ปิด</button><button class="btn btn-primary" style="opacity:.4;cursor:not-allowed">ห้องนี้ไม่ว่าง</button>`);
   }
 
@@ -1083,25 +1088,25 @@ function renderModal(){
     const r=S.rooms.find(x=>x.id===data);
     if(!r)return'';
     return modal(`จองห้อง ${String(r.number).padStart(2,'0')} — กรอกข้อมูลผู้จอง`,`
-      <div style="margin-bottom:14px;padding:10px 12px;background:#0E1016;border-radius:10px;display:flex;justify-content:space-between;font-size:13px">
-        <span style="color:#6B7180">ห้อง ${String(r.number).padStart(2,'0')} · ชั้น ${r.floor} · ${r.type}</span>
-        <span style="color:#A990FF;font-weight:700">฿${fmtMoney(r.price)}/เดือน</span>
+      <div style="margin-bottom:14px;padding:10px 12px;background:var(--c-surface);border-radius:10px;display:flex;justify-content:space-between;font-size:13px">
+        <span style="color:var(--c-dim2)">ห้อง ${String(r.number).padStart(2,'0')} · ชั้น ${r.floor} · ${r.type}</span>
+        <span style="color:var(--c-accent-txt);font-weight:700">฿${fmtMoney(r.price)}/เดือน</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group"><label class="form-label">ชื่อ<span style="color:#F87171">*</span></label><input id="bookFirstName" class="input" placeholder="ชื่อจริง"></div>
-        <div class="form-group"><label class="form-label">นามสกุล<span style="color:#F87171">*</span></label><input id="bookLastName" class="input" placeholder="นามสกุล"></div>
+        <div class="form-group"><label class="form-label">ชื่อ<span style="color:var(--c-red)">*</span></label><input id="bookFirstName" class="input" placeholder="ชื่อจริง"></div>
+        <div class="form-group"><label class="form-label">นามสกุล<span style="color:var(--c-red)">*</span></label><input id="bookLastName" class="input" placeholder="นามสกุล"></div>
       </div>
-      <div class="form-group"><label class="form-label">ถนน<span style="color:#F87171">*</span></label><input id="bookStreet" class="input" placeholder="บ้านเลขที่ / ถนน / ซอย"></div>
+      <div class="form-group"><label class="form-label">ถนน<span style="color:var(--c-red)">*</span></label><input id="bookStreet" class="input" placeholder="บ้านเลขที่ / ถนน / ซอย"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group"><label class="form-label">รหัสไปรษณีย์<span style="color:#F87171">*</span></label><input id="bookPostal" class="input" type="text" inputmode="numeric" maxlength="5" placeholder="เช่น 10250"></div>
-        <div class="form-group"><label class="form-label">อำเภอ/เขต<span style="color:#F87171">*</span></label><input id="bookDistrict" class="input" placeholder="อำเภอ หรือ เขต"></div>
+        <div class="form-group"><label class="form-label">รหัสไปรษณีย์<span style="color:var(--c-red)">*</span></label><input id="bookPostal" class="input" type="text" inputmode="numeric" maxlength="5" placeholder="เช่น 10250"></div>
+        <div class="form-group"><label class="form-label">อำเภอ/เขต<span style="color:var(--c-red)">*</span></label><input id="bookDistrict" class="input" placeholder="อำเภอ หรือ เขต"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group"><label class="form-label">จังหวัด<span style="color:#F87171">*</span></label><select id="bookProvince" class="input">${THAI_PROVINCES.map(p=>`<option${p==='กรุงเทพมหานคร'?' selected':''}>${p}</option>`).join('')}</select></div>
-        <div class="form-group"><label class="form-label">โทรศัพท์<span style="color:#F87171">*</span></label><input id="bookPhone" class="input" type="tel" inputmode="numeric" maxlength="10" placeholder="เบอร์ติดต่อ"></div>
+        <div class="form-group"><label class="form-label">จังหวัด<span style="color:var(--c-red)">*</span></label><select id="bookProvince" class="input">${THAI_PROVINCES.map(p=>`<option${p==='กรุงเทพมหานคร'?' selected':''}>${p}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">โทรศัพท์<span style="color:var(--c-red)">*</span></label><input id="bookPhone" class="input" type="tel" inputmode="numeric" maxlength="10" placeholder="เบอร์ติดต่อ"></div>
       </div>
-      <div class="form-group"><label class="form-label">วันที่ต้องการเข้าพัก<span style="color:#F87171">*</span></label><input id="bookDate" class="input" type="date" value="${new Date(Date.now()+86400000*7).toISOString().slice(0,10)}"></div>
-      <div style="font-size:12px;color:#5C6270">ค่าจอง ฿${fmtMoney(BOOK_DEPOSIT)} (หักจากค่าเช่าเดือนแรก)</div>
+      <div class="form-group"><label class="form-label">วันที่ต้องการเข้าพัก<span style="color:var(--c-red)">*</span></label><input id="bookDate" class="input" type="date" value="${new Date(Date.now()+86400000*7).toISOString().slice(0,10)}"></div>
+      <div style="font-size:12px;color:var(--c-dim)">ค่าจอง ฿${fmtMoney(BOOK_DEPOSIT)} (หักจากค่าเช่าเดือนแรก)</div>
     `,`<button class="btn btn-ghost" onclick="openModal('roomDetail','${r.id}')">ย้อนกลับ</button><button class="btn btn-primary" onclick="startBookingPay('${r.id}')">ดำเนินการชำระเงิน →</button>`);
   }
 
@@ -1110,7 +1115,7 @@ function renderModal(){
     if(!b)return'';
     const prov=b.bookerProvince||'กรุงเทพมหานคร';
     return modal('แก้ไขข้อมูลการจอง',`
-      <div style="margin-bottom:12px;font-size:13.5px;color:#6B7180">ห้อง ${b.roomNumber} · การจอง ${b.id}</div>
+      <div style="margin-bottom:12px;font-size:13.5px;color:var(--c-dim2)">ห้อง ${b.roomNumber} · การจอง ${b.id}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group"><label class="form-label">ชื่อ</label><input id="editFirstName" class="input" value="${b.bookerFirstName||''}"></div>
         <div class="form-group"><label class="form-label">นามสกุล</label><input id="editLastName" class="input" value="${b.bookerLastName||''}"></div>
@@ -1132,29 +1137,29 @@ function renderModal(){
     const b=S.bills.find(x=>x.id===data);
     if(!b)return'';
     return modal('ใบเสร็จรับเงิน',`
-      <div style="background:#0E1016;border-radius:12px;padding:20px">
+      <div style="background:var(--c-surface);border-radius:12px;padding:20px">
         <div style="text-align:center;margin-bottom:16px">
           <div style="font-weight:700;font-size:16px">หอพักสัมฤทธิ์</div>
-          <div style="font-size:11px;color:#5C6270;font-family:'JetBrains Mono',monospace">SAMRIT RESIDENCE</div>
-          <div style="font-size:12px;color:#5C6270;margin-top:4px">ใบเสร็จรับเงิน</div>
+          <div style="font-size:11px;color:var(--c-dim);font-family:'JetBrains Mono',monospace">SAMRIT RESIDENCE</div>
+          <div style="font-size:12px;color:var(--c-dim);margin-top:4px">ใบเสร็จรับเงิน</div>
         </div>
-        <div style="border-top:1px dashed rgba(255,255,255,0.1);padding-top:14px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ห้อง</span><span style="font-weight:600">${b.roomNumber}</span></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">เดือน</span><span>${b.month}</span></div>
-          ${b.date?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">วันชำระ</span><span>${fmtDate(b.date)}</span></div>`:''}
+        <div style="border-top:1px dashed var(--bd-strong);padding-top:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">ห้อง</span><span style="font-weight:600">${b.roomNumber}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">เดือน</span><span>${b.month}</span></div>
+          ${b.date?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">วันชำระ</span><span>${fmtDate(b.date)}</span></div>`:''}
         </div>
-        <div style="border-top:1px dashed rgba(255,255,255,0.1);padding-top:14px;margin-top:8px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าเช่า</span><span>฿${fmtMoney(b.rent)}</span></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าน้ำ</span><span>฿${fmtMoney(waterCost(b))}</span></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าไฟ</span><span>฿${fmtMoney(electricCost(b))}</span></div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">อินเทอร์เน็ต</span><span>฿${fmtMoney(b.internet)}</span></div>
-          ${+b.other?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#6B7180">ค่าอื่นๆ / ค่าปรับ</span><span>฿${fmtMoney(+b.other)}</span></div>`:''}
-          ${+b.deposit?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:#FBBF24">ค่ามัดจำ (แยกต่างหาก)</span><span style="color:#FBBF24">฿${fmtMoney(+b.deposit)}</span></div>`:''}
+        <div style="border-top:1px dashed var(--bd-strong);padding-top:14px;margin-top:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">ค่าเช่า</span><span>฿${fmtMoney(b.rent)}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">ค่าน้ำ</span><span>฿${fmtMoney(waterCost(b))}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">ค่าไฟ</span><span>฿${fmtMoney(electricCost(b))}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">อินเทอร์เน็ต</span><span>฿${fmtMoney(b.internet)}</span></div>
+          ${+b.other?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">ค่าอื่นๆ / ค่าปรับ</span><span>฿${fmtMoney(+b.other)}</span></div>`:''}
+          ${+b.deposit?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-yellow)">ค่ามัดจำ (แยกต่างหาก)</span><span style="color:var(--c-yellow)">฿${fmtMoney(+b.deposit)}</span></div>`:''}
         </div>
-        ${b.note?`<div style="border-top:1px dashed rgba(255,255,255,0.1);padding-top:12px;margin-top:8px;font-size:13px"><span style="color:#6B7180">หมายเหตุ:</span> ${String(b.note).replace(/</g,'&lt;')}</div>`:''}
-        <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+        ${b.note?`<div style="border-top:1px dashed var(--bd-strong);padding-top:12px;margin-top:8px;font-size:13px"><span style="color:var(--c-dim2)">หมายเหตุ:</span> ${String(b.note).replace(/</g,'&lt;')}</div>`:''}
+        <div style="border-top:1px solid var(--bd-strong);padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">
           <span style="font-weight:700;font-size:15px">รวมทั้งสิ้น</span>
-          <span style="font-weight:700;font-size:20px;color:#A990FF">฿${fmtMoney(billTotal(b))}</span>
+          <span style="font-weight:700;font-size:20px;color:var(--c-accent-txt)">฿${fmtMoney(billTotal(b))}</span>
         </div>
         <div style="text-align:center;margin-top:12px"><span class="badge ${pstatus(b.status)}">${pstatusLabel(b.status)}</span></div>
       </div>
@@ -1178,12 +1183,12 @@ function renderModal(){
       btnLabel='ยืนยันการชำระเงิน';
     }
     return modal(title,`
-      <div style="background:#0E1016;border-radius:14px;padding:20px;margin-bottom:4px">
-        <div style="font-size:13.5px;color:#6B7180;margin-bottom:14px">ยอดที่ต้องชำระ: <span style="font-size:18px;font-weight:700;color:#A990FF">฿${fmtMoney(amount)}</span></div>
+      <div style="background:var(--c-surface);border-radius:14px;padding:20px;margin-bottom:4px">
+        <div style="font-size:13.5px;color:var(--c-dim2);margin-bottom:14px">ยอดที่ต้องชำระ: <span style="font-size:18px;font-weight:700;color:var(--c-accent-txt)">฿${fmtMoney(amount)}</span></div>
         ${qrBox(amount)}
         ${slipUploadField()}
       </div>
-      <div style="font-size:12px;color:#5C6270;margin-top:10px">${desc}</div>
+      <div style="font-size:12px;color:var(--c-dim);margin-top:10px">${desc}</div>
     `,`<button class="btn btn-ghost" onclick="payCtx=null;closeModal()">ยกเลิก</button><button class="btn btn-primary" onclick="confirmPay()">✓ ${btnLabel}</button>`);
   }
 
@@ -1233,6 +1238,10 @@ function render(){
 }
 
 boot();
+</script>
+<script>
+function toggleTheme(){var r=document.documentElement;var cur=r.getAttribute('data-theme')==='light'?'dark':'light';r.setAttribute('data-theme',cur);try{localStorage.setItem('samrit_theme',cur);}catch(e){}var b=document.getElementById('themeBtn');if(b)b.textContent=cur==='light'?'\uD83C\uDF19':'\u2600\uFE0F';}
+(function(){var b=document.createElement('button');b.id='themeBtn';b.type='button';b.title='สลับธีม สว่าง/มืด';b.onclick=toggleTheme;b.style.cssText='position:fixed;bottom:18px;right:18px;z-index:9999;width:44px;height:44px;border-radius:50%;border:1px solid var(--bd2);background:var(--c-elevated);color:var(--c-text);font-size:19px;line-height:1;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center';b.textContent=(document.documentElement.getAttribute('data-theme')==='light')?'\uD83C\uDF19':'\u2600\uFE0F';document.body.appendChild(b);})();
 </script>
 </body>
 </html>
