@@ -312,7 +312,7 @@ function qrBox(amount){
     qr=qrSVG('samrit'+(pay.promptpay||''),160);
     note='สแกนเพื่อชำระเงิน หรือโอนผ่านบัญชี:';
   }
-  const amtLine=amount!=null?`<div style="text-align:center;margin-top:8px;font-size:14px;color:var(--c-base);font-weight:700;font-family:'JetBrains Mono',monospace">฿${(+amount).toLocaleString('th-TH',{minimumFractionDigits:2})}</div>`:'';
+  const amtLine=amount!=null?`<div style="text-align:center;margin-top:8px;font-size:14px;color:#0b0c10;font-weight:700;font-family:'JetBrains Mono',monospace">฿${(+amount).toLocaleString('th-TH',{minimumFractionDigits:2})}</div>`:'';
   const ppLine=ppDigits.length>=10?`<div style="font-size:13px;margin-bottom:10px"><span style="color:var(--c-dim2)">พร้อมเพย์:</span> <span style="color:var(--c-accent-txt);font-family:'JetBrains Mono',monospace">${pay.promptpay}</span></div>`:'';
   const banks=pay.banks.map(b=>`<div style="margin-bottom:10px"><div style="font-weight:600;font-size:13.5px">${b.bank}</div><div style="font-size:13px;color:var(--c-accent-txt);font-family:'JetBrains Mono',monospace">${b.acc} <span style="color:var(--c-dim2)">${b.holder}</span></div></div>`).join('');
   return`<div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
