@@ -767,8 +767,8 @@ function renderHistory(){
   const activeStayRooms=new Set(myStays().filter(s=>!s.checkout).map(s=>String(s.roomNumber)));
   myBookings().filter(b=>b.status==='ยืนยันแล้ว'&&!activeStayRooms.has(String(b.roomNumber))).forEach(b=>stayRows.push({
     sort:b.date||b.createdAt||'',room:b.roomNumber,
-    sub:'กำหนดเข้าพัก '+fmtDate(b.date),
-    badge:'<span class="badge badge-yellow" style="margin-top:4px">ยืนยันแล้ว · รอเช็คอิน</span>'}));
+    sub:'เข้าพักเมื่อ '+fmtDate(b.date),
+    badge:'<span class="badge badge-green" style="margin-top:4px">เข้าพักแล้ว</span>'}));
   stayRows.sort((a,b)=>(b.sort||'').localeCompare(a.sort||''));
   // รวมประวัติการชำระเงิน: มัดจำการจอง + บิลรายเดือน (เรียงใหม่สุดก่อน)
   const payRows=[];
