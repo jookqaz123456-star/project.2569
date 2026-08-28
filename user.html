@@ -760,6 +760,15 @@ function renderRepair(){
 }
 function renderHistory(){
   const stays=myStays();
+  // รวมประวัติการชำระเงิน: มัดจำการจอง + บิลรายเดือน (เรียงใหม่สุดก่อน)
+  const payRows=[];
+  myBookings().filter(b=>b.status!=='ยกเลิก'&&!b.autoCancelled&&(b.amount||b.slip)).forEach(b=>{
+    payRows.push({sort:b.createdAt||b.date||'',label:'มัดจำจอง',room:b.roomNumber,total:(+b.amount||BOOK_DEPOSIT),badge:bstatus(b.status),statusText:b.status});
+  });
+  myBills().forEach(b=>{
+    payRows.push({sort:b.date||(b.month?b.month+'-01':''),label:b.month,room:b.roomNumber,total:billTotal(b),badge:pstatus(b.status),statusText:pstatusLabel(b.status)});
+  });
+  payRows.sort((a,b)=>(b.sort||'').localeCompare(a.sort||''));
   return`<div class="page-wrap">
     <div style="margin-bottom:20px">
       <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">ประวัติ</h1>
@@ -782,11 +791,11 @@ function renderHistory(){
           <div style="font-weight:700;margin-bottom:14px">ประวัติการชำระเงิน</div>
           <div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table>
             <tr><th>เดือน</th><th>ห้อง</th><th>รวม</th><th>สถานะ</th></tr>
-            ${myBills().map(b=>`<tr>
-              <td>${b.month}</td>
-              <td>${b.roomNumber}</td>
-              <td>฿${fmtMoney(billTotal(b))}</td>
-              <td><span class="badge ${pstatus(b.status)}">${pstatusLabel(b.status)}</span></td>
+            ${payRows.map(r=>`<tr>
+              <td>${r.label}</td>
+              <td>${r.room}</td>
+              <td>฿${fmtMoney(r.total)}</td>
+              <td><span class="badge ${r.badge}">${r.statusText}</span></td>
             </tr>`).join('')||`<tr><td colspan="4" style="text-align:center;color:var(--c-dim);padding:20px">ยังไม่มีประวัติ</td></tr>`}
           </table></div></div>
         </div>
