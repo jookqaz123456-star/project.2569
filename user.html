@@ -759,7 +759,17 @@ function renderRepair(){
   </div>`;
 }
 function renderHistory(){
-  const stays=myStays();
+  // ประวัติการเข้าพัก: การเข้าพักจริง + การจองที่ยืนยันแล้ว (รอแอดมินเช็คอิน)
+  const stayRows=[];
+  myStays().forEach(s=>stayRows.push({sort:s.checkin||'',room:s.roomNumber,
+    sub:fmtDate(s.checkin)+' – '+fmtDate(s.checkout),
+    badge:s.checkout?'':'<span class="badge badge-green" style="margin-top:4px">เข้าพักอยู่</span>'}));
+  const activeStayRooms=new Set(myStays().filter(s=>!s.checkout).map(s=>String(s.roomNumber)));
+  myBookings().filter(b=>b.status==='ยืนยันแล้ว'&&!activeStayRooms.has(String(b.roomNumber))).forEach(b=>stayRows.push({
+    sort:b.date||b.createdAt||'',room:b.roomNumber,
+    sub:'กำหนดเข้าพัก '+fmtDate(b.date),
+    badge:'<span class="badge badge-yellow" style="margin-top:4px">ยืนยันแล้ว · รอเช็คอิน</span>'}));
+  stayRows.sort((a,b)=>(b.sort||'').localeCompare(a.sort||''));
   // รวมประวัติการชำระเงิน: มัดจำการจอง + บิลรายเดือน (เรียงใหม่สุดก่อน)
   const payRows=[];
   myBookings().filter(b=>b.status!=='ยกเลิก'&&!b.autoCancelled&&(b.amount||b.slip)).forEach(b=>{
@@ -778,12 +788,12 @@ function renderHistory(){
       <div>
         <div style="font-weight:700;margin-bottom:14px">ประวัติการเข้าพัก</div>
         <div class="timeline">
-          ${stays.length?stays.reverse().map(s=>`<div class="tl-item">
+          ${stayRows.length?stayRows.map(s=>`<div class="tl-item">
             <div><div class="tl-dot"></div><div class="tl-line"></div></div>
             <div class="tl-content">
-              <div class="tl-title">ห้อง ${s.roomNumber}</div>
-              <div class="tl-sub">${fmtDate(s.checkin)} – ${fmtDate(s.checkout)}</div>
-              ${s.checkout?'':`<span class="badge badge-green" style="margin-top:4px">เข้าพักอยู่</span>`}
+              <div class="tl-title">ห้อง ${s.room}</div>
+              <div class="tl-sub">${s.sub}</div>
+              ${s.badge}
             </div>
           </div>`).join(''):`<div style="color:var(--c-dim);font-size:13px">ยังไม่มีประวัติ</div>`}
         </div>
