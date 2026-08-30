@@ -5,7 +5,7 @@
 const crypto = require('node:crypto');
 const seed = require('./seed');
 
-const COLLECTIONS = ['rooms', 'tenants', 'bookings', 'contracts', 'payments', 'bills', 'stays', 'repairs', 'slips'];
+const COLLECTIONS = ['rooms', 'tenants', 'bookings', 'contracts', 'payments', 'bills', 'stays', 'repairs', 'slips', 'messages'];
 
 // ─── Pure helpers (backend-independent) ────────────────────────
 function hashPassword(pw) {

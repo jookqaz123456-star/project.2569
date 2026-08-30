@@ -73,9 +73,10 @@ app.get('/api/bootstrap', auth.requireAuth, auth.requireStaff, wrap(async (req, 
 app.get('/api/me/bootstrap', auth.requireAuth, wrap(async (req, res) => {
   const uid = req.user.id;
   const light = req.query.light === '1';
-  const [rooms, bookings, bills, stays, repairs, contracts, paySettings, photos] = await Promise.all([
+  const [rooms, bookings, bills, stays, repairs, contracts, messages, paySettings, photos] = await Promise.all([
     db.listColl('rooms'), db.listColl('bookings'), db.listColl('bills'),
     db.listColl('stays'), db.listColl('repairs'), db.listColl('contracts'),
+    db.listColl('messages'),
     db.getSetting('paySettings', {}), db.getSetting('photos', {}),
   ]);
   const out = {
@@ -85,6 +86,7 @@ app.get('/api/me/bootstrap', auth.requireAuth, wrap(async (req, res) => {
     stays: stays.filter(b => b.userId === uid),
     repairs: repairs.filter(b => b.userId === uid),
     contracts: maybeStrip('contracts', contracts.filter(c => c.userId === uid), light),
+    messages: messages.filter(m => m.userId === uid),
     paySettings,
   };
   if (!light) out.photos = photos;
