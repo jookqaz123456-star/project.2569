@@ -201,6 +201,8 @@ const S = {
   search: '',
   filterStatus: 'all',
   selectedRoom: null,
+  messages: [],
+  chatActive: null,
 
   rooms: [
     {id:'r1',number:1,floor:3,type:'ห้องเดี่ยว',price:3500,status:'occupied',tenantId:'t1',size:'28 ตร.ม.'},
@@ -414,6 +416,7 @@ async function loadAll(light){
         .forEach(a=>S.users.push({...a,urole:a.role||'resident',perms:a.perms||[]}));
     }
     S.slips=light?_mergeHeavy('slips',d.slips):(d.slips||[]);
+    S.messages=d.messages||[];
     S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;
     if(!light) S.photos=d.photos||{};   // light refresh: เก็บรูปห้องเดิมไว้ ไม่โหลดซ้ำ
     autoCancelStaleBookings();
@@ -668,6 +671,7 @@ function markPaid(id){
 // ─── SVG Icons ───────────────────────────────────────────────
 const ico={
   home:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V9l8-5 8 5v11" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><rect x="9" y="13" width="6" height="7" stroke="currentColor" stroke-width="1.6"/></svg>`,
+  chat:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H9l-5 4V5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
   grid:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>`,
   room:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3 9h18M9 9v12" stroke="currentColor" stroke-width="1.5"/></svg>`,
   user:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.7"/><path d="M5.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" stroke="currentColor" stroke-width="1.7"/></svg>`,
@@ -697,6 +701,7 @@ function renderSidebar(){
     {id:'rooms',label:'จัดการห้อง',icon:'room'},
     {id:'tenants',label:'ผู้เช่า',icon:'user'},
     {id:'bookings',label:'การจอง',icon:'book'},
+    {id:'chat',label:'แชท',icon:'chat'},
     {id:'contracts',label:'สัญญาเช่า',icon:'contract'},
     {id:'payments',label:'การชำระเงิน',icon:'pay'},
     {id:'paysettings',label:'QR & สลิปโอน',icon:'qr'},
@@ -710,7 +715,7 @@ function renderSidebar(){
     </div>
     <nav class="sb-nav">
       <div class="sb-section">เมนูหลัก</div>
-      ${items.map(it=>`<div class="sb-item${S.screen===it.id?' active':''}" onclick="nav('${it.id}')">${ico[it.icon]}<span>${it.label}</span></div>`).join('')}
+      ${items.map(it=>{const un=it.id==='chat'?chatUnreadTotal():0;return`<div class="sb-item${S.screen===it.id?' active':''}" onclick="nav('${it.id}')">${ico[it.icon]}<span>${it.label}</span>${un?`<span style="margin-left:auto;background:var(--c-red);color:#fff;font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px">${un}</span>`:''}</div>`;}).join('')}
     </nav>
     <div class="sb-footer">
       <div class="sb-user">
@@ -725,6 +730,80 @@ function renderSidebar(){
 }
 
 // ─── Dashboard ───────────────────────────────────────────────
+// ─── Chat (ผู้ดูแล ↔ ผู้เช่า) ─────────────────────────────────
+function scrollChatBottom(){const el=document.getElementById('chatScroll');if(el)el.scrollTop=el.scrollHeight;}
+function fmtChatTime(t){if(!t)return'';const d=new Date(t);if(isNaN(d))return'';const today=new Date();const sameDay=d.toDateString()===today.toDateString();const hm=d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});return sameDay?hm:(d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+hm);}
+function chatUnreadTotal(){return (S.messages||[]).filter(m=>m.sender==='user'&&!m.isRead).length;}
+function chatConversations(){
+  const byUser={};
+  (S.messages||[]).forEach(m=>{
+    const k=m.userId;if(!k)return;
+    if(!byUser[k])byUser[k]={userId:k,name:m.name||'',roomNumber:m.roomNumber||'',last:null,unread:0,msgs:[]};
+    const c=byUser[k];c.msgs.push(m);
+    if(m.name&&m.sender==='user')c.name=m.name;
+    if(m.roomNumber)c.roomNumber=m.roomNumber;
+    if(!c.last||(m.timestamp||'')>(c.last.timestamp||''))c.last=m;
+    if(m.sender==='user'&&!m.isRead)c.unread++;
+  });
+  return Object.values(byUser).sort((a,b)=>((b.last?.timestamp)||'').localeCompare((a.last?.timestamp)||''));
+}
+function openChat(userId){
+  S.chatActive=userId;
+  (S.messages||[]).filter(m=>m.userId===userId&&m.sender==='user'&&!m.isRead).forEach(m=>{m.isRead=true;persistColl('messages',m);});
+  render();
+}
+function adminSendChat(){
+  if(!S.chatActive){return;}
+  const inp=document.getElementById('chatInput');
+  const text=(inp?.value||'').trim();
+  if(!text)return;
+  const conv=chatConversations().find(c=>c.userId===S.chatActive);
+  const rec={id:Samrit.newId(),userId:S.chatActive,sender:'admin',name:S.auth?.name||'ผู้ดูแลระบบ',roomNumber:conv?.roomNumber||'',message:text,timestamp:new Date().toISOString(),isRead:true};
+  S.messages.push(rec);persistColl('messages',rec);
+  if(inp)inp.value='';
+  render();
+}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();adminSendChat();}}
+function renderAdminChat(){
+  const convs=chatConversations();
+  if(S.chatActive&&!convs.some(c=>c.userId===S.chatActive))S.chatActive=null;
+  const active=S.chatActive?convs.find(c=>c.userId===S.chatActive):null;
+  const list=convs.length?convs.map(c=>{
+    const on=c.userId===S.chatActive;
+    return`<div onclick="openChat('${c.userId}')" style="padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--bd1);background:${on?'var(--c-raised)':'transparent'};display:flex;gap:10px;align-items:center">
+      <div style="width:38px;height:38px;border-radius:50%;background:var(--c-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">${(c.name||'?')[0]}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:6px"><div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(c.name||'ผู้เช่า').replace(/</g,'&lt;')}${c.roomNumber?` · ห้อง ${c.roomNumber}`:''}</div>${c.unread?`<span style="background:var(--c-red);color:#fff;font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0">${c.unread}</span>`:''}</div>
+        <div style="font-size:12px;color:var(--c-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.last?(c.last.sender==='admin'?'คุณ: ':'')+String(c.last.message).replace(/</g,'&lt;'):''}</div>
+      </div>
+    </div>`;
+  }).join(''):`<div style="padding:30px;text-align:center;color:var(--c-dim);font-size:13px">ยังไม่มีข้อความจากผู้เช่า</div>`;
+  const thread=active?`
+    <div id="chatScroll" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px">
+      ${active.msgs.slice().sort((a,b)=>(a.timestamp||'').localeCompare(b.timestamp||'')).map(m=>{
+        const admin=m.sender==='admin';
+        return`<div style="display:flex;justify-content:${admin?'flex-end':'flex-start'}">
+          <div style="max-width:76%">
+            <div style="padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;${admin?'background:var(--c-accent);color:#fff;border-bottom-right-radius:4px':'background:var(--c-elevated);color:var(--c-text);border:1px solid var(--bd2);border-bottom-left-radius:4px'}">${String(m.message).replace(/</g,'&lt;')}</div>
+            <div style="font-size:10.5px;color:var(--c-dim);margin-top:3px;text-align:${admin?'right':'left'};padding:0 6px">${fmtChatTime(m.timestamp)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="border-top:1px solid var(--bd2);padding:12px;display:flex;gap:8px;align-items:flex-end;background:var(--c-surface)">
+      <textarea id="chatInput" class="input" rows="1" placeholder="พิมพ์ข้อความตอบกลับ..." style="resize:none;flex:1;max-height:120px" onkeydown="chatKey(event)"></textarea>
+      <button class="btn btn-primary" style="padding:10px 18px" onclick="adminSendChat()">ส่ง</button>
+    </div>`:`<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--c-dim);font-size:13.5px">เลือกผู้เช่าทางซ้ายเพื่อดูและตอบข้อความ</div>`;
+  return`
+  <div class="topbar"><div class="topbar-title">แชทกับผู้เช่า</div></div>
+  <div class="page">
+    <div class="card" style="padding:0;overflow:hidden;display:flex;height:70vh;min-height:440px">
+      <div style="width:290px;border-right:1px solid var(--bd2);overflow-y:auto;flex-shrink:0">${list}</div>
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0">${thread}</div>
+    </div>
+  </div>`;
+}
+
 function renderDashboard(){
   const totalRooms=S.rooms.length;
   const occupied=S.rooms.filter(r=>r.status==='occupied').length;
@@ -1763,6 +1842,7 @@ function render(){
     case'rooms':content=renderRooms();break;
     case'tenants':content=renderTenants();break;
     case'bookings':content=renderBookings();break;
+    case'chat':content=renderAdminChat();break;
     case'contracts':content=renderContracts();break;
     case'payments':content=renderPayments();break;
     case'paysettings':content=renderPaySettings();break;
@@ -1771,6 +1851,7 @@ function render(){
   }
 
   document.getElementById('app').innerHTML=`<button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="เมนู">☰</button><div class="sidebar-backdrop${S.sidebarOpen?' show':''}" onclick="toggleSidebar()"></div>${renderSidebar()}<div class="main">${content}</div>${renderModal()}`;
+  if(S.screen==='chat')setTimeout(scrollChatBottom,0);
 
   if(activeId){
     const el=document.getElementById(activeId);

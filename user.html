@@ -211,6 +211,7 @@ const S = {
     {id:'demo',name:'นายตัวอย่าง ผู้ใช้',username:'demo',password:'demo1234',email:'demo@example.com',phone:'089-000-0000'}
   ],
   contracts: [],
+  messages: [],
 };
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -248,6 +249,7 @@ function myBills(){return S.bills.filter(b=>b.userId===S.auth?.id).slice().sort(
 function myStays(){return S.stays.filter(b=>b.userId===S.auth?.id);}
 function myRepairs(){return S.repairs.filter(b=>b.userId===S.auth?.id);}
 function myContract(){return (S.contracts||[]).find(c=>c.userId===S.auth?.id||c.id==='rc_'+S.auth?.id);}
+function myMessages(){return (S.messages||[]).filter(m=>m.userId===S.auth?.id).slice().sort((a,b)=>(a.timestamp||'').localeCompare(b.timestamp||''));}
 
 // ─── Backend-backed data layer (Samrit client: live API / demo) ─
 const DEFAULT_PAY={
@@ -341,6 +343,7 @@ const ico={
   trash:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 7h18M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 7l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
   receipt:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 3h16v18l-2.5-2-2.5 2-2.5-2-2.5 2-2.5-2L4 21V3z" stroke="currentColor" stroke-width="1.7"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
   repair:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  chat:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H9l-5 4V5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
 };
 
 // ─── Navigation ──────────────────────────────────────────────
@@ -394,7 +397,7 @@ async function loadResidentData(light){
     S.rooms=(d.rooms||[]).slice().sort((a,b)=>a.number-b.number);
     S.bookings=light?_mergeHeavy('bookings',d.bookings):(d.bookings||[]);
     S.bills=light?_mergeHeavy('bills',d.bills):(d.bills||[]);
-    S.stays=d.stays||[];S.repairs=d.repairs||[];
+    S.stays=d.stays||[];S.repairs=d.repairs||[];S.messages=d.messages||[];
     S.contracts=light?_mergeHeavy('contracts',d.contracts):(d.contracts||[]);
     S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;
     if(!light) S.photos=d.photos||{};   // light: เก็บรูปห้องเดิมไว้ ไม่โหลดซ้ำ
@@ -560,6 +563,7 @@ function renderTopNav(){
     {id:'bookings',label:'การจอง',ico:'book'},
     {id:'contract',label:'สัญญาเช่า',ico:'doc'},
     {id:'payments',label:'ชำระเงิน',ico:'pay'},
+    {id:'chat',label:'แชท',ico:'chat'},
     {id:'history',label:'ประวัติ',ico:'history'},
   ];
   return`<div class="topnav">
@@ -758,6 +762,49 @@ function renderRepair(){
     </div>
   </div>`;
 }
+// ─── Chat Screen (ผู้เช่า ↔ ผู้ดูแล) ──────────────────────────
+function scrollChatBottom(){const el=document.getElementById('chatScroll');if(el)el.scrollTop=el.scrollHeight;}
+function sendChat(){
+  if(!S.auth){alert('กรุณาเข้าสู่ระบบ');return;}
+  const inp=document.getElementById('chatInput');
+  const text=(inp?.value||'').trim();
+  if(!text)return;
+  const room=(myStays().find(s=>!s.checkout)?.roomNumber)||(myBookings().find(b=>b.status==='ยืนยันแล้ว')?.roomNumber)||(myBills()[0]?.roomNumber)||(myBookings()[0]?.roomNumber)||'';
+  const rec={id:uid(),userId:S.auth.id,sender:'user',name:S.auth.name||'',roomNumber:room,message:text,timestamp:new Date().toISOString(),isRead:false};
+  S.messages.push(rec);persistColl('messages',rec);
+  if(inp)inp.value='';
+  render();
+}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function renderChat(){
+  const msgs=myMessages();
+  return`<div class="page-wrap">
+    <div style="margin-bottom:16px">
+      <h1 style="font-size:22px;font-weight:700;margin-bottom:4px">แชทกับผู้ดูแล</h1>
+      <p style="font-size:13.5px;color:var(--c-dim2)">สอบถามหรือแจ้งเรื่องต่าง ๆ กับผู้ดูแลหอพักได้ที่นี่</p>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column;height:66vh;min-height:420px">
+      <div id="chatScroll" style="flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px">
+        ${msgs.length?msgs.map(m=>{
+          const mine=m.sender==='user';
+          return`<div style="display:flex;justify-content:${mine?'flex-end':'flex-start'}">
+            <div style="max-width:76%">
+              ${mine?'':`<div style="font-size:11px;color:var(--c-dim);margin:0 0 3px 6px">ผู้ดูแล</div>`}
+              <div style="padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;${mine?'background:var(--c-accent);color:#fff;border-bottom-right-radius:4px':'background:var(--c-elevated);color:var(--c-text);border:1px solid var(--bd2);border-bottom-left-radius:4px'}">${String(m.message).replace(/</g,'&lt;')}</div>
+              <div style="font-size:10.5px;color:var(--c-dim);margin-top:3px;text-align:${mine?'right':'left'};padding:0 6px">${fmtChatTime(m.timestamp)}</div>
+            </div>
+          </div>`;
+        }).join(''):`<div style="margin:auto;text-align:center;color:var(--c-dim);font-size:13.5px">ยังไม่มีข้อความ — เริ่มพิมพ์เพื่อสอบถามผู้ดูแลได้เลย</div>`}
+      </div>
+      <div style="border-top:1px solid var(--bd2);padding:12px;display:flex;gap:8px;align-items:flex-end;background:var(--c-surface)">
+        <textarea id="chatInput" class="input" rows="1" placeholder="พิมพ์ข้อความ..." style="resize:none;flex:1;max-height:120px" onkeydown="chatKey(event)"></textarea>
+        <button class="btn btn-primary" style="padding:10px 18px" onclick="sendChat()">ส่ง</button>
+      </div>
+    </div>
+  </div>`;
+}
+function fmtChatTime(t){if(!t)return'';const d=new Date(t);if(isNaN(d))return'';const today=new Date();const sameDay=d.toDateString()===today.toDateString();const hm=d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});return sameDay?hm:(d.toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+hm);}
+
 function renderHistory(){
   // ประวัติการเข้าพัก: การเข้าพักจริง + การจองที่ยืนยันแล้ว (รอแอดมินเช็คอิน)
   const stayRows=[];
@@ -1241,11 +1288,13 @@ function render(){
     case'bookings':content=renderBookings();break;
     case'contract':content=renderContract();break;
     case'payments':content=renderPayments();break;
+    case'chat':content=renderChat();break;
     case'history':content=renderHistory();break;
     default:content=renderBrowse();
   }
 
   document.getElementById('app').innerHTML=`${renderTopNav()}<div>${content}</div>${renderModal()}`;
+  if(S.screen==='chat')setTimeout(scrollChatBottom,0);
 
   // ปิด autocomplete/autofill ของเบราว์เซอร์ (กล่องแนะนำสีขาว) ทุกช่องกรอก
   document.querySelectorAll('#app input').forEach(i=>{i.setAttribute('autocomplete','off');i.setAttribute('autocorrect','off');i.setAttribute('spellcheck','false');});
