@@ -84,7 +84,7 @@
     async bootstrapAdmin(seed, light) {
       if (mode === 'live') return api('/api/bootstrap' + (light ? '?light=1' : ''));
       const out = {};
-      ['rooms', 'tenants', 'bookings', 'contracts', 'payments', 'bills', 'stays', 'repairs', 'slips'].forEach(c => {
+      ['rooms', 'tenants', 'bookings', 'contracts', 'payments', 'bills', 'stays', 'repairs', 'slips', 'messages'].forEach(c => {
         let a = dList(c); if (a === null) { a = (seed && seed[c]) || []; dSet(c, a); } out[c] = a;
       });
       let us = dList('users'); if (us === null) { us = (seed && seed.users) || []; dSet('users', us); } out.users = us;
@@ -121,6 +121,7 @@
         stays: ens('stays').filter(b => b.userId === u.id),
         repairs: ens('repairs').filter(b => b.userId === u.id),
         contracts: (ens('contracts') || []).filter(c => c.userId === u.id),
+        messages: ens('messages').filter(m => m.userId === u.id),
         paySettings: dGetSetting('paySettings', (seed && seed.paySettings) || {}),
         photos: dGetSetting('photos', {}),
       };
