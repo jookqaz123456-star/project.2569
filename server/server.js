@@ -35,6 +35,23 @@ function stripHeavy(coll, list) {
 }
 const maybeStrip = (coll, list, light) => (light ? stripHeavy(coll, list) : list);
 
+// ─── LINE OA: แจ้งเตือนแอดมินเมื่อผู้เช่าส่งข้อความแชทใหม่ ──────
+//     ตั้งค่า LINE_TOKEN (Channel access token) ใน environment เพื่อเปิดใช้งาน
+//     ส่งแบบ broadcast → ทุกคนที่เพิ่ม LINE OA เป็นเพื่อน (แอดมิน) จะได้รับแจ้งเตือน
+async function notifyLineNewMessage(msg) {
+  const token = process.env.LINE_TOKEN;
+  if (!token) return;                        // ยังไม่ได้ตั้งค่า → ข้ามเงียบ ๆ
+  try {
+    const room = msg.roomNumber ? `ห้อง ${msg.roomNumber} · ` : '';
+    const text = `🔔 มีข้อความใหม่จากผู้เช่า\n${room}${msg.name || ''}\n\n"${String(msg.message || '').slice(0, 300)}"`;
+    await fetch('https://api.line.biz/v2/bot/message/broadcast', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify({ messages: [{ type: 'text', text }] }),
+    });
+  } catch (e) { console.warn('[line] notify failed:', e.message); }
+}
+
 // ─── Health (used by frontend to detect live mode) ─────────────
 app.get('/api/health', (_req, res) => res.json({ ok: true, mode: 'live', db: db.kind(), time: Date.now() }));
 
@@ -116,10 +133,16 @@ app.get('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, re
   res.json(item);
 }));
 app.post('/api/coll/:coll', ensureColl, auth.requireAuth, wrap(async (req, res) => {
-  res.json(await db.upsertColl(req.params.coll, req.body || {}));
+  const saved = await db.upsertColl(req.params.coll, req.body || {});
+  if (req.params.coll === 'messages' && saved.sender === 'user') notifyLineNewMessage(saved); // แจ้ง LINE (ไม่รอผล)
+  res.json(saved);
 }));
 app.put('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, res) => {
-  res.json(await db.upsertColl(req.params.coll, { ...(req.body || {}), id: req.params.id }));
+  // แจ้ง LINE เฉพาะข้อความ "ใหม่" จากผู้เช่า (ไม่แจ้งซ้ำตอนแอดมินกดอ่าน/อัปเดตสถานะ)
+  const isNewMessage = req.params.coll === 'messages' && !(await db.getColl('messages', req.params.id));
+  const saved = await db.upsertColl(req.params.coll, { ...(req.body || {}), id: req.params.id });
+  if (isNewMessage && saved.sender === 'user') notifyLineNewMessage(saved);
+  res.json(saved);
 }));
 app.delete('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, res) => {
   await db.removeColl(req.params.coll, req.params.id);
