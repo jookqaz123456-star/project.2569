@@ -4,6 +4,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('node:path');
+const https = require('node:https');
 const db = require('./db');
 const auth = require('./auth');
 
@@ -38,21 +39,33 @@ const maybeStrip = (coll, list, light) => (light ? stripHeavy(coll, list) : list
 // ─── LINE OA: แจ้งเตือนแอดมินเมื่อผู้เช่าส่งข้อความแชทใหม่ ──────
 //     ตั้งค่า LINE_TOKEN (Channel access token) ใน environment เพื่อเปิดใช้งาน
 //     ส่งแบบ broadcast → ทุกคนที่เพิ่ม LINE OA เป็นเพื่อน (แอดมิน) จะได้รับแจ้งเตือน
-async function notifyLineNewMessage(msg) {
+function notifyLineNewMessage(msg) {
   const token = process.env.LINE_TOKEN;
   if (!token) { console.warn('[line] ข้าม: ยังไม่ได้ตั้งค่า LINE_TOKEN'); return; }
-  try {
-    const room = msg.roomNumber ? `ห้อง ${msg.roomNumber} · ` : '';
-    const text = `🔔 มีข้อความใหม่จากผู้เช่า\n${room}${msg.name || ''}\n\n"${String(msg.message || '').slice(0, 300)}"`;
-    const r = await fetch('https://api.line.biz/v2/bot/message/broadcast', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
-      body: JSON.stringify({ messages: [{ type: 'text', text }] }),
+  const room = msg.roomNumber ? `ห้อง ${msg.roomNumber} · ` : '';
+  const text = `🔔 มีข้อความใหม่จากผู้เช่า\n${room}${msg.name || ''}\n\n"${String(msg.message || '').slice(0, 300)}"`;
+  const payload = JSON.stringify({ messages: [{ type: 'text', text }] });
+  // ใช้โมดูล https ของ Node โดยตรง (เสถียรกว่า global fetch บนบางแพลตฟอร์ม)
+  const req = https.request({
+    hostname: 'api.line.biz',
+    path: '/v2/bot/message/broadcast',
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'content-length': Buffer.byteLength(payload),
+      authorization: 'Bearer ' + token,
+    },
+  }, (res) => {
+    let body = '';
+    res.on('data', (c) => { body += c; });
+    res.on('end', () => {
+      if (res.statusCode >= 200 && res.statusCode < 300) console.log('[line] ส่งแจ้งเตือนสำเร็จ (broadcast)');
+      else console.warn('[line] LINE ตอบกลับ error', res.statusCode, body);
     });
-    // fetch ไม่ throw เมื่อ status 4xx/5xx → ต้องเช็ก r.ok เองและ log ผลลัพธ์จริงจาก LINE
-    if (r.ok) console.log('[line] ส่งแจ้งเตือนสำเร็จ (broadcast)');
-    else console.warn('[line] LINE ตอบกลับ error', r.status, await r.text());
-  } catch (e) { console.warn('[line] notify failed:', e.message); }
+  });
+  req.on('error', (e) => console.warn('[line] notify failed:', e.message, e.code || ''));
+  req.write(payload);
+  req.end();
 }
 
 // ─── Health (used by frontend to detect live mode) ─────────────
