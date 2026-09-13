@@ -40,15 +40,18 @@ const maybeStrip = (coll, list, light) => (light ? stripHeavy(coll, list) : list
 //     ส่งแบบ broadcast → ทุกคนที่เพิ่ม LINE OA เป็นเพื่อน (แอดมิน) จะได้รับแจ้งเตือน
 async function notifyLineNewMessage(msg) {
   const token = process.env.LINE_TOKEN;
-  if (!token) return;                        // ยังไม่ได้ตั้งค่า → ข้ามเงียบ ๆ
+  if (!token) { console.warn('[line] ข้าม: ยังไม่ได้ตั้งค่า LINE_TOKEN'); return; }
   try {
     const room = msg.roomNumber ? `ห้อง ${msg.roomNumber} · ` : '';
     const text = `🔔 มีข้อความใหม่จากผู้เช่า\n${room}${msg.name || ''}\n\n"${String(msg.message || '').slice(0, 300)}"`;
-    await fetch('https://api.line.biz/v2/bot/message/broadcast', {
+    const r = await fetch('https://api.line.biz/v2/bot/message/broadcast', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
       body: JSON.stringify({ messages: [{ type: 'text', text }] }),
     });
+    // fetch ไม่ throw เมื่อ status 4xx/5xx → ต้องเช็ก r.ok เองและ log ผลลัพธ์จริงจาก LINE
+    if (r.ok) console.log('[line] ส่งแจ้งเตือนสำเร็จ (broadcast)');
+    else console.warn('[line] LINE ตอบกลับ error', r.status, await r.text());
   } catch (e) { console.warn('[line] notify failed:', e.message); }
 }
 
