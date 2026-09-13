@@ -47,7 +47,7 @@ function notifyLineNewMessage(msg) {
   const payload = JSON.stringify({ messages: [{ type: 'text', text }] });
   // ใช้โมดูล https ของ Node โดยตรง (เสถียรกว่า global fetch บนบางแพลตฟอร์ม)
   const req = https.request({
-    hostname: 'api.line.biz',
+    hostname: 'api.line.me',
     path: '/v2/bot/message/broadcast',
     method: 'POST',
     headers: {
