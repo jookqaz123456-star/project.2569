@@ -36,14 +36,12 @@ function stripHeavy(coll, list) {
 }
 const maybeStrip = (coll, list, light) => (light ? stripHeavy(coll, list) : list);
 
-// ─── LINE OA: แจ้งเตือนแอดมินเมื่อผู้เช่าส่งข้อความแชทใหม่ ──────
+// ─── LINE OA: แจ้งเตือนแอดมิน ──────────────────────────────────
 //     ตั้งค่า LINE_TOKEN (Channel access token) ใน environment เพื่อเปิดใช้งาน
 //     ส่งแบบ broadcast → ทุกคนที่เพิ่ม LINE OA เป็นเพื่อน (แอดมิน) จะได้รับแจ้งเตือน
-function notifyLineNewMessage(msg) {
+function notifyLine(text) {
   const token = process.env.LINE_TOKEN;
   if (!token) { console.warn('[line] ข้าม: ยังไม่ได้ตั้งค่า LINE_TOKEN'); return; }
-  const room = msg.roomNumber ? `ห้อง ${msg.roomNumber} · ` : '';
-  const text = `🔔 มีข้อความใหม่จากผู้เช่า\n${room}${msg.name || ''}\n\n"${String(msg.message || '').slice(0, 300)}"`;
   const payload = JSON.stringify({ messages: [{ type: 'text', text }] });
   // ใช้โมดูล https ของ Node โดยตรง (เสถียรกว่า global fetch บนบางแพลตฟอร์ม)
   const req = https.request({
@@ -66,6 +64,22 @@ function notifyLineNewMessage(msg) {
   req.on('error', (e) => console.warn('[line] notify failed:', e.message, e.code || ''));
   req.write(payload);
   req.end();
+}
+// ตัดสินใจว่าเหตุการณ์ไหนควรแจ้งเตือน LINE (prev = ข้อมูลเดิมก่อนบันทึก, null = รายการใหม่)
+function maybeNotifyLine(coll, doc, prev) {
+  try {
+    const clip = (s) => String(s || '').slice(0, 300);
+    if (coll === 'messages' && !prev && doc.sender === 'user') {
+      const room = doc.roomNumber ? `ห้อง ${doc.roomNumber} · ` : '';
+      notifyLine(`🔔 มีข้อความใหม่จากผู้เช่า\n${room}${doc.name || ''}\n\n"${clip(doc.message)}"`);
+    } else if (coll === 'bookings' && !prev) {
+      notifyLine(`🏠 มีการจองห้องใหม่\nห้อง ${doc.roomNumber || '-'} · ${doc.name || doc.bookerName || ''}\nวันเข้าพัก ${doc.date || '-'} · สถานะ: รอยืนยัน`);
+    } else if (coll === 'slips' && !prev && doc.kind === 'ค่าเช่า') {
+      notifyLine(`🧾 มีการชำระเงิน (ค่าเช่า)\nห้อง ${doc.roomNumber || '-'} · ${doc.name || ''}\nเดือน ${doc.month || '-'} · ฿${doc.amount || '-'} · รอตรวจสลิป`);
+    } else if (coll === 'contracts' && doc.signedDoc && !(prev && prev.signedDoc)) {
+      notifyLine(`📝 ผู้เช่าส่งสัญญาเช่าที่เซ็นแล้ว\nห้อง ${doc.roomNumber || '-'} · ${doc.tenantName || ''}\nสถานะ: รอยืนยัน`);
+    }
+  } catch (e) { console.warn('[line] maybeNotify error:', e.message); }
 }
 
 // ─── Health (used by frontend to detect live mode) ─────────────
@@ -148,16 +162,17 @@ app.get('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, re
   if (!item) return res.status(404).json({ error: 'not found' });
   res.json(item);
 }));
+const NOTIFY_COLLS = ['messages', 'bookings', 'slips', 'contracts']; // คอลเลกชันที่ต้องเช็กเพื่อแจ้ง LINE
 app.post('/api/coll/:coll', ensureColl, auth.requireAuth, wrap(async (req, res) => {
   const saved = await db.upsertColl(req.params.coll, req.body || {});
-  if (req.params.coll === 'messages' && saved.sender === 'user') notifyLineNewMessage(saved); // แจ้ง LINE (ไม่รอผล)
+  maybeNotifyLine(req.params.coll, saved, null); // POST = รายการใหม่เสมอ (ไม่รอผล)
   res.json(saved);
 }));
 app.put('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, res) => {
-  // แจ้ง LINE เฉพาะข้อความ "ใหม่" จากผู้เช่า (ไม่แจ้งซ้ำตอนแอดมินกดอ่าน/อัปเดตสถานะ)
-  const isNewMessage = req.params.coll === 'messages' && !(await db.getColl('messages', req.params.id));
+  // ดึงข้อมูลเดิมก่อนบันทึก เพื่อแยก "รายการใหม่" กับ "อัปเดต" (กันแจ้งซ้ำตอนแอดมินอ่าน/แก้สถานะ)
+  const prev = NOTIFY_COLLS.includes(req.params.coll) ? await db.getColl(req.params.coll, req.params.id) : null;
   const saved = await db.upsertColl(req.params.coll, { ...(req.body || {}), id: req.params.id });
-  if (isNewMessage && saved.sender === 'user') notifyLineNewMessage(saved);
+  maybeNotifyLine(req.params.coll, saved, prev);
   res.json(saved);
 }));
 app.delete('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, res) => {
