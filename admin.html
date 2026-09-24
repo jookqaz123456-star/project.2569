@@ -643,7 +643,18 @@ function setPromptpay(v){S.pay.promptpay=v;savePay();}
 function setBankField(i,field,v){S.pay.banks[i][field]=v;savePay();}
 function addBank(){S.pay.banks.push({bank:'ธนาคาร',acc:'XXX-X-XXXXX-X',holder:'(นาย/นาง XXXXX)'});savePay();render();}
 function removeBank(i){S.pay.banks.splice(i,1);savePay();render();}
-function setSlipStatus(id,status){const s=(S.slips||[]).find(x=>x.id===id);if(s){s.status=status;persistColl('slips',s);}render();}
+function setSlipStatus(id,status){
+  const s=(S.slips||[]).find(x=>x.id===id);
+  if(s){
+    s.status=status;persistColl('slips',s);
+    // อนุมัติสลิปค่าเช่า → ทำบิล/การชำระเงินที่ตรงกัน (ห้อง+เดือน) เป็น "ชำระแล้ว" อัตโนมัติ
+    if(status==='อนุมัติ'&&s.kind==='ค่าเช่า'){
+      const p=S.payments.find(x=>String(x.roomNumber)===String(s.roomNumber)&&x.month===s.month&&x.status!=='paid');
+      if(p){p.status='paid';p.date=new Date().toISOString().slice(0,10);p.method='โอนเงิน';persistColl('payments',p);syncBillForPayment(p);}
+    }
+  }
+  render();
+}
 function deleteSlip(id){if(!confirm('ลบสลิปนี้?'))return;S.slips=(S.slips||[]).filter(s=>s.id!==id);persistRemove('slips',id);render();}
 
 // ─── Room photos (admin upload) ──────────────────────────────
@@ -664,7 +675,7 @@ function getFormVals(formId){
 }
 function markPaid(id){
   const i=S.payments.findIndex(p=>p.id===id);
-  if(i>=0){S.payments[i].status='paid';S.payments[i].date=new Date().toISOString().slice(0,10);S.payments[i].method='โอนเงิน';persistColl('payments',S.payments[i]);}
+  if(i>=0){S.payments[i].status='paid';S.payments[i].date=new Date().toISOString().slice(0,10);S.payments[i].method='โอนเงิน';persistColl('payments',S.payments[i]);syncBillForPayment(S.payments[i]);}
   closeModal();render();
 }
 
