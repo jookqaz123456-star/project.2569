@@ -270,6 +270,7 @@ function electricCost(p){return p.electricCost!=null?+p.electricCost:(+p.electri
 function payTotal(p){return p.rent + waterCost(p) + electricCost(p) + p.internet + (+p.other||0) + (+p.deposit||0);}
 // เรียงบิลจากใหม่สุด → เก่าสุด (เดือนล่าสุดก่อน, แล้ววันที่, แล้วลำดับที่สร้าง)
 function sortBillsDesc(arr){return (arr||[]).slice().sort((a,b)=>{
+  const u=(b.updatedAt||'').localeCompare(a.updatedAt||'');if(u)return u;   // เพิ่งจ่าย/สร้าง/แก้ไขล่าสุด → ขึ้นบนสุด
   const m=(b.month||'').localeCompare(a.month||'');if(m)return m;
   const d=(b.date||'').localeCompare(a.date||'');if(d)return d;
   return String(b.id||'').localeCompare(String(a.id||''));
@@ -549,7 +550,7 @@ function savePayment(){
   let obj;
   if(f._id){const i=S.payments.findIndex(x=>x.id===f._id);if(i>=0){S.payments[i]={...S.payments[i],...p};obj=S.payments[i];}}
   else{obj={id:Samrit.newId(),...p,status:p.status||'unpaid'};S.payments.push(obj);}
-  if(obj){persistColl('payments',obj);syncBillForPayment(obj);}
+  if(obj){obj.updatedAt=new Date().toISOString();persistColl('payments',obj);syncBillForPayment(obj);}
   closeModal();
 }
 // Mirror a payment into the resident-facing `bills` collection so the chosen
@@ -650,7 +651,7 @@ function setSlipStatus(id,status){
     // อนุมัติสลิปค่าเช่า → ทำบิล/การชำระเงินที่ตรงกัน (ห้อง+เดือน) เป็น "ชำระแล้ว" อัตโนมัติ
     if(status==='อนุมัติ'&&s.kind==='ค่าเช่า'){
       const p=S.payments.find(x=>String(x.roomNumber)===String(s.roomNumber)&&x.month===s.month&&x.status!=='paid');
-      if(p){p.status='paid';p.date=new Date().toISOString().slice(0,10);p.method='โอนเงิน';persistColl('payments',p);syncBillForPayment(p);}
+      if(p){p.status='paid';p.date=new Date().toISOString().slice(0,10);p.updatedAt=new Date().toISOString();p.method='โอนเงิน';persistColl('payments',p);syncBillForPayment(p);}
     }
   }
   render();
@@ -675,7 +676,7 @@ function getFormVals(formId){
 }
 function markPaid(id){
   const i=S.payments.findIndex(p=>p.id===id);
-  if(i>=0){S.payments[i].status='paid';S.payments[i].date=new Date().toISOString().slice(0,10);S.payments[i].method='โอนเงิน';persistColl('payments',S.payments[i]);syncBillForPayment(S.payments[i]);}
+  if(i>=0){S.payments[i].status='paid';S.payments[i].date=new Date().toISOString().slice(0,10);S.payments[i].updatedAt=new Date().toISOString();S.payments[i].method='โอนเงิน';persistColl('payments',S.payments[i]);syncBillForPayment(S.payments[i]);}
   closeModal();render();
 }
 
