@@ -302,10 +302,25 @@ function autoCancelStaleBookings(){
 // ปุ่ม "ยืนยัน" ในหน้าการจอง = ส่งข้อมูลไปสร้างผู้เช่า (ยังไม่หยุดนับถอยหลัง — รอกด "ยืนยันเข้าพัก")
 function confirmBookingStay(id){const b=S.bookings.find(x=>x.id===id);if(b){b.sentToTenant=true;occupyRoom(b.roomId);persistColl('bookings',b);createTenantFromBooking(b);}render();}
 // ยืนยันการจอง → สร้างข้อมูลผู้เช่าจากที่ผู้จองกรอก แล้วผูกกับห้อง
-// ซ่อมข้อมูลเก่า: การจองที่ "ยืนยันแล้ว" แต่ยังไม่มีผู้เช่าผูกอยู่ → สร้างผู้เช่าให้ (ห้องจะแสดงชื่อ)
+// ซ่อมข้อมูลเก่า: การจองที่ "ยืนยันแล้ว" แต่ห้องไม่แสดงชื่อผู้เช่า
+//  → หาห้องจาก roomId หรือเลขห้อง, สร้างผู้เช่าถ้ายังไม่มี, แล้วผูกห้องกับผู้เช่าให้ครบ
 function repairTenantsFromBookings(){
   (S.bookings||[]).forEach(b=>{
-    if(b.status==='ยืนยันแล้ว' && !(S.tenants||[]).some(t=>t.fromBooking===b.id)) createTenantFromBooking(b);
+    if(b.status!=='ยืนยันแล้ว')return;
+    // หาห้อง: ลองจาก roomId ก่อน ถ้าไม่เจอลองจากเลขห้อง (roomNumber)
+    let r=b.roomId?roomOf(b.roomId):null;
+    if(!r&&b.roomNumber!=null)r=S.rooms.find(x=>String(x.number)===String(b.roomNumber));
+    // มีผู้เช่าจากการจองนี้แล้วหรือยัง
+    let t=(S.tenants||[]).find(x=>x.fromBooking===b.id);
+    if(!t){
+      t={id:Samrit.newId(),name:bookName(b)||'-',phone:bookPhone(b)||'',
+        address:b.bookerAddress||'',province:b.bookerProvince||'',postal:b.bookerPostal||'',
+        roomId:(r?r.id:b.roomId)||null,checkin:b.date||new Date().toISOString().slice(0,10),
+        checkout:'',checkinStatus:'รอเข้าพัก',fromBooking:b.id};
+      S.tenants.push(t);persistColl('tenants',t);
+    }
+    // ผูกห้องกับผู้เช่าถ้ายังไม่ผูก (แก้กรณีมีผู้เช่าแล้วแต่ห้องแสดง "-")
+    if(r&&r.tenantId!==t.id){r.tenantId=t.id;if(r.status==='vacant')r.status='occupied';persistColl('rooms',r);}
   });
 }
 function createTenantFromBooking(b){
