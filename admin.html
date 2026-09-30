@@ -302,6 +302,12 @@ function autoCancelStaleBookings(){
 // ปุ่ม "ยืนยัน" ในหน้าการจอง = ส่งข้อมูลไปสร้างผู้เช่า (ยังไม่หยุดนับถอยหลัง — รอกด "ยืนยันเข้าพัก")
 function confirmBookingStay(id){const b=S.bookings.find(x=>x.id===id);if(b){b.sentToTenant=true;occupyRoom(b.roomId);persistColl('bookings',b);createTenantFromBooking(b);}render();}
 // ยืนยันการจอง → สร้างข้อมูลผู้เช่าจากที่ผู้จองกรอก แล้วผูกกับห้อง
+// ซ่อมข้อมูลเก่า: การจองที่ "ยืนยันแล้ว" แต่ยังไม่มีผู้เช่าผูกอยู่ → สร้างผู้เช่าให้ (ห้องจะแสดงชื่อ)
+function repairTenantsFromBookings(){
+  (S.bookings||[]).forEach(b=>{
+    if(b.status==='ยืนยันแล้ว' && !(S.tenants||[]).some(t=>t.fromBooking===b.id)) createTenantFromBooking(b);
+  });
+}
 function createTenantFromBooking(b){
   if(!b)return;
   if((S.tenants||[]).some(t=>t.fromBooking===b.id))return; // กันซ้ำ
@@ -421,6 +427,7 @@ async function loadAll(light){
     S.pay=d.paySettings&&d.paySettings.banks?d.paySettings:DEFAULT_PAY;
     if(!light) S.photos=d.photos||{};   // light refresh: เก็บรูปห้องเดิมไว้ ไม่โหลดซ้ำ
     autoCancelStaleBookings();
+    repairTenantsFromBookings();   // ซ่อมห้องที่ไม่ว่างแต่ไม่มีผู้เช่า (จากการจองที่ยืนยันแล้ว)
   }catch(e){console.warn('bootstrap',e.message);}
 }
 // โหลดรูป base64 ของรายการเดียวเฉพาะตอนต้องใช้ (กดดู) แล้ว cache ไว้ใน S
@@ -523,7 +530,12 @@ function saveTenant(){
   if(obj)persistColl('tenants',obj);
   closeModal();
 }
-function deleteTenant(id){if(confirm('ลบผู้เช่านี้?')){S.tenants=S.tenants.filter(t=>t.id!==id);persistRemove('tenants',id);render();}}
+function deleteTenant(id){if(confirm('ลบผู้เช่านี้?')){
+  // คืนห้องเป็นว่างเมื่อลบผู้เช่า (กันห้องค้างสถานะ "ไม่ว่าง" แต่ไม่มีผู้เช่า)
+  const t=S.tenants.find(x=>x.id===id);
+  if(t&&t.roomId){const r=S.rooms.find(x=>x.id===t.roomId);if(r&&r.tenantId===id){r.tenantId=null;r.status='vacant';persistColl('rooms',r);}}
+  S.tenants=S.tenants.filter(t=>t.id!==id);persistRemove('tenants',id);render();
+}}
 // ย้ายออก → คืนห้องเป็นว่าง แล้วเอาผู้เช่าออกจากรายการ
 function checkoutTenant(id){
   const t=S.tenants.find(x=>x.id===id);
@@ -539,7 +551,8 @@ function saveBooking(){
   if(f._id){const i=S.bookings.findIndex(b=>b.id===f._id);if(i>=0){S.bookings[i]={...S.bookings[i],...f};obj=S.bookings[i];}}
   else{obj={id:Samrit.newId(),...f,status:f.status||'รอยืนยัน'};S.bookings.push(obj);}
   if(obj){const rm=roomOf(obj.roomId);if(rm)obj.roomNumber=rm.number;persistColl('bookings',obj);
-    if(obj.status==='ยกเลิก')freeRoomIfBooked(obj.roomId); else occupyRoom(obj.roomId);
+    if(obj.status==='ยกเลิก')freeRoomIfBooked(obj.roomId);
+    else{ occupyRoom(obj.roomId); if(obj.status==='ยืนยันแล้ว')createTenantFromBooking(obj); } // ยืนยันผ่านแก้ไข → สร้างผู้เช่าด้วย
   }
   closeModal();
 }
