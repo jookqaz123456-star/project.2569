@@ -389,6 +389,8 @@ function _mergeHeavy(coll,list){
   return (list||[]).map(n=>{const o=old.get(n.id);if(o)for(const k of f)if((n[k]==null||n[k]==='')&&o[k]!=null)n[k]=o[k];return n;});
 }
 async function loadResidentData(light){
+  // รอให้การบันทึกที่ค้างอยู่เสร็จก่อน กันดึงข้อมูลเก่ามาทับสิ่งที่เพิ่งบันทึก (สถานะกระพริบ/หายวูบ)
+  let _w=0; while(_pendingSaves>0 && _w<4000){ await new Promise(r=>setTimeout(r,100)); _w+=100; }
   const _gen=_saveGen;
   try{
     const d=await Samrit.bootstrapResident(SEED,light);
