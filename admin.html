@@ -921,7 +921,7 @@ function renderDashboard(){
       <div class="table-wrap"><table>
         <tr><th>ห้อง</th><th>ผู้เช่า</th><th>เดือน</th><th>รวม</th><th>สถานะ</th></tr>
         ${sortBillsDesc(S.payments).slice(0,5).map(p=>`<tr>
-          <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">0${p.roomNumber}</span></td>
+          <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">${String(p.roomNumber).padStart(2,'0')}</span></td>
           <td>${p.tenantName}</td>
           <td>${p.month}</td>
           <td>฿${fmtMoney(payTotal(p))}</td>
@@ -1329,7 +1329,7 @@ function renderPayments(){
     <div class="card"><div class="table-wrap"><table>
       <tr><th>ห้อง</th><th>ผู้เช่า</th><th>เดือน</th><th>ค่าเช่า</th><th>น้ำ</th><th>ไฟ</th><th>เน็ต</th><th>รวม</th><th>สถานะ</th><th></th></tr>
       ${rows.map(p=>`<tr>
-        <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">0${p.roomNumber}</span></td>
+        <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700">${String(p.roomNumber).padStart(2,'0')}</span></td>
         <td>${p.tenantName}${p.userId?` <span class="badge badge-green" style="font-size:9.5px;vertical-align:middle">${ico.pay} ส่งให้ผู้ใช้แล้ว</span>`:''}</td>
         <td>${p.month}</td>
         <td>฿${fmtMoney(p.rent)}</td>
@@ -1814,7 +1814,7 @@ function renderModal(){
           <div style="font-size:12px;color:var(--c-dim);margin-top:4px">ใบเสร็จรับเงิน</div>
         </div>
         <div style="border-top:1px dashed var(--bd-strong);padding-top:14px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">ห้อง</span><span style="font-weight:600">0${p.roomNumber}</span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">ห้อง</span><span style="font-weight:600">${String(p.roomNumber).padStart(2,'0')}</span></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">ผู้เช่า</span><span>${p.tenantName}</span></div>
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">เดือน</span><span>${p.month}</span></div>
           ${p.date?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px"><span style="color:var(--c-dim2)">วันชำระ</span><span>${fmtDate(p.date)}</span></div>`:''}
