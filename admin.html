@@ -316,9 +316,11 @@ function repairTenantsFromBookings(){
       t={id:Samrit.newId(),name:bookName(b)||'-',phone:bookPhone(b)||'',
         address:b.bookerAddress||'',province:b.bookerProvince||'',postal:b.bookerPostal||'',
         roomId:(r?r.id:b.roomId)||null,checkin:b.date||new Date().toISOString().slice(0,10),
-        checkout:'',checkinStatus:'รอเข้าพัก',fromBooking:b.id};
+        checkout:'',checkinStatus:'รอเข้าพัก',fromBooking:b.id,userId:b.userId||''};
       S.tenants.push(t);persistColl('tenants',t);
     }
+    // เติม userId ให้ผู้เช่าเดิมที่ยังไม่มี (ผูกกับบัญชีผู้เช่าให้ครบ)
+    if(t&&b.userId&&!t.userId){t.userId=b.userId;persistColl('tenants',t);}
     // ผูกห้องกับผู้เช่าถ้ายังไม่ผูก (แก้กรณีมีผู้เช่าแล้วแต่ห้องแสดง "-")
     if(r&&r.tenantId!==t.id){r.tenantId=t.id;if(r.status==='vacant')r.status='occupied';persistColl('rooms',r);}
   });
@@ -330,7 +332,7 @@ function createTenantFromBooking(b){
   const tenant={id:Samrit.newId(),name:bookName(b)||'-',phone:bookPhone(b)||'',
     address:b.bookerAddress||'',province:b.bookerProvince||'',postal:b.bookerPostal||'',
     roomId:b.roomId||null,checkin:b.date||new Date().toISOString().slice(0,10),checkout:'',
-    checkinStatus:'รอเข้าพัก',fromBooking:b.id};
+    checkinStatus:'รอเข้าพัก',fromBooking:b.id,userId:b.userId||''};
   S.tenants.push(tenant);persistColl('tenants',tenant);
   if(r){r.tenantId=tenant.id;persistColl('rooms',r);}
 }
@@ -358,7 +360,9 @@ function residentAccounts(){return (S.users||[]).filter(u=>(u.urole||u.role)==='
 function residentUserForRoom(r){
   if(!r)return '';
   const accs=residentAccounts();const has=id=>accs.some(u=>u.id===id);
-  if(r.tenantId){const t=tenantOf(r.tenantId);if(t&&t.fromBooking){const b=S.bookings.find(x=>x.id===t.fromBooking);if(b&&b.userId&&has(b.userId))return b.userId;}}
+  if(r.tenantId){const t=tenantOf(r.tenantId);
+    if(t&&t.userId&&has(t.userId))return t.userId;
+    if(t&&t.fromBooking){const b=S.bookings.find(x=>x.id===t.fromBooking);if(b&&b.userId&&has(b.userId))return b.userId;}}
   const bk=(S.bookings||[]).filter(x=>x.userId&&has(x.userId)&&(x.roomId===r.id||String(x.roomNumber)===String(r.number))&&x.status!=='ยกเลิก')
     .sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
   return bk?bk.userId:'';
