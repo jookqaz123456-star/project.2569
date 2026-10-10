@@ -1660,12 +1660,12 @@ function renderModal(){
           <div class="form-group"><label class="form-label">เลขห้อง</label><input name="roomNumber" id="payRoomNum" class="input" type="number" value="${p?.roomNumber||''}"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label class="form-label">ค่าเช่า (฿)</label><input name="rent" id="payRent" class="input" type="number" value="${p?.rent||3500}" oninput="updateBillCalc()"></div>
+          <div class="form-group"><label class="form-label">ค่าเช่า (฿)</label><input name="rent" id="payRent" class="input" type="number" value="${p?.rent||0}" oninput="updateBillCalc()"></div>
           <div class="form-group"><label class="form-label">ค่าน้ำ (฿)</label><input name="waterCost" class="input" type="number" value="${p?waterCost(p):0}" oninput="updateBillCalc()"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">ค่าไฟ (฿)</label><input name="electricCost" class="input" type="number" value="${p?electricCost(p):0}" oninput="updateBillCalc()"></div>
-          <div class="form-group"><label class="form-label">ค่าเน็ต (฿)</label><input name="internet" class="input" type="number" value="${p?.internet||300}" oninput="updateBillCalc()"></div>
+          <div class="form-group"><label class="form-label">ค่าเน็ต (฿)</label><input name="internet" class="input" type="number" value="${p?.internet||0}" oninput="updateBillCalc()"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">ค่าอื่นๆ / ค่าปรับ (฿)</label><input name="other" class="input" type="number" value="${p?.other||0}" oninput="updateBillCalc()"></div>
@@ -1860,13 +1860,12 @@ function onPayRoomChange(roomId){
   if(!r)return;
   const tn=document.getElementById('payTenantName');
   const rn=document.getElementById('payRoomNum');
-  const rent=document.getElementById('payRent');
-  if(tn&&r.tenantId){const t=tenantOf(r.tenantId);if(t)tn.value=t.name;}
+  // ชื่อผู้เช่า: เติมเมื่อห้องมีผู้เช่า / ว่างเมื่อห้องไม่มีผู้เช่า (กันค้างค่าเดิม)
+  if(tn){const t=r.tenantId?tenantOf(r.tenantId):null;tn.value=t?t.name:'';}
   if(rn)rn.value=r.number;
-  if(rent)rent.value=r.price;
-  // ผูกบัญชีผู้เช่าให้อัตโนมัติ (ถ้าหาเจอ) เพื่อให้บิลไปแสดงในพอร์ทัลผู้เช่า
+  // บัญชีผู้พักอาศัย: ผูกให้อัตโนมัติเมื่อหาเจอ / ว่างเมื่อเป็นห้องว่าง
   const us=document.querySelector('#paymentForm [name=userId]');
-  if(us){const uid2=residentUserForRoom(r);if(uid2)us.value=uid2;}
+  if(us)us.value=residentUserForRoom(r)||'';
 }
 function setRoomStatus(id,s){const r=S.rooms.find(x=>x.id===id);if(r){r.status=s;persistColl('rooms',r);}render();}
 
