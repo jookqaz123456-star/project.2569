@@ -353,6 +353,16 @@ function roomOf(id){return S.rooms.find(r=>r.id===id);}
 function tenantOf(id){return S.tenants.find(t=>t.id===id);}
 // Resident accounts (so a bill can be sent to a specific resident's portal)
 function residentAccounts(){return (S.users||[]).filter(u=>(u.urole||u.role)==='resident');}
+// หาบัญชีผู้พักอาศัยที่ผูกกับห้องนี้ (ผ่านผู้เช่า→การจอง หรือการจองที่ยืนยันของห้อง)
+// ใช้เติมช่อง "ส่งบิลให้ผู้พักอาศัย" อัตโนมัติ กันลืมเลือกแล้วผู้เช่าไม่เห็นบิล
+function residentUserForRoom(r){
+  if(!r)return '';
+  const accs=residentAccounts();const has=id=>accs.some(u=>u.id===id);
+  if(r.tenantId){const t=tenantOf(r.tenantId);if(t&&t.fromBooking){const b=S.bookings.find(x=>x.id===t.fromBooking);if(b&&b.userId&&has(b.userId))return b.userId;}}
+  const bk=(S.bookings||[]).filter(x=>x.userId&&has(x.userId)&&(x.roomId===r.id||String(x.roomNumber)===String(r.number))&&x.status!=='ยกเลิก')
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+  return bk?bk.userId:'';
+}
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
 
 // ─── Backend-backed data layer (Samrit client: live API / demo) ─
@@ -518,6 +528,7 @@ function getSig(){return sigPad?sigPad.canvas.toDataURL():'';}
 function nav(screen){S.screen=screen;S.modal=null;S.sidebarOpen=false;render();}
 function toggleSidebar(){S.sidebarOpen=!S.sidebarOpen;render();}
 async function openModal(type,data={}){S.modal=type;S.modalData=data;render();if(type==='signContract')setTimeout(initSigPad,50);if(type==='addPayment'||type==='editPayment')setTimeout(updateBillCalc,50);
+  if(type==='addPayment')setTimeout(()=>{const sel=document.getElementById('payRoomSel');if(sel&&sel.value)onPayRoomChange(sel.value);},60);
   // โหลดรูป base64 เฉพาะตอนกดดู (lazy-load) แล้ว render ใหม่ให้รูปโผล่
   let coll=null; if(type==='viewSlip')coll='slips'; else if(type==='viewBooking')coll='bookings'; else if(type==='viewSignedContract'||type==='viewResidentContract')coll='contracts';
   if(coll){const changed=await ensureHeavy(coll,data);if(changed&&S.modal===type)render();}
@@ -1849,6 +1860,9 @@ function onPayRoomChange(roomId){
   if(tn&&r.tenantId){const t=tenantOf(r.tenantId);if(t)tn.value=t.name;}
   if(rn)rn.value=r.number;
   if(rent)rent.value=r.price;
+  // ผูกบัญชีผู้เช่าให้อัตโนมัติ (ถ้าหาเจอ) เพื่อให้บิลไปแสดงในพอร์ทัลผู้เช่า
+  const us=document.querySelector('#paymentForm [name=userId]');
+  if(us){const uid2=residentUserForRoom(r);if(uid2)us.value=uid2;}
 }
 function setRoomStatus(id,s){const r=S.rooms.find(x=>x.id===id);if(r){r.status=s;persistColl('rooms',r);}render();}
 
