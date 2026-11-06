@@ -279,6 +279,7 @@ let _pendingSaves=0;
 let _saveGen=0;            // กันไม่ให้โหลดข้อมูลเก่ามาทับสิ่งที่เพิ่งบันทึก
 function _track(pr){_saveGen++;_pendingSaves++;Promise.resolve(pr).catch(e=>console.warn(e&&e.message)).finally(()=>{_pendingSaves=Math.max(0,_pendingSaves-1);});return pr;}
 function persistColl(coll,obj){ if(Samrit.mode==='live'){_track(Samrit.save(coll,obj));} else {Samrit.saveDemo(coll,S[coll]);} }
+function persistRemove(coll,id){ if(Samrit.mode==='live'){_track(Samrit.remove(coll,id));} else {Samrit.saveDemo(coll,S[coll]);} }
 async function pushSlip(o){
   const slip={roomNumber:o.roomNumber,name:o.name,amount:o.amount,slip:o.slip,kind:o.kind,month:o.month||'',date:new Date().toISOString().slice(0,10),status:'รอตรวจสอบ'};
   try{
@@ -777,6 +778,13 @@ function sendChat(){
   if(inp)inp.value='';
   render();
 }
+function deleteChat(id){
+  const m=(S.messages||[]).find(x=>x.id===id);
+  if(!m||m.sender!=='user'||m.userId!==S.auth?.id)return;
+  if(!confirm('ลบข้อความนี้?'))return;
+  S.messages=S.messages.filter(x=>x.id!==id);persistRemove('messages',id);
+  render();
+}
 function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
 function renderChat(){
   const msgs=myMessages();
@@ -793,7 +801,7 @@ function renderChat(){
             <div style="max-width:76%">
               ${mine?'':`<div style="font-size:11px;color:var(--c-dim);margin:0 0 3px 6px">ผู้ดูแล</div>`}
               <div style="padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;${mine?'background:var(--c-accent);color:#fff;border-bottom-right-radius:4px':'background:var(--c-elevated);color:var(--c-text);border:1px solid var(--bd2);border-bottom-left-radius:4px'}">${String(m.message).replace(/</g,'&lt;')}</div>
-              <div style="font-size:10.5px;color:var(--c-dim);margin-top:3px;text-align:${mine?'right':'left'};padding:0 6px">${fmtChatTime(m.timestamp)}</div>
+              <div style="font-size:10.5px;color:var(--c-dim);margin-top:3px;text-align:${mine?'right':'left'};padding:0 6px">${fmtChatTime(m.timestamp)}${mine?` · <a href="#" onclick="event.preventDefault();deleteChat('${m.id}')" style="color:var(--c-red);text-decoration:none">ลบ</a>`:''}</div>
             </div>
           </div>`;
         }).join(''):`<div style="margin:auto;text-align:center;color:var(--c-dim);font-size:13.5px">ยังไม่มีข้อความ — เริ่มพิมพ์เพื่อสอบถามผู้ดูแลได้เลย</div>`}
