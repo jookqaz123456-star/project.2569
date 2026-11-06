@@ -176,6 +176,12 @@ app.put('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, re
   res.json(saved);
 }));
 app.delete('/api/coll/:coll/:id', ensureColl, auth.requireAuth, wrap(async (req, res) => {
+  // ผู้เช่าลบได้เฉพาะข้อความแชทของตัวเอง (แอดมิน/เจ้าหน้าที่ลบได้ทุกข้อความ)
+  const isStaff = ['admin', 'staff'].includes(req.user.role);
+  if (!isStaff && req.params.coll === 'messages') {
+    const m = await db.getColl('messages', req.params.id);
+    if (!m || m.userId !== req.user.id || m.sender !== 'user') return res.status(403).json({ error: 'forbidden' });
+  }
   await db.removeColl(req.params.coll, req.params.id);
   res.json({ ok: true });
 }));

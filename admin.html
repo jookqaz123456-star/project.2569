@@ -820,6 +820,11 @@ function adminSendChat(){
   if(inp)inp.value='';
   render();
 }
+function adminDeleteChat(id){
+  if(!confirm('ลบข้อความนี้?'))return;
+  S.messages=(S.messages||[]).filter(x=>x.id!==id);persistRemove('messages',id);
+  render();
+}
 function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();adminSendChat();}}
 function renderAdminChat(){
   const convs=chatConversations();
@@ -842,7 +847,7 @@ function renderAdminChat(){
         return`<div style="display:flex;justify-content:${admin?'flex-end':'flex-start'}">
           <div style="max-width:76%">
             <div style="padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;${admin?'background:var(--c-accent);color:#fff;border-bottom-right-radius:4px':'background:var(--c-elevated);color:var(--c-text);border:1px solid var(--bd2);border-bottom-left-radius:4px'}">${String(m.message).replace(/</g,'&lt;')}</div>
-            <div style="font-size:10.5px;color:var(--c-dim);margin-top:3px;text-align:${admin?'right':'left'};padding:0 6px">${fmtChatTime(m.timestamp)}</div>
+            <div style="font-size:10.5px;color:var(--c-dim);margin-top:3px;text-align:${admin?'right':'left'};padding:0 6px">${fmtChatTime(m.timestamp)} · <a href="#" onclick="event.preventDefault();adminDeleteChat('${m.id}')" style="color:var(--c-red);text-decoration:none">ลบ</a></div>
           </div>
         </div>`;
       }).join('')}
