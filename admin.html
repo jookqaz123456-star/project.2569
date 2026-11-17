@@ -323,7 +323,8 @@ function repairTenantsFromBookings(){
     // เติม userId ให้ผู้เช่าเดิมที่ยังไม่มี (ผูกกับบัญชีผู้เช่าให้ครบ)
     if(t&&b.userId&&!t.userId){t.userId=b.userId;persistColl('tenants',t);}
     // ผูกห้องกับผู้เช่าถ้ายังไม่ผูก (แก้กรณีมีผู้เช่าแล้วแต่ห้องแสดง "-")
-    if(r&&r.tenantId!==t.id){r.tenantId=t.id;if(r.status==='vacant')r.status='occupied';persistColl('rooms',r);}
+    //   ผูกเฉพาะห้องที่ยังไม่มีผู้เช่า และผู้เช่ายังอยู่ห้องนี้จริง (ไม่ทับสิ่งที่แอดมินแก้ เช่น ย้ายห้อง)
+    if(r&&!r.tenantId&&(!t.roomId||t.roomId===r.id)){r.tenantId=t.id;if(r.status==='vacant')r.status='occupied';persistColl('rooms',r);}
   });
 }
 function createTenantFromBooking(b){
